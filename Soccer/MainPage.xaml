@@ -1,0 +1,31 @@
+﻿<Page
+    x:Class="Soccer.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Soccer"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid>
+        <TextBlock Text="{x:Bind ViewModel.Message, Mode=OneWay}"/>
+            <Canvas x:Name="GameArea"></Canvas>
+        <!--<ItemsControl 
+            ItemsSource="{x:Bind ViewModel.PhysicsItems, Mode=OneWay}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas></Canvas>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="local:PhysicsObjectViewModel">
+                    <Ellipse Fill="SteelBlue" Height="{x:Bind Diameter, Mode=OneTime}" Width="{x:Bind Diameter, Mode=OneTime}" >
+                        <Ellipse.RenderTransform>
+                            <TranslateTransform X="{x:Bind X, Mode=OneTime}" Y="{x:Bind Y, Mode=OneTime}"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>-->
+    </Grid>
+</Page>
