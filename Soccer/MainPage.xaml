@@ -9,11 +9,11 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     <Grid>
         <TextBlock Text="{x:Bind ViewModel.Message, Mode=OneWay}"/>
-            <Canvas x:Name="GameArea"></Canvas>
+            <Canvas x:Name="GameArea" PointerMoved="GameArea_PointerMoved"></Canvas>
         <!--<ItemsControl 
             ItemsSource="{x:Bind ViewModel.PhysicsItems, Mode=OneWay}">
             <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
+                <ItemsPanelTemplate> 
                     <Canvas></Canvas>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>

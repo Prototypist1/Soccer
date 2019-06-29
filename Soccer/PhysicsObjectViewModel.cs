@@ -7,28 +7,62 @@ using Windows.UI.Xaml.Shapes;
 
 namespace Soccer
 {
+    public class Player : IInbetween
+    {
 
 
-    public class PhysicsObjectInbetween : IInbetween
+        public readonly PhysicsObject physicsObject;
+        private readonly double top;
+        private readonly double left;
+
+        private double targetVx, targetVy;
+
+        public UIElement Element
+        {
+            get;
+        }
+
+        public Player(PhysicsObject physicsObject, UIElement Element, double top, double left)
+        {
+            this.physicsObject = physicsObject;
+
+            this.Element = Element;
+            this.top = top;
+            this.left = left;
+            Update();
+        }
+
+        public void SetTargetV(double vx, double vy) {
+            this.targetVx = vx;
+            this.targetVy = vy;
+        }
+
+        public void Update()
+        {
+            Canvas.SetTop(Element, physicsObject.Y - top);
+            Canvas.SetLeft(Element, physicsObject.X - left);
+            physicsObject.ApplyForce(
+                (targetVx - physicsObject.Vx) * physicsObject.Mass,
+                (targetVy - physicsObject.Vy) * physicsObject.Mass);
+        }
+    }
+
+
+
+    public class Ball : IInbetween
     {
         public readonly PhysicsObject physicsObject;
-        public UIElement Element => elipse;
-        private readonly Ellipse elipse;
+        public UIElement Element { get; }
+        private readonly double top;
+        private readonly double left;
 
-        public PhysicsObjectInbetween(double mass, double radius, double x, double y, double vx,double vy)
+        public Ball(PhysicsObject physicsObject, UIElement Element, double top, double left)
         {
-            this.physicsObject = new PhysicsObject(mass, radius, x, y) {
-                Vx = vx,
-                Vy = vy
-            };
+            this.physicsObject = physicsObject;
 
-            elipse = new Ellipse()
-            {
-                Width = 2 * physicsObject.Radius,
-                Height = 2 * physicsObject.Radius,
-                Fill = new SolidColorBrush(Windows.UI.Colors.Blue)
-        };
-
+            this.Element = Element;
+            this.top = top;
+            this.left = left;
             Update();
         }
 
@@ -36,9 +70,9 @@ namespace Soccer
 
         public void Update()
         {
-            Canvas.SetTop(elipse, physicsObject.Y - physicsObject.Radius);
-            Canvas.SetLeft(elipse, physicsObject.X - physicsObject.Radius);
-            physicsObject.ApplyForce(-physicsObject.Vx * physicsObject.Mass / 1000, -physicsObject.Vy * physicsObject.Mass / 1000);
+            Canvas.SetTop(Element, physicsObject.Y - top);
+            Canvas.SetLeft(Element, physicsObject.X - left);
+            //physicsObject.ApplyForce(-physicsObject.Vx * physicsObject.Mass / 1000, -physicsObject.Vy * physicsObject.Mass / 1000);
         }
     }
 
@@ -46,7 +80,7 @@ namespace Soccer
     {
         private readonly PhysicsEngine physicsEngine;
         private readonly Canvas canvas;
-        private List<PhysicsObjectInbetween> items = new List<PhysicsObjectInbetween>();
+        private List<IInbetween> items = new List<IInbetween>();
         private int time=0;
 
         public PhyisEngineInbetween(double stepSize, double height, double width, Canvas canvas)
@@ -55,8 +89,15 @@ namespace Soccer
             this.canvas = canvas;
         }
 
-        public void AddItem(double mass, double radius, double x, double y, double vx, double vy) {
-            var toAdd = new PhysicsObjectInbetween(mass, radius, x, y,vx,vy);
+        public void AddPlayer(PhysicsObject physicsObject, UIElement element, double top, double left) {
+            var toAdd = new Player(physicsObject, element, top, left);
+            physicsEngine.AddObject(toAdd.physicsObject);
+            this.canvas.Children.Add(toAdd.Element);
+            items.Add(toAdd);
+        }
+
+        public void AddBall(PhysicsObject physicsObject, UIElement element,double top, double left) {
+            var toAdd = new Ball(physicsObject, element, top, left);
             physicsEngine.AddObject(toAdd.physicsObject);
             this.canvas.Children.Add(toAdd.Element);
             items.Add(toAdd);

@@ -53,10 +53,14 @@ namespace Physics
         }
 
         private readonly GridEntry[,] Grid;
+        private readonly double height;
+        private readonly double width;
 
         public GridManager(double stepSize, double height, double width)
         {
             StepSize = stepSize;
+            this.height = height;
+            this.width = width;
             Grid = new GridEntry[(int)Math.Ceiling(width / stepSize), (int)Math.Ceiling(height / stepSize)];
 
             for (int x = 0; x < (int)Math.Ceiling(width / stepSize); x++)
@@ -70,24 +74,34 @@ namespace Physics
 
         public double StepSize { get; internal set; }
 
-        // this  shoud depend on the size of the object
         public HashSet<PhysicsObject> AddToGrid(PhysicsObject physicsObject)
         {
             var couldHits = new HashSet<PhysicsObject>();
 
-            var x = (int)Math.Floor((physicsObject.X + physicsObject.Radius) / StepSize);
-            var y = (int)Math.Floor((physicsObject.Y + physicsObject.Radius) / StepSize);
-
-            for (int addx = -1; addx < 2; addx++)
-            {
-
-                for (int addy = -1; addy < 2; addy++)
-                {
-                    couldHits.UnionWith(Grid[x + addx, y + addy].physicsObjects);
-                }
+            var inner = physicsObject.GetBounds();
+            if (physicsObject.mobile) {
+                inner = new Bounds(
+                    Help.BoundAddition(inner.maxX, StepSize) / StepSize, 
+                    Help.BoundAddition(inner.maxY, StepSize) / StepSize, 
+                    Help.BoundAddition(inner.minX, -StepSize) / StepSize, 
+                    Help.BoundAddition(inner.minY, -StepSize) / StepSize);
             }
 
-            Grid[x, y].Add(physicsObject);
+            var bound = new Bounds(
+                Math.Floor(width/StepSize)-1,
+                Math.Floor(height/StepSize)-1,
+                0,
+                0);
+
+            for (int x = (int)Math.Floor(Math.Max(inner.minX/StepSize, bound.minX)); x <= (int)Math.Floor(Math.Min(inner.maxX, bound.maxX)); x++)
+            {
+
+                for (int y = (int)Math.Floor(Math.Max(inner.minY, bound.minY)); y <= (int)Math.Floor(Math.Min(inner.maxY, bound.maxY)); y++)
+                {
+                    couldHits.UnionWith(Grid[x, y].physicsObjects);
+                    Grid[x, y].Add(physicsObject);
+                }
+            }
 
             return couldHits;
 
@@ -95,7 +109,30 @@ namespace Physics
 
         public void RemoveFromGrid(PhysicsObject physicsObject)
         {
-            Grid[(int)Math.Floor((physicsObject.X + physicsObject.Radius) / StepSize), (int)Math.Floor((physicsObject.Y + physicsObject.Radius) / StepSize)].Remove(physicsObject);
+            var inner = physicsObject.GetBounds();
+            if (physicsObject.mobile)
+            {
+                inner = new Bounds(
+                    Help.BoundAddition(inner.maxX, StepSize) / StepSize,
+                    Help.BoundAddition(inner.maxY, StepSize) / StepSize,
+                    Help.BoundAddition(inner.minX, -StepSize) / StepSize,
+                    Help.BoundAddition(inner.minY, -StepSize) / StepSize);
+            }
+
+            var bound = new Bounds(
+                Math.Floor(width / StepSize) -1,
+                Math.Floor(height / StepSize) - 1,
+                0,
+                0);
+
+            for (int x = (int)Math.Floor(Math.Max(inner.minX, bound.minX)); x <= (int)Math.Floor(Math.Min(inner.maxX, bound.maxX)); x++)
+            {
+
+                for (int y = (int)Math.Floor(Math.Max(inner.minY, bound.minY)); y <= (int)Math.Floor(Math.Min(inner.maxY, bound.maxY)); y++)
+                {
+                    Grid[x, y].Remove(physicsObject);
+                }
+            }            
         }
     }
 
@@ -233,7 +270,6 @@ namespace Physics
 
                             if (isGood(vf2_minus, v2) && isGood(vf2_plus, v2) && vf2_plus != vf2_minus)
                             {
-
                                 if (Math.Abs(v2 - vf2_plus) > Math.Abs(v2 - vf2_minus))
                                 {
                                     if (Math.Abs(v2 - vf2_minus) > CLOSE)
@@ -250,7 +286,6 @@ namespace Physics
                                     }
                                     vf2 = vf2_minus;
                                 }
-
                             }
                             else if (isGood(vf2_minus, v2))
                             {
