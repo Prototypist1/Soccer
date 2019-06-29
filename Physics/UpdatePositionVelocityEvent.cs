@@ -45,7 +45,7 @@
             myPhysicsObject.Y = y;
             myPhysicsObject.Vx = vx;
             myPhysicsObject.Vy = vy;
-            myPhysicsObject.time = time;
+            myPhysicsObject.Time = time;
 
 
             EventManager.WhatHappensNext(myPhysicsObject, gridManager, eventManager, endtime);

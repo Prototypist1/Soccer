@@ -143,7 +143,7 @@ namespace Physics
         {
             var couldHits = gridManager.AddToGrid(physicsObject);
 
-            var nextStep = Math.Min(endTime, physicsObject.time + (gridManager.StepSize / physicsObject.Speed));
+            var nextStep = Math.Min(endTime, physicsObject.Time + (gridManager.StepSize / physicsObject.Speed));
 
             foreach (var couldHit in couldHits)
             {
@@ -154,7 +154,7 @@ namespace Physics
             }
 
 
-            if ((physicsObject.Vx != 0 || physicsObject.Vy != 0) && physicsObject.time < endTime)
+            if ((physicsObject.Vx != 0 || physicsObject.Vy != 0) && physicsObject.Time < endTime)
             {
                 eventManager.AddMoveEent(nextStep, physicsObject);
             }
@@ -214,11 +214,11 @@ namespace Physics
 
                 physicsObject1.X = x1;
                 physicsObject1.Y = y1;
-                physicsObject1.time = Time;
+                physicsObject1.Time = Time;
 
                 physicsObject2.X = x2;
                 physicsObject2.Y = y2;
-                physicsObject2.time = Time;
+                physicsObject2.Time = Time;
 
                 // update the V of both
 
@@ -354,7 +354,7 @@ namespace Physics
                 gridManager.RemoveFromGrid(physicsObject);
                 physicsObject.X = x;
                 physicsObject.Y = y;
-                physicsObject.time = Time;
+                physicsObject.Time = Time;
                 WhatHappensNext(physicsObject, gridManager, eventManager, endtime);
             }
 
@@ -366,7 +366,7 @@ namespace Physics
 
         public void AddMoveEent(double time, PhysicsObject physicsObject)
         {
-            var toAdd = new MoveEvent(time, physicsObject, physicsObject.X + ((time - physicsObject.time) * physicsObject.Vx), physicsObject.Y + ((time - physicsObject.time) * physicsObject.Vy));
+            var toAdd = new MoveEvent(time, physicsObject, physicsObject.X + ((time - physicsObject.Time) * physicsObject.Vx), physicsObject.Y + ((time - physicsObject.Time) * physicsObject.Vy));
             AddEvent(toAdd);
         }
 

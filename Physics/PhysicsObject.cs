@@ -140,21 +140,21 @@ namespace Physics
             double DVX = that.Vx - self.Vx,
                    DVY = that.Vy - self.Vy;
 
-            if (self.time > that.time)
+            if (self.Time > that.Time)
             {
-                startTime = self.time;
+                startTime = self.Time;
                 thisX0 = self.X;
                 thisY0 = self.Y;
-                thatX0 = that.X + (that.Vx * (self.time - that.time));
-                thatY0 = that.Y + (that.Vy * (self.time - that.time));
+                thatX0 = that.X + (that.Vx * (self.Time - that.Time));
+                thatY0 = that.Y + (that.Vy * (self.Time - that.Time));
             }
             else
             {
-                startTime = that.time;
+                startTime = that.Time;
                 thatX0 = that.X;
                 thatY0 = that.Y;
-                thisX0 = self.X + (self.Vx * (that.time - self.time));
-                thisY0 = self.Y + (self.Vy * (that.time - self.time));
+                thisX0 = self.X + (self.Vx * (that.Time - self.Time));
+                thisY0 = self.Y + (self.Vy * (that.Time - self.Time));
             }
             // how far they are from us
             DX = thatX0 - thisX0;
@@ -183,10 +183,10 @@ namespace Physics
                     startTime + res,
                     self,
                     that,
-                    self.X + self.Vx * ((startTime + res) - self.time),
-                    self.Y + self.Vy * ((startTime + res) - self.time),
-                    that.X + that.Vx * ((startTime + res) - that.time),
-                    that.Y + that.Vy * ((startTime + res) - that.time));
+                    self.X + self.Vx * ((startTime + res) - self.Time),
+                    self.Y + self.Vy * ((startTime + res) - self.Time),
+                    that.X + that.Vx * ((startTime + res) - that.Time),
+                    that.Y + that.Vy * ((startTime + res) - that.Time));
 
                 return true;
             }
@@ -209,10 +209,10 @@ namespace Physics
                 if (myPhysicsObject.Vx > 0)
                 {
                     var time = (verticalLine.X - (myPhysicsObject.X + self.shape.Radius)) / self.Vx;
-                    if (self.time + time < endTime)
+                    if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
-                            self.time + time,
+                            self.Time + time,
                             myPhysicsObject,
                             myPhysicsObject.X + (time * self.Vx),
                             myPhysicsObject.Y + (time * self.Vy),
@@ -236,10 +236,10 @@ namespace Physics
                 if (myPhysicsObject.Vx < 0)
                 {
                     var time = (verticalLine.X - (myPhysicsObject.X - self.shape.Radius)) / self.Vx;
-                    if (self.time + time < endTime)
+                    if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
-                            self.time + time,
+                            self.Time + time,
                             myPhysicsObject,
                             myPhysicsObject.X + (time * self.Vx),
                             myPhysicsObject.Y + (time * self.Vy),
@@ -263,10 +263,10 @@ namespace Physics
                 if (myPhysicsObject.Vx < 0)
                 {
                     var time = (verticalLine.X - (myPhysicsObject.X - self.shape.Radius)) / self.Vx;
-                    if (self.time + time < endTime)
+                    if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
-                            self.time + time,
+                            self.Time + time,
                             myPhysicsObject,
                             myPhysicsObject.X + (time * self.Vx),
                             myPhysicsObject.Y + (time * self.Vy),
@@ -282,10 +282,10 @@ namespace Physics
                 else if (myPhysicsObject.Vx > 0)
                 {
                     var time = (verticalLine.X - (myPhysicsObject.X + self.shape.Radius)) / self.Vx;
-                    if (self.time + time < endTime)
+                    if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
-                            self.time + time,
+                            self.Time + time,
                             myPhysicsObject,
                             myPhysicsObject.X + (time * self.Vx),
                             myPhysicsObject.Y + (time * self.Vy),
@@ -321,10 +321,10 @@ namespace Physics
                 if (myPhysicsObject.Vy > 0)
                 {
                     var time = (verticalLine.Y - (myPhysicsObject.Y + self.shape.Radius)) / self.Vy;
-                    if (self.time + time < endTime)
+                    if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
-                            self.time + time,
+                            self.Time + time,
                             myPhysicsObject,
                             myPhysicsObject.X + (time * self.Vx),
                             myPhysicsObject.Y + (time * self.Vy),
@@ -349,10 +349,10 @@ namespace Physics
                 if (myPhysicsObject.Vy < 0)
                 {
                     var time = (verticalLine.Y - (myPhysicsObject.Y - self.shape.Radius)) / self.Vy;
-                    if (self.time + time < endTime)
+                    if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
-                            self.time + time,
+                            self.Time + time,
                             myPhysicsObject,
                             myPhysicsObject.X + (time * self.Vx),
                             myPhysicsObject.Y + (time * self.Vy),
@@ -377,10 +377,10 @@ namespace Physics
                 if (myPhysicsObject.Vy < 0)
                 {
                     var time = (verticalLine.Y - (myPhysicsObject.Y - self.shape.Radius)) / self.Vy;
-                    if (self.time + time < endTime)
+                    if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
-                            self.time + time,
+                            self.Time + time,
                             myPhysicsObject,
                             myPhysicsObject.X + (time * self.Vx),
                             myPhysicsObject.Y + (time * self.Vy),
@@ -397,10 +397,10 @@ namespace Physics
                 else if (myPhysicsObject.Vy > 0)
                 {
                     var time = (verticalLine.Y - (myPhysicsObject.Y + self.shape.Radius)) / self.Vy;
-                    if (self.time + time < endTime)
+                    if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
-                            self.time + time,
+                            self.Time + time,
                             myPhysicsObject,
                             myPhysicsObject.X + (time * self.Vx),
                             myPhysicsObject.Y + (time * self.Vy),
@@ -469,7 +469,7 @@ namespace Physics
         }
 
         internal bool mobile = true;
-        public double time { get; internal set; } = 0;
+        public double Time { get; internal set; } = 0;
         public double Vx { get; set; }
         public double Vy { get; set; }
         public double X { get; internal set; }
