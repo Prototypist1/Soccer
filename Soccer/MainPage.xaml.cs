@@ -30,10 +30,5 @@ namespace Soccer
 
         public GameModel ViewModel { get; set; } = new GameModel();
 
-        private void GameArea_PointerMoved(object sender, PointerRoutedEventArgs e)
-        {
-            var thing = e.GetCurrentPoint(GameArea);
-            ViewModel.MouseAt(thing.Position);
-        }
     }
 }

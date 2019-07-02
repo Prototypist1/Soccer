@@ -25,7 +25,7 @@ namespace Soccer
             engine = new PhyisEngineInbetween(100, 2000, 2000, canvas);
 
             {
-                var ball = PhysicsObjectBuilder.Ball(1, 40, 100, 100);
+                var ball = PhysicsObjectBuilder.Ball(1, 40, 450, 450);
 
                 var elispe = new Ellipse()
                 {
@@ -34,7 +34,7 @@ namespace Soccer
                     Fill = new SolidColorBrush(Colors.Red),
 
                 };
-                engine.AddPlayer(ball, elispe, 40, 40);
+                player = engine.AddPlayer(ball, elispe, 40, 40);
             }
 
             //var r = new Random();
@@ -89,29 +89,26 @@ namespace Soccer
                 engine.AddBall(line, rectangle, 0, 0);
             }
 
+
+            var point = Windows.UI.Core.CoreWindow.GetForCurrentThread().PointerPosition;
+            lastX = point.X;
+            lastY = point.Y;
+
             PrivateStart();
         }
 
-        bool firstFrame = true;
         double lastX, lastY;
-        internal void MouseAt(Point position)
+        private void MouseAt(double x, double y)
         {
-            if (firstFrame) {
-                lastX = position.X;
-                lastY = position.Y;
-                firstFrame = false;
-                return;
-            }
-
-            var vx = position.X - lastX;
-            var vy = position.Y - lastY;
+            var vx = x - lastX;
+            var vy = y - lastY;
 
             if (player != null) {
                 player.SetTargetV(vx, vy);
             }
 
-            lastX = position.X;
-            lastY = position.Y;
+            lastX = x;
+            lastY = y;
         }
 
         public Ball[] PhysicsItems { get; private set; } = new Ball[] { };
@@ -128,6 +125,9 @@ namespace Soccer
 
                 await Task.Delay(1);
                 frameNumber++;
+
+                var point = Windows.UI.Core.CoreWindow.GetForCurrentThread().PointerPosition;
+                MouseAt(point.X, point.Y);
 
                 engine.Update();
                 Message = $"fps: {frameNumber / sw.Elapsed.TotalSeconds}";
