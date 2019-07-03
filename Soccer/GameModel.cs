@@ -6,7 +6,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.System;
 using Windows.UI;
+using Windows.UI.Core;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
@@ -34,7 +37,17 @@ namespace Soccer
                     Fill = new SolidColorBrush(Colors.Red),
 
                 };
-                player = engine.AddPlayer(ball, elispe, 40, 40);
+
+
+                var area = new Ellipse()
+                {
+                    Width = 400,
+                    Height = 400,
+                    Fill = new SolidColorBrush(Colors.Red),
+                    Opacity = .2
+                };
+
+                player = engine.AddPlayer(ball, elispe,area, 40, 40,300,600,300,600);
             }
 
             //var r = new Random();
@@ -128,6 +141,27 @@ namespace Soccer
 
                 var point = Windows.UI.Core.CoreWindow.GetForCurrentThread().PointerPosition;
                 MouseAt(point.X, point.Y);
+
+
+                var keyForce = new Vector((
+                        (Window.Current.CoreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
+                        (Window.Current.CoreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0)),
+                    (
+                        (Window.Current.CoreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
+                        (Window.Current.CoreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0)));
+
+                var speed = .2;
+
+                if (keyForce.Length > 0)
+                {
+
+                    keyForce = keyForce.NewNormalized().NewScaled(speed);
+                    player.ForceOnCenter(keyForce.x, keyForce.y);
+
+                }
+                //else {
+                //    player.Damp();
+                //}
 
                 engine.Update();
                 Message = $"fps: {frameNumber / sw.Elapsed.TotalSeconds}";

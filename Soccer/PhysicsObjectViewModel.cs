@@ -21,9 +21,10 @@ namespace Soccer
             this.canvas = canvas;
         }
 
-        public Player AddPlayer(PhysicsObject physicsObject, UIElement element, double top, double left) {
-            var toAdd = new Player(physicsObject, element, top, left);
+        public Player AddPlayer(PhysicsObject physicsObject, UIElement element, UIElement area, double top, double left, double minX, double maxX, double minY, double maxY) {
+            var toAdd = new Player(physicsObject, element,area, top, left, minX, maxX, minY, maxY);
             physicsEngine.AddObject(toAdd.physicsObject);
+            this.canvas.Children.Add(area);
             this.canvas.Children.Add(toAdd.Element);
             items.Add(toAdd);
             return toAdd;
