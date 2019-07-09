@@ -13,7 +13,7 @@ namespace Physics
             this.y = y;
         }
 
-        public Vector NewNormalized() {
+        public Vector NewUnitized() {
             var d = Math.Sqrt((x * x) + (y * y));
             return new Vector(x/d, y/d);
         }

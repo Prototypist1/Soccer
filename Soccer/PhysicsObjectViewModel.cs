@@ -12,7 +12,7 @@ namespace Soccer
     {
         private readonly PhysicsEngine physicsEngine;
         private readonly Canvas canvas;
-        private List<IInbetween> items = new List<IInbetween>();
+        private readonly List<IInbetween> items = new List<IInbetween>();
         private int time=0;
 
         public PhyisEngineInbetween(double stepSize, double height, double width, Canvas canvas)

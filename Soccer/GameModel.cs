@@ -47,7 +47,7 @@ namespace Soccer
                     Opacity = .2
                 };
 
-                player = engine.AddPlayer(ball, elispe,area, 40, 40,300,600,300,600);
+                player = engine.AddPlayer(ball, elispe,area, 40, 40,210,590,210,590);
             }
 
             //var r = new Random();
@@ -72,38 +72,33 @@ namespace Soccer
                 }
             }
 
+            var points = new[] {
+                (new Vector(210,10) ,new Vector(590,10)),
+                (new Vector(10,210) ,new Vector(210,10)),
+                (new Vector(10,590) ,new Vector(10,210)),
+                (new Vector(210,790),new Vector(10,590)),
+                (new Vector(590,790),new Vector(210,790)),
+                (new Vector(790,590),new Vector(590,790)),
+                (new Vector(790,210),new Vector(790,590)),
+                (new Vector(590,10) ,new Vector(790,210))
+            };
 
-            foreach (var i in new[] { 100, 800 })
+            foreach (var side in points)
             {
+                var line = PhysicsObjectBuilder.Line(side.Item1,side.Item2);
 
-                var line = PhysicsObjectBuilder.VerticalLine(i);
-
-                var rectangle = new Rectangle()
+                var rectangle = new Line()
                 {
-                    Width = 1,
-                    Height = 2000,
-                    Fill = new SolidColorBrush(Colors.Black),
+                    X1 = side.Item1.x,
+                    X2 = side.Item2.x,
+                    Y1 = side.Item1.y,
+                    Y2 = side.Item2.y,
+                    Stroke = new SolidColorBrush(Colors.Black),
                 };
                 engine.AddBall(line, rectangle,0,0);
             }
 
-
-            foreach (var i in new[] { 100, 800 })
-            {
-
-                var line = PhysicsObjectBuilder.HorizontalLine(i);
-
-                var rectangle = new Rectangle()
-                {
-                    Width = 2000,
-                    Height = 1,
-                    Fill = new SolidColorBrush(Colors.Black),
-                };
-                engine.AddBall(line, rectangle, 0, 0);
-            }
-
-
-            var point = Windows.UI.Core.CoreWindow.GetForCurrentThread().PointerPosition;
+            var point = CoreWindow.GetForCurrentThread().PointerPosition;
             lastX = point.X;
             lastY = point.Y;
 
@@ -143,19 +138,21 @@ namespace Soccer
                 MouseAt(point.X, point.Y);
 
 
+#pragma warning disable IDE0047 // Remove unnecessary parentheses
                 var keyForce = new Vector((
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0)),
                     (
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0)));
+#pragma warning restore IDE0047 // Remove unnecessary parentheses
 
                 var speed = .2;
 
                 if (keyForce.Length > 0)
                 {
 
-                    keyForce = keyForce.NewNormalized().NewScaled(speed);
+                    keyForce = keyForce.NewUnitized().NewScaled(speed);
                     player.ForceOnCenter(keyForce.x, keyForce.y);
 
                 }

@@ -2,20 +2,19 @@
 {
     internal class UpdatePositionVelocityEvent : IEvent
     {
-        private double time;
-        private PhysicsObject myPhysicsObject;
-        private double start_vx;
-        private double start_vy;
-        private double start_x;
-        private double start_y;
-        private double x;
-        private double y;
-        private double vx;
-        private double vy;
+        private readonly PhysicsObject myPhysicsObject;
+        private readonly double start_vx;
+        private readonly double start_vy;
+        private readonly double start_x;
+        private readonly double start_y;
+        private readonly double x;
+        private readonly double y;
+        private readonly double vx;
+        private readonly double vy;
 
         public UpdatePositionVelocityEvent(double time, PhysicsObject myPhysicsObject, double x, double y, double vx, double vy)
         {
-            this.time = time;
+            this.Time = time;
             this.myPhysicsObject = myPhysicsObject;
             this.start_vx = myPhysicsObject.Vx;
             this.start_vy = myPhysicsObject.Vy;
@@ -27,7 +26,7 @@
             this.vy = vy;
         }
 
-        public double Time => time;
+        public double Time { get; }
 
         public void Enact(GridManager gridManager, EventManager eventManager, double endtime)
         {
@@ -39,13 +38,13 @@
                 return;
             }
 
-            gridManager.RemoveFromGrid(myPhysicsObject);
+            myPhysicsObject.RemoveFromGrid(gridManager);
 
             myPhysicsObject.X = x;
             myPhysicsObject.Y = y;
             myPhysicsObject.Vx = vx;
             myPhysicsObject.Vy = vy;
-            myPhysicsObject.Time = time;
+            myPhysicsObject.Time = Time;
 
 
             EventManager.WhatHappensNext(myPhysicsObject, gridManager, eventManager, endtime);
