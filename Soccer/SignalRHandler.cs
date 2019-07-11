@@ -14,7 +14,7 @@ namespace Soccer
         public static async Task<SignalRHandler> Create() {
 
             var connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:53353/ChatHub")
+                .WithUrl("http://localhost:53353/GameHub")
                 .Build();
 
             connection.On<Positions>(nameof(Positions), x =>

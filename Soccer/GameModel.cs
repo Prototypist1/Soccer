@@ -38,7 +38,6 @@ namespace Soccer
 
                 };
 
-
                 var area = new Ellipse()
                 {
                     Width = 400,
@@ -47,29 +46,20 @@ namespace Soccer
                     Opacity = .2
                 };
 
-                player = engine.AddPlayer(ball, elispe,area, 40, 40,210,590,210,590);
+                player = engine.AddPlayer(ball, elispe, area, 40, 40,210,590,210,590);
             }
 
-            //var r = new Random();
-
-            foreach (var x in new[] { 300})
             {
-                foreach (var y in new[] { 300 })
+                var ball = PhysicsObjectBuilder.Ball(1, 40, 300, 300);
+
+                var elispe = new Ellipse()
                 {
-                    var ball = PhysicsObjectBuilder.Ball(1, 40, x, y);
+                    Width = 80,
+                    Height = 80,
+                    Fill = new SolidColorBrush(Colors.Black),
 
-                    //ball.Vx = r.NextDouble() * 2 - 1;
-                    //ball.Vy = r.NextDouble() * 2 - 1;
-                    var elispe = new Ellipse()
-                    {
-                        Width = 80,
-                        Height = 80,
-                        Fill = new SolidColorBrush(Colors.Black),
-
-                    };
-                    engine.AddBall(ball, elispe, 40,40);
-
-                }
+                };
+                engine.AddBall(ball, elispe, 40, 40);
             }
 
             var points = new[] {

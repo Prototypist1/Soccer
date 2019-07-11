@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
@@ -26,6 +27,11 @@ namespace Soccer
         {
             this.InitializeComponent();
             ViewModel.Start(GameArea);
+            var dontWaint = Task.Run(async () =>
+            {
+                await Task.Delay(5000);
+                await SignalRHandler.Create();
+            });
         }
 
         public GameModel ViewModel { get; set; } = new GameModel();
