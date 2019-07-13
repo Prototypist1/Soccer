@@ -12,7 +12,7 @@ namespace Physics
         public readonly double width;
         public readonly double stepSize;
 
-        public GridManager(double stepSize, double height, double width)
+        public GridManager(double stepSize, double width, double height)
         {
             this.stepSize = stepSize;
             this.height = height;

@@ -11,7 +11,10 @@ namespace Server
     public class Game {
         private int PlayerCount = 0;
         private int frame=0;
-        private readonly PhysicsEngine physicsEngine = new PhysicsEngine(100, 900, 1600);
+        private const double footLen = 200;
+        private const double xMax = 1600;
+        private const double yMax = 900;
+        private readonly PhysicsEngine physicsEngine = new PhysicsEngine(100, xMax+100, yMax+100);
         private readonly Dictionary<Guid, PhysicsObject> feet = new Dictionary<Guid, PhysicsObject>();
         private readonly Dictionary<Guid, Center> bodies = new Dictionary<Guid, Center>();
         private readonly Guid ballId;
@@ -36,14 +39,14 @@ namespace Server
 
             physicsEngine.AddObject(ball);
             var points = new[] {
-                (new Vector(210,10) ,new Vector(590,10)),
-                (new Vector(10,210) ,new Vector(210,10)),
-                (new Vector(10,590) ,new Vector(10,210)),
-                (new Vector(210,790),new Vector(10,590)),
-                (new Vector(590,790),new Vector(210,790)),
-                (new Vector(790,590),new Vector(590,790)),
-                (new Vector(790,210),new Vector(790,590)),
-                (new Vector(590,10) ,new Vector(790,210))
+                (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
+                (new Vector(0,footLen) ,new Vector(footLen,0)),
+                (new Vector(0,yMax - footLen) ,new Vector(0,footLen)),
+                (new Vector(footLen,yMax),new Vector(0,yMax - footLen)),
+                (new Vector(xMax - footLen,yMax),new Vector(footLen,yMax)),
+                (new Vector(xMax,yMax - footLen),new Vector(xMax - footLen,yMax)),
+                (new Vector(xMax,footLen),new Vector(xMax,yMax - footLen)),
+                (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
             };
 
             foreach (var side in points)
@@ -68,10 +71,10 @@ namespace Server
             var body = new Center(
                 startX,
                 startY,
-                790 - (createPlayer.BodyDiameter / 2.0),
-                10 + (createPlayer.BodyDiameter / 2.0),
-                10 + (createPlayer.BodyDiameter / 2.0),
-                790 - (createPlayer.BodyDiameter / 2.0));
+                xMax - (createPlayer.BodyDiameter / 2.0),
+                (createPlayer.BodyDiameter / 2.0),
+                (createPlayer.BodyDiameter / 2.0),
+                yMax - (createPlayer.BodyDiameter / 2.0));
             bodies[createPlayer.Body] = body;
             PlayerCount++;
 
@@ -106,6 +109,11 @@ namespace Server
             frames[playerInputs.Frame].Add(playerInputs);
             var res = new List<Positions>();
             while (frames.Count > frame && frames[frame].Count == PlayerCount) {
+
+                ball.ApplyForce(
+                    -(ball.Vx * ball.Mass) / 100.0,
+                    -(ball.Vy* ball.Mass) / 100.0);
+
                 foreach (var input in frames[frame])
                 {
                     var body = bodies[input.BodyId];

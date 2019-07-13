@@ -49,34 +49,18 @@ namespace RemoteSoccer
 
         private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
 
+
+        private const double footLen = 200;
+        private const double xMax = 1600;
+        private const double yMax = 900;
+
+        private  Scaler scaler;
+
+
         public MainPage()
         {
             this.InitializeComponent();
-            var points = new[] {
-                (new Vector(210,10) ,new Vector(590,10)),
-                (new Vector(10,210) ,new Vector(210,10)),
-                (new Vector(10,590) ,new Vector(10,210)),
-                (new Vector(210,790),new Vector(10,590)),
-                (new Vector(590,790),new Vector(210,790)),
-                (new Vector(790,590),new Vector(590,790)),
-                (new Vector(790,210),new Vector(790,590)),
-                (new Vector(590,10) ,new Vector(790,210))
-            };
-
-
-            foreach (var side in points)
-            {
-                var line = new Line()
-                {
-                    X1 = side.Item1.x,
-                    X2 = side.Item2.x,
-                    Y1 = side.Item1.y,
-                    Y2 = side.Item2.y,
-                    Stroke = new SolidColorBrush(Colors.Black),
-                };
-
-                GameArea.Children.Add(line);
-            }
+            
 
             Task.Run(async () =>
             {
@@ -84,6 +68,38 @@ namespace RemoteSoccer
                     HandlePositions,
                     HandleObjectsCreated);
                 var game = Guid.NewGuid();
+
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                    CoreDispatcherPriority.Normal,
+                    () =>
+                    {
+
+                        scaler = new Scaler(GameHolder.ActualWidth, GameHolder.ActualHeight, xMax, yMax);
+                            var points = new[] {
+                            (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
+                            (new Vector(0,footLen) ,new Vector(footLen,0)),
+                            (new Vector(0,yMax - footLen) ,new Vector(0,footLen)),
+                            (new Vector(footLen,yMax),new Vector(0,yMax - footLen)),
+                            (new Vector(xMax - footLen,yMax),new Vector(footLen,yMax)),
+                            (new Vector(xMax,yMax - footLen),new Vector(xMax - footLen,yMax)),
+                            (new Vector(xMax,footLen),new Vector(xMax,yMax - footLen)),
+                            (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
+                        };
+
+                        foreach (var side in points)
+                        {
+                            var line = new Line()
+                            {
+                                X1 = scaler.ScaleX(side.Item1.x),
+                                X2 = scaler.ScaleX(side.Item2.x),
+                                Y1 = scaler.ScaleY(side.Item1.y),
+                                Y2 = scaler.ScaleY(side.Item2.y),
+                                Stroke = new SolidColorBrush(Colors.Black),
+                            };
+
+                            GameArea.Children.Add(line);
+                        }
+                    });
 
                 handler.Send(new CreateGame(game));
 
@@ -123,8 +139,8 @@ namespace RemoteSoccer
                         {
                             var ellispe = new Ellipse()
                             {
-                                Width = objectCreated.Diameter,
-                                Height = objectCreated.Diameter,
+                                Width = scaler.Scale(objectCreated.Diameter),
+                                Height = scaler.Scale(objectCreated.Diameter),
                                 Fill = new SolidColorBrush(Color.FromArgb(
                                     objectCreated.A,
                                     objectCreated.R,
@@ -150,8 +166,8 @@ namespace RemoteSoccer
                 {
                     if (elements.TryGetValue(position.Id, out var element))
                     {
-                        element.X = position.X - (element.Diameter / 2.0);
-                        element.Y = position.Y - (element.Diameter / 2.0);
+                        element.X = scaler.ScaleX(position.X - (element.Diameter / 2.0));
+                        element.Y = scaler.ScaleY(position.Y - (element.Diameter / 2.0));
                     }
                 }
             }
@@ -223,5 +239,9 @@ namespace RemoteSoccer
 
         }
 
+        private void GameArea_LayoutUpdated(object sender, object e)
+        {
+
+        }
     }
 }

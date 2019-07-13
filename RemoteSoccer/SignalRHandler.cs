@@ -17,7 +17,6 @@ namespace RemoteSoccer
                 .WithUrl("http://localhost:50737/GameHub")
                 .Build();
 
-            // TODO more!
             connection.On(nameof(Positions), handlePossitions);
             connection.On(nameof(ObjectsCreated), handleObjectsCreated);
 
