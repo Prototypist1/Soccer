@@ -14,7 +14,7 @@ namespace RemoteSoccer
         public static async Task<SignalRHandler> Create(Action<Positions> handlePossitions, Action<ObjectsCreated> handleObjectsCreated) {
 
             var connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:53353/GameHub")
+                .WithUrl("http://localhost:50737/GameHub")
                 .Build();
 
             // TODO more!
@@ -52,7 +52,7 @@ namespace RemoteSoccer
 
         public async void Send(Guid game, PlayerInputs inputs)
         {
-            await connection.InvokeAsync(nameof(PlayerInputs), inputs);   
+            await connection.InvokeAsync(nameof(PlayerInputs), game, inputs);   
         }
     }
 }

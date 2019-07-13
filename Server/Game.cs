@@ -23,6 +23,17 @@ namespace Server
         public Game() {
             ballId = Guid.NewGuid();
             ball = PhysicsObjectBuilder.Ball(1, 40, 450, 450);
+
+            objectsCreated.Add(new ObjectCreated(
+                ball.X, 
+                ball.Y, 
+                ballId,
+                80,
+                0,
+                0,
+                0,
+                255));
+
             physicsEngine.AddObject(ball);
             var points = new[] {
                 (new Vector(210,10) ,new Vector(590,10)),
@@ -47,27 +58,41 @@ namespace Server
 
         internal List<ObjectCreated> CreatePlayer(CreatePlayer createPlayer)
         {
-            double radius = 40;
             double startX = 400;
             double startY = 400;
-            var foot = PhysicsObjectBuilder.Ball(1, radius, startX, startY);
+            var foot = PhysicsObjectBuilder.Ball(1, createPlayer.FootDiameter/2.0, startX, startY);
 
             physicsEngine.AddObject(foot);
-            feet[createPlayer.foot] = foot;
+            feet[createPlayer.Foot] = foot;
 
             var body = new Center(
                 startX,
                 startY,
-                1600-radius,
-                radius,
-                radius,
-                900-radius);
-            bodies[createPlayer.body] = body;
+                790 - (createPlayer.BodyDiameter / 2.0),
+                10 + (createPlayer.BodyDiameter / 2.0),
+                10 + (createPlayer.BodyDiameter / 2.0),
+                790 - (createPlayer.BodyDiameter / 2.0));
+            bodies[createPlayer.Body] = body;
             PlayerCount++;
 
             var res = new List<ObjectCreated>(){
-                new ObjectCreated(body.X, body.Y, createPlayer.body),
-                new ObjectCreated(foot.X, foot.Y, createPlayer.foot) };
+                new ObjectCreated(
+                    body.X, 
+                    body.Y, 
+                    createPlayer.Body,
+                    createPlayer.BodyDiameter,
+                    createPlayer.BodyR,
+                    createPlayer.BodyG,
+                    createPlayer.BodyB,
+                    createPlayer.BodyA),
+                new ObjectCreated(foot.X, 
+                    foot.Y, 
+                    createPlayer.Foot,
+                    createPlayer.FootDiameter,
+                    createPlayer.FootR,
+                    createPlayer.FootG,
+                    createPlayer.FootB,
+                    createPlayer.FootA) };
 
             objectsCreated.AddRange(res);
             return res;
@@ -75,28 +100,27 @@ namespace Server
 
         internal List<Positions> PlayerInputs(PlayerInputs playerInputs)
         {
-            while (playerInputs.frame >= frames.Count) {
+            while (playerInputs.Frame >= frames.Count) {
                 frames.Add(new List<PlayerInputs>());
             }
-            frames[playerInputs.frame].Add(playerInputs);
+            frames[playerInputs.Frame].Add(playerInputs);
             var res = new List<Positions>();
-            while (frames[frame].Count == PlayerCount) {
-                frame++;
+            while (frames.Count > frame && frames[frame].Count == PlayerCount) {
                 foreach (var input in frames[frame])
                 {
-                    var body = bodies[input.bodyId];
+                    var body = bodies[input.BodyId];
                     var speed = .2;
-                    var keyForce = new Vector(input.bodyX, input.bodyY);
+                    var keyForce = new Vector(input.BodyX, input.BodyY);
                     if (keyForce.Length > 0)
                     {
                         keyForce = keyForce.NewUnitized().NewScaled(speed);
                         body.ApplyForce(keyForce.x, keyForce.y);
                     }
 
-                    var foot = feet[input.footId];
+                    var foot = feet[input.FootId];
                     var max = 200.0;
 
-                    var target = new Vector(foot.X + input.footX - (body.X), foot.Y + input.footY - (body.Y));
+                    var target = new Vector(foot.X + input.FootX - (body.X), foot.Y + input.FootY - (body.Y));
 
                     if (target.Length > max)
                     {
@@ -110,12 +134,13 @@ namespace Server
                         (targetVx - foot.Vx) * foot.Mass / 2.0,
                         (targetVy - foot.Vy) * foot.Mass / 2.0);
                 }
+                frame++;
                 physicsEngine.Simulate(frame);
                 foreach (var center in bodies.Values)
                 {
                     center.Update();
                 }
-                res.Add(new Positions(GetPosition().ToArray()));
+                res.Add(new Positions(GetPosition().ToArray(),frame-1));
             }
             return res;
         }

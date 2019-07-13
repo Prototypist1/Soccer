@@ -3,11 +3,11 @@
 namespace Common
 {
     public struct CreateGame {
-        public readonly Guid id;
+        public Guid Id { get; set; }
 
         public CreateGame(Guid id)
         {
-            this.id = id;
+            this.Id = id;
         }
     }
 }

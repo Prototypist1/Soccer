@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.System;
@@ -30,14 +31,55 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private readonly Dictionary<Guid, UIElement> elements = new Dictionary<Guid, UIElement>();
+        private class ElementEntry
+        {
+            public readonly Ellipse element;
+            public double X;
+            public double Y;
+            public double Diameter;
+
+            public ElementEntry(Ellipse element, double x, double y, double diameter)
+            {
+                this.element = element ?? throw new ArgumentNullException(nameof(element));
+                X = x;
+                Y = y;
+                Diameter = diameter;
+            }
+        }
+
+        private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
 
         public MainPage()
         {
             this.InitializeComponent();
+            var points = new[] {
+                (new Vector(210,10) ,new Vector(590,10)),
+                (new Vector(10,210) ,new Vector(210,10)),
+                (new Vector(10,590) ,new Vector(10,210)),
+                (new Vector(210,790),new Vector(10,590)),
+                (new Vector(590,790),new Vector(210,790)),
+                (new Vector(790,590),new Vector(590,790)),
+                (new Vector(790,210),new Vector(790,590)),
+                (new Vector(590,10) ,new Vector(790,210))
+            };
+
+
+            foreach (var side in points)
+            {
+                var line = new Line()
+                {
+                    X1 = side.Item1.x,
+                    X2 = side.Item2.x,
+                    Y1 = side.Item1.y,
+                    Y2 = side.Item2.y,
+                    Stroke = new SolidColorBrush(Colors.Black),
+                };
+
+                GameArea.Children.Add(line);
+            }
+
             Task.Run(async () =>
             {
-                await Task.Delay(5000);
                 var handler = await SignalRHandler.Create(
                     HandlePositions,
                     HandleObjectsCreated);
@@ -47,75 +89,136 @@ namespace RemoteSoccer
 
                 var foot = Guid.NewGuid();
                 var body = Guid.NewGuid();
-                handler.Send(game, new CreatePlayer(foot,body));
+                handler.Send(game, new CreatePlayer(
+                    foot,
+                    body,
+                    400,
+                    80,
+                    255,
+                    0,
+                    0,
+                    127,
+                    255,
+                    0,
+                    0,
+                    255));
 
-                StartReadingInput(handler,foot,body, game);
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                    CoreDispatcherPriority.Normal,
+                    () => MainLoop(handler, foot, body, game));
+
             });
         }
 
-        private void HandleObjectsCreated(ObjectsCreated objectsCreated) {
-            foreach (var objectCreated in objectsCreated.objects)
-            {
-                if (!elements.ContainsKey(objectCreated.id)) {
-                    var ellispe = new Ellipse()
-                    {
-                        Width = 80,
-                        Height = 80,
-                        Fill = new SolidColorBrush(Colors.Black),
-                    };
-                    elements.Add(objectCreated.id, ellispe);
-                    GameArea.Children.Add(ellispe);
-                }
-            }
-
-        }
-
-        private void HandlePositions(Positions positions) {
-            foreach (var position in positions.positions)
-            {
-                if (elements.TryGetValue(position.Id, out var element)) {
-                    Canvas.SetLeft(element, position.X);
-                    Canvas.SetTop(element, position.Y);
-                }
-            }
-        }
-
-        private void StartReadingInput(SignalRHandler handler, Guid foot, Guid body, Guid game)
+        private void HandleObjectsCreated(ObjectsCreated objectsCreated)
         {
-            var frame = 0;
+            var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                CoreDispatcherPriority.Normal,
+                () =>
+                {
+                    foreach (var objectCreated in objectsCreated.Objects)
+                    {
 
-            double lastX=0, lastY=0;
+                        if (!elements.ContainsKey(objectCreated.Id))
+                        {
+                            var ellispe = new Ellipse()
+                            {
+                                Width = objectCreated.Diameter,
+                                Height = objectCreated.Diameter,
+                                Fill = new SolidColorBrush(Color.FromArgb(
+                                    objectCreated.A,
+                                    objectCreated.R,
+                                    objectCreated.G,
+                                    objectCreated.B)),
+                            };
+                            elements.Add(objectCreated.Id, new ElementEntry( ellispe,-1000,-1000, objectCreated.Diameter));
+                            GameArea.Children.Add(ellispe);
+                        }
+                    }
+                });
+        }
 
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            while (true)
+        double framesRecieved = 0;
+        int currentDisplayFrame = 0;
+        private void HandlePositions(Positions positions)
+        {
+            framesRecieved++;
+            if (positions.Frame > currentDisplayFrame)
             {
+                currentDisplayFrame = positions.Frame;
+                foreach (var position in positions.PositionsList)
+                {
+                    if (elements.TryGetValue(position.Id, out var element))
+                    {
+                        element.X = position.X - (element.Diameter / 2.0);
+                        element.Y = position.Y - (element.Diameter / 2.0);
+                    }
+                }
+            }
 
-                var point = CoreWindow.GetForCurrentThread().PointerPosition;
+        }
 
+        // assumed to be run on the main thread
+        private async void MainLoop(SignalRHandler handler, Guid foot, Guid body, Guid game)
+        {
+            try
+            {
+                var frame = 0;
 
-                var footX = frame == 0 ? 0 : point.X - lastX;
-                var footY = frame == 0 ? 0 : point.Y - lastY;
+                double lastX = 0, lastY = 0;
 
-                lastX = point.X;
-                lastY = point.Y;
+                var stopWatch = new Stopwatch();
+                stopWatch.Start();
 
-                var bodyX =
+                while (true)
+                {
+
+                    
+                    
+                    var point = CoreWindow.GetForCurrentThread().PointerPosition;
+                    var bodyX =
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
-                var bodyY =
+                    var bodyY =
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
 
-                handler.Send(game,
-                    new PlayerInputs(frame, footX, footY, bodyX, bodyY, foot, body));
+                    var footX = frame == 0 ? 0 : point.X - lastX;
+                    var footY = frame == 0 ? 0 : point.Y - lastY;
 
-                frame++;
+                    lastX = point.X;
+                    lastY = point.Y;
 
-                while (stopWatch.ElapsedMilliseconds < ((1000 * frame)/ 16.0))
-                {
+                    handler.Send(game,
+                        new PlayerInputs(frame, footX, footY, bodyX, bodyY, foot, body));
+
+                    frame++;
+
+                    foreach (var element in elements.Values)
+                    {
+                        Canvas.SetLeft(element.element, element.X);
+                        Canvas.SetTop(element.element, element.Y);
+                    }
+
+                    if (frame % 60 == 0)
+                    {
+                        Fps.Text = $"frames send per second: {frame / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
+                            $"frame recieved {framesRecieved / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
+                            $"frame lag {frame - currentDisplayFrame}";
+                    }
+
+                    // let someone else have a go
+                    await Task.Delay((int)Math.Max(1, ((1000 * frame) / 60)- stopWatch.ElapsedMilliseconds));
+
+                    //while (stopWatch.ElapsedMilliseconds < ((1000 * frame) / 60))
+                    //{
+                    //}
                 }
+            }
+            catch (Exception e)
+            {
+
+                var db = 0;
             }
 
         }

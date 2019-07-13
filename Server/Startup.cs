@@ -13,13 +13,14 @@ namespace Server
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR().AddAzureSignalR();
+            services.AddSignalR();//.AddAzureSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseAzureSignalR(routes =>
+            //.UseAzureSignalR
+            app.UseSignalR(routes =>
             {
                 routes.MapHub<GameHub>($"/{nameof(GameHub)}");
             });

@@ -6,9 +6,9 @@ namespace Common
 {
 
     public struct ObjectForce {
-        public readonly double fx;
-        public readonly double fy;
-        public readonly Guid id;
+        public double fx;
+        public double fy;
+        public Guid id;
 
         public ObjectForce(double fx, double fy, Guid id)
         {
@@ -20,23 +20,23 @@ namespace Common
 
     public struct PlayerInputs
     {
-        public readonly int frame;
-        public readonly double footX;
-        public readonly double footY;
-        public readonly double bodyX;
-        public readonly double bodyY;
-        public readonly Guid footId;
-        public readonly Guid bodyId;
+        public int Frame { get; set; }
+        public double FootX { get; set; }
+        public double FootY { get; set; }
+        public double BodyX { get; set; }
+        public double BodyY { get; set; }
+        public Guid FootId { get; set; }
+        public Guid BodyId { get; set; }
 
         public PlayerInputs(int frame, double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId)
         {
-            this.frame = frame;
-            this.footX = footX;
-            this.footY = footY;
-            this.bodyX = bodyX;
-            this.bodyY = bodyY;
-            this.footId = footId;
-            this.bodyId = bodyId;
+            this.Frame = frame;
+            this.FootX = footX;
+            this.FootY = footY;
+            this.BodyX = bodyX;
+            this.BodyY = bodyY;
+            this.FootId = footId;
+            this.BodyId = bodyId;
         }
     }
 }

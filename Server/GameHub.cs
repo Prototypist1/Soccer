@@ -9,29 +9,33 @@ using System.Threading.Tasks;
 namespace Server
 {
 
+    public static class GameHubState {
+
+        public static readonly Dictionary<Guid, Game> games = new Dictionary<Guid, Game>();
+    }
+
     public class GameHub : Hub
     {
-        private readonly Dictionary<Guid, Game> games = new Dictionary<Guid, Game>();
 
         public void CreateGame(CreateGame createGame) {
-            games[createGame.id] = new Game();
+            GameHubState.games[createGame.Id] = new Game();
         }
 
         public async Task CreatePlayer(Guid game, CreatePlayer createPlayer)
         {
             // create the player
-            var playerCreated = games[game].CreatePlayer(createPlayer);
+            var playerCreated = GameHubState.games[game].CreatePlayer(createPlayer);
             // tell the other players
             await Clients.Group(game.ToString()).SendAsync(nameof(ObjectsCreated),new ObjectsCreated(playerCreated.ToArray()));
             // tell the new player about everyone
-            await Clients.Caller.SendAsync(nameof(ObjectsCreated), new ObjectsCreated(games[game].GetObjectsCreated().ToArray()));
+            await Clients.Caller.SendAsync(nameof(ObjectsCreated), new ObjectsCreated(GameHubState.games[game].GetObjectsCreated().ToArray()));
             // add the player to the group
             await Groups.AddToGroupAsync(Context.ConnectionId, game.ToString());
         }
 
         public void PlayerInputs(Guid game, PlayerInputs playerInputs)
         {
-           var positions = games[game].PlayerInputs(playerInputs);
+           var positions = GameHubState.games[game].PlayerInputs(playerInputs);
             if (positions.Any()) {
                 Clients.Group(game.ToString()).SendAsync(nameof(Positions), positions.Last());
             }

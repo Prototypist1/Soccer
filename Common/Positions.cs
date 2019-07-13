@@ -5,9 +5,9 @@ using System.Text;
 namespace Common
 {
     public struct Position {
-        public readonly double X;
-        public readonly double Y;
-        public readonly Guid Id;
+        public double X { get; set; }
+        public double Y { get; set; }
+        public Guid Id { get; set; }
 
         public Position(double x, double y, Guid id)
         {
@@ -19,11 +19,13 @@ namespace Common
 
     public struct Positions
     {
-        public readonly Position[] positions;
+        public Position[] PositionsList { get; set; }
+        public int Frame { get; set; }
 
-        public Positions(Position[] positions)
+        public Positions(Position[] positions,int frame)
         {
-            this.positions = positions ?? throw new ArgumentNullException(nameof(positions));
+            this.PositionsList = positions ?? throw new ArgumentNullException(nameof(positions));
+            Frame = frame;
         }
     }
 }
