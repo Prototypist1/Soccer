@@ -1,17 +1,40 @@
 ﻿using Common;
 using Microsoft.AspNetCore.SignalR;
+using Physics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Server
 {
+
     public class GameHub : Hub
     {
-        public void PlayerInputs(PlayerInputs playerInputs)
-        {
+        private readonly Dictionary<Guid, Game> games = new Dictionary<Guid, Game>();
+
+        public void CreateGame(CreateGame createGame) {
+            games[createGame.id] = new Game();
         }
 
-        public void Positions(Positions positions)
+        public async Task CreatePlayer(Guid game, CreatePlayer createPlayer)
         {
-            Clients.All.SendAsync(nameof(Positions), positions);
+            // create the player
+            var playerCreated = games[game].CreatePlayer(createPlayer);
+            // tell the other players
+            await Clients.Group(game.ToString()).SendAsync(nameof(ObjectsCreated),new ObjectsCreated(playerCreated.ToArray()));
+            // tell the new player about everyone
+            await Clients.Caller.SendAsync(nameof(ObjectsCreated), new ObjectsCreated(games[game].GetObjectsCreated().ToArray()));
+            // add the player to the group
+            await Groups.AddToGroupAsync(Context.ConnectionId, game.ToString());
+        }
+
+        public void PlayerInputs(Guid game, PlayerInputs playerInputs)
+        {
+           var positions = games[game].PlayerInputs(playerInputs);
+            if (positions.Any()) {
+                Clients.Group(game.ToString()).SendAsync(nameof(Positions), positions.Last());
+            }
         }
     }
 }

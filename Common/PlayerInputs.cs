@@ -20,13 +20,23 @@ namespace Common
 
     public struct PlayerInputs
     {
-        public readonly ObjectForce Body;
-        public readonly ObjectForce Foot;
+        public readonly int frame;
+        public readonly double footX;
+        public readonly double footY;
+        public readonly double bodyX;
+        public readonly double bodyY;
+        public readonly Guid footId;
+        public readonly Guid bodyId;
 
-        public PlayerInputs(ObjectForce body, ObjectForce foot)
+        public PlayerInputs(int frame, double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId)
         {
-            Body = body;
-            Foot = foot;
+            this.frame = frame;
+            this.footX = footX;
+            this.footY = footY;
+            this.bodyX = bodyX;
+            this.bodyY = bodyY;
+            this.footId = footId;
+            this.bodyId = bodyId;
         }
     }
 }

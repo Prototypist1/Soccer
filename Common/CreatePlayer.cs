@@ -3,11 +3,13 @@
 namespace Common
 {
     public struct CreatePlayer {
-        public readonly Guid Id;
+        public readonly Guid foot;
+        public readonly Guid body;
 
-        public CreatePlayer(Guid id)
+        public CreatePlayer(Guid foot, Guid body)
         {
-            Id = id;
+            this.foot = foot;
+            this.body = body;
         }
     }
 }

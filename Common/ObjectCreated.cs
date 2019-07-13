@@ -17,15 +17,13 @@ namespace Common
         }
     }
 
+    public struct ObjectsCreated {
+        public readonly ObjectCreated[] objects;
 
-    public struct PlayerCreated {
-        public readonly ObjectCreated Body;
-        public readonly ObjectCreated Foot;
-
-        public PlayerCreated(ObjectCreated body, ObjectCreated foot)
+        public ObjectsCreated(ObjectCreated[] objects)
         {
-            Body = body;
-            Foot = foot;
+            this.objects = objects ?? throw new ArgumentNullException(nameof(objects));
         }
     }
+
 }

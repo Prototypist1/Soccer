@@ -583,17 +583,16 @@ namespace Physics
         }
     }
 
-    public abstract class PhysicsObject {
+    public abstract class PhysicsObject
+    {
 
-        public PhysicsObject(double mass, double x, double y, Guid id)
+        public PhysicsObject(double mass, double x, double y)
         {
             Mass = mass;
             X = x;
             Y = y;
-            Id = id;
         }
 
-        public Guid Id {get;}
         public double Time { get; internal set; } = 0;
         public double Vx { get; set; }
         public double Vy { get; set; }

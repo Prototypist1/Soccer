@@ -1,58 +1,18 @@
-﻿using Physics;
-using System;
+﻿using Common;
+using Physics;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
 namespace Soccer
 {
+
     public class Player : IInbetween
     {
-        private class Center {
-            public double x, y, vx, vy, fx, fy, maxX, minX, minY, maxY;
-
-            public void Update() {
-
-                vx += fx;
-                vy += fy;
-
-                x += vx;
-                y += vy;
-
-                if (x > maxX) {
-                    x = maxX;
-                    vx = Math.Min(0,vx);
-                }
-
-                if (y > maxY)
-                {
-                    y = maxY;
-                    vy = Math.Min(0, vy);
-                }
-
-                if (x < minX)
-                {
-                    x = minX;
-                    vx = Math.Max(0, vx);
-                }
-
-                if (y < minY)
-                {
-                    y = minY;
-                    vy = Math.Max(0, vy);
-                }
-
-                fx = -vx / 100.0;
-                fy = -vy / 100.0;
-                
-            }
-        }
-
-
         public readonly PhysicsObject physicsObject;
         private readonly UIElement area;
         private readonly double top;
         private readonly double left;
-        private readonly Center center = new Center();
+        private readonly Center center;
 
         private double targetVx, targetVy;
 
@@ -65,13 +25,14 @@ namespace Soccer
         {
             this.physicsObject = physicsObject;
 
-            this.center.x = physicsObject.X;
-            this.center.y = physicsObject.Y;
-            this.center.maxX = maxX;
-            this.center.minX = minX;
-            this.center.maxY = maxY;
-            this.center.minY = minY;
-            
+            this.center = new Center(
+                physicsObject.X,
+                physicsObject.Y,
+                maxX,
+                minX,
+                minY,
+                maxY);
+
             this.Element = Element;
             this.area = area;
             this.top = top;
@@ -80,8 +41,8 @@ namespace Soccer
         }
 
         public void ForceOnCenter(double fx, double fy) {
-            center.fx += fx;
-            center.fy += fy;
+
+            center.ApplyForce(fx,fy);
         }
 
         //public void Damp() {
@@ -102,17 +63,17 @@ namespace Soccer
 
 
             var max = 200.0;
-            Canvas.SetTop(area, center.y - max);
-            Canvas.SetLeft(area, center.x - max);
+            Canvas.SetTop(area, center.Y - max);
+            Canvas.SetLeft(area, center.X - max);
 
-            var target  = new Vector( physicsObject.X + targetVx - (center.x),physicsObject.Y + targetVy - (center.y));
+            var target  = new Vector( physicsObject.X + targetVx - (center.X),physicsObject.Y + targetVy - (center.Y));
 
             if (target.Length > max) {
                 target = target.NewScaled(max / target.Length);
             }
 
-            targetVx = ((target.x + center.x + center.vx)  - physicsObject.X);
-            targetVy = (target.y + center.y + center.vy) - physicsObject.Y;
+            targetVx = ((target.x + center.X + center.vx)  - physicsObject.X);
+            targetVy = (target.y + center.Y + center.vy) - physicsObject.Y;
 
             physicsObject.ApplyForce(
                 (targetVx - physicsObject.Vx) * physicsObject.Mass / 2.0,
