@@ -47,8 +47,35 @@ namespace RemoteSoccer
             }
         }
 
-        private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
+        private class LineScaling
+        {
+            public Line line;
+            public double x1,x2,y1,y2;
 
+            public LineScaling(Line line, double x1, double x2, double y1, double y2)
+            {
+                this.line = line ?? throw new ArgumentNullException(nameof(line));
+                this.x1 = x1;
+                this.x2 = x2;
+                this.y1 = y1;
+                this.y2 = y2;
+            }
+        }
+
+        private class EllipseScaling {
+            public Ellipse Ellipse;
+            public double diameter;
+
+            public EllipseScaling(Ellipse ellipse, double diameter)
+            {
+                Ellipse = ellipse ?? throw new ArgumentNullException(nameof(ellipse));
+                this.diameter = diameter;
+            }
+        }
+
+        private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
+        private readonly List<LineScaling> lines = new List<LineScaling>();
+        private readonly List<EllipseScaling> ellipses = new List<EllipseScaling>();
 
         private const double footLen = 200;
         private const double xMax = 1600;
@@ -96,6 +123,8 @@ namespace RemoteSoccer
                                 Y2 = scaler.ScaleY(side.Item2.y),
                                 Stroke = new SolidColorBrush(Colors.Black),
                             };
+
+                            lines.Add(new LineScaling (line, side.Item1.x, side.Item2.x, side.Item1.y, side.Item2.y));
 
                             GameArea.Children.Add(line);
                         }
@@ -148,6 +177,7 @@ namespace RemoteSoccer
                                     objectCreated.B)),
                             };
                             elements.Add(objectCreated.Id, new ElementEntry( ellispe,-1000,-1000, objectCreated.Diameter));
+                            ellipses.Add(new EllipseScaling( ellispe, objectCreated.Diameter));
                             GameArea.Children.Add(ellispe);
                         }
                     }
@@ -192,6 +222,7 @@ namespace RemoteSoccer
                     
                     
                     var point = CoreWindow.GetForCurrentThread().PointerPosition;
+                    //CoreWindow.GetForCurrentThread().PointerPosition = new Point(500, 500);
                     var bodyX =
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
@@ -231,17 +262,30 @@ namespace RemoteSoccer
                     //}
                 }
             }
+#pragma warning disable CS0168 // Variable is declared but never used
             catch (Exception e)
             {
-
                 var db = 0;
             }
+#pragma warning restore CS0168 // Variable is declared but never used
 
         }
 
-        private void GameArea_LayoutUpdated(object sender, object e)
+        private void GameHolder_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-
+            scaler = new Scaler(GameHolder.ActualWidth, GameHolder.ActualHeight, xMax, yMax);
+            foreach (var line in lines)
+            {
+                line.line.X1 = scaler.ScaleX(line.x1);
+                line.line.X2 = scaler.ScaleX(line.x2);
+                line.line.Y1 = scaler.ScaleY(line.y1);
+                line.line.Y2 = scaler.ScaleY(line.y2);
+            }
+            foreach (var ellipse in ellipses)
+            {
+                ellipse.Ellipse.Width = scaler.Scale(ellipse.diameter);
+                ellipse.Ellipse.Height = scaler.Scale(ellipse.diameter);
+            }
         }
     }
 }
