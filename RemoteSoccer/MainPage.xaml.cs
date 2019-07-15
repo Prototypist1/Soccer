@@ -91,9 +91,7 @@ namespace RemoteSoccer
 
             Task.Run(async () =>
             {
-                var handler = await SignalRHandler.Create(
-                    HandlePositions,
-                    HandleObjectsCreated);
+                var handler = await SignalRHandler.Create();
                 var game = Guid.NewGuid();
 
                 await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
@@ -130,7 +128,9 @@ namespace RemoteSoccer
                         }
                     });
 
-                handler.Send(new CreateGame(game));
+                handler.Send(new CreateGame(game),
+                    HandlePositions,
+                    HandleObjectsCreated);
 
                 var foot = Guid.NewGuid();
                 var body = Guid.NewGuid();
@@ -219,8 +219,6 @@ namespace RemoteSoccer
                 while (true)
                 {
 
-                    
-                    
                     var point = CoreWindow.GetForCurrentThread().PointerPosition;
                     //CoreWindow.GetForCurrentThread().PointerPosition = new Point(500, 500);
                     var bodyX =

@@ -4,21 +4,58 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RemoteSoccer
 {
+    class SingleSignalRHandler {
+
+        private static Task<SignalRHandler> instance;
+
+        public static Task<SignalRHandler> Get() {
+            var getter = new Getter();
+            getter.GotIt(Interlocked.CompareExchange(ref instance, getter.task, null) == null);
+            return instance;
+        }
+
+        private class Getter
+        {
+            private TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
+            internal Task<SignalRHandler> task;
+
+            public void GotIt(bool gotIt) {
+                taskCompletionSource.SetResult(gotIt);
+            }
+
+
+            public Getter()
+            {
+                task = MakeTask();
+            }
+
+            private async Task<SignalRHandler> MakeTask() {
+                var gotIt = await taskCompletionSource.Task;
+                if (gotIt) {
+                    return await SignalRHandler.Create();
+                }
+                else {
+                    return await SingleSignalRHandler.instance;
+                }
+            }
+
+
+        }
+    }
+
     class SignalRHandler
     {
 
-        public static async Task<SignalRHandler> Create(Action<Positions> handlePossitions, Action<ObjectsCreated> handleObjectsCreated) {
+        public static async Task<SignalRHandler> Create() {
 
             var connection = new HubConnectionBuilder()
                 .WithUrl("http://localhost:50737/GameHub")
                 .Build();
-
-            connection.On(nameof(Positions), handlePossitions);
-            connection.On(nameof(ObjectsCreated), handleObjectsCreated);
 
             connection.Closed += async (error) =>
             {
@@ -38,8 +75,11 @@ namespace RemoteSoccer
             this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
-        public async void Send(CreateGame createGame)
+        public async void Send(CreateGame createGame, Action<Positions> handlePossitions, Action<ObjectsCreated> handleObjectsCreated)
         {
+            connection.On(nameof(Positions), handlePossitions);
+            connection.On(nameof(ObjectsCreated), handleObjectsCreated);
+
             await connection.InvokeAsync(nameof(CreateGame), createGame);
         }
 
