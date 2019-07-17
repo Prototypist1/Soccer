@@ -1,5 +1,6 @@
 ﻿using Common;
 using Microsoft.AspNetCore.SignalR.Client;
+using Prototypist.Fluent;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,27 +70,126 @@ namespace RemoteSoccer
             return new SignalRHandler(connection);
         }
 
+        private readonly List<Action<GameCreated>> gameCreatedHandlers = new List<Action<GameCreated>>();
+        private readonly List<Action<GameAlreadyExists>> gameAlreadyExistsHandlers = new List<Action<GameAlreadyExists>>();
+
+        private readonly List<Action<GameJoined>> gameJoinedHandlers = new List<Action<GameJoined>>();
+        private readonly List<Action<GameDoesNotExist>> gameDoesNotExistHandlers = new List<Action<GameDoesNotExist>>();
+
         private readonly HubConnection connection;
         public SignalRHandler(HubConnection connection)
         {
             this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            connection.On<GameCreated>(nameof(GameCreated), HandleGameCreated);
+            connection.On<GameAlreadyExists>(nameof(GameAlreadyExists), HandleGameAlreadyExists);
+            connection.On<GameJoined>(nameof(GameJoined), HandleGameJoined);
+            connection.On<GameDoesNotExist>(nameof(GameDoesNotExist), HandleGameDoesNotExist);
+
         }
 
-        public async void Send(CreateGame createGame, Action<Positions> handlePossitions, Action<ObjectsCreated> handleObjectsCreated)
+        private void HandleGameDoesNotExist(GameDoesNotExist gameDoesNotExist)
+        {
+            foreach (var handler in gameDoesNotExistHandlers.ToArray())
+            {
+                handler(gameDoesNotExist);
+            }
+        }
+
+        private void HandleGameJoined(GameJoined gameJoined)
+        {
+            foreach (var handler in gameJoinedHandlers.ToArray())
+            {
+                handler(gameJoined);
+            }
+        }
+
+        private void HandleGameAlreadyExists(GameAlreadyExists gameAlreadyExists)
+        {
+            foreach (var handler in gameAlreadyExistsHandlers.ToArray())
+            {
+                handler(gameAlreadyExists);
+            }
+        }
+
+        private void HandleGameCreated(GameCreated gameCreated)
+        {
+            foreach (var handler in gameCreatedHandlers.ToArray())
+            {
+                handler(gameCreated);
+            }
+        }
+
+        public async Task<OrType<GameCreated,GameAlreadyExists>> Send(CreateGame createGame)
+        {
+            var taskCompletionSource = new TaskCompletionSource<OrType<GameCreated, GameAlreadyExists>>();
+
+            (Action<GameCreated>, Action<GameAlreadyExists>) actions = (null, null);
+            actions =(
+               (GameCreated x) => {
+                   if (x.Id == createGame.Id) {
+                       taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists>(x));
+                       gameCreatedHandlers.Remove(actions.Item1);
+                       gameAlreadyExistsHandlers.Remove(actions.Item2);
+                   }
+                },
+                (GameAlreadyExists x) => {
+                    if (x.Id == createGame.Id)
+                    {
+                        taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists>(x));
+                        gameCreatedHandlers.Remove(actions.Item1);
+                        gameAlreadyExistsHandlers.Remove(actions.Item2);
+                    }
+                });
+
+            gameCreatedHandlers.Add(actions.Item1);
+            gameAlreadyExistsHandlers.Add(actions.Item2);
+
+            await connection.InvokeAsync(nameof(CreateGame), createGame);
+
+            return await taskCompletionSource.Task;
+        }
+
+        public async Task<OrType<GameJoined, GameDoesNotExist>> Send(JoinGame joinGame)
+        {
+            var taskCompletionSource = new TaskCompletionSource<OrType<GameJoined, GameDoesNotExist>>();
+
+            (Action<GameJoined>, Action<GameDoesNotExist>) actions = (null, null);
+            actions = (
+               (GameJoined x) => {
+                   if (x.Id == joinGame.Id)
+                   {
+                       taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist>(x));
+                       gameJoinedHandlers.Remove(actions.Item1);
+                       gameDoesNotExistHandlers.Remove(actions.Item2);
+                   }
+               },
+                (GameDoesNotExist x) => {
+                    if (x.Id == joinGame.Id)
+                    {
+                        taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist>(x));
+                        gameJoinedHandlers.Remove(actions.Item1);
+                        gameDoesNotExistHandlers.Remove(actions.Item2);
+                    }
+                }
+            );
+
+            gameJoinedHandlers.Add(actions.Item1);
+            gameDoesNotExistHandlers.Add(actions.Item2);
+
+            await connection.InvokeAsync(nameof(JoinGame), joinGame);
+
+            return await taskCompletionSource.Task;
+        }
+
+        public async void Send(string game, CreatePlayer createPlayer, Action<Positions> handlePossitions, Action<ObjectsCreated> handleObjectsCreated)
         {
             connection.On(nameof(Positions), handlePossitions);
             connection.On(nameof(ObjectsCreated), handleObjectsCreated);
 
-            await connection.InvokeAsync(nameof(CreateGame), createGame);
-        }
-
-
-        public async void Send(Guid game, CreatePlayer createPlayer)
-        {
             await connection.InvokeAsync(nameof(CreatePlayer),game, createPlayer);
         }
 
-        public async void Send(Guid game, PlayerInputs inputs)
+        public async void Send(string game, PlayerInputs inputs)
         {
             await connection.InvokeAsync(nameof(PlayerInputs), game, inputs);   
         }

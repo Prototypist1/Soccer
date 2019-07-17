@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,10 +26,12 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class LandingPage : Page
     {
+        private Task connecting;
+
         public LandingPage()
         {
             this.InitializeComponent();
-            Task.Run(async () =>
+            connecting = Task.Run(async () =>
             {
 
                 await SingleSignalRHandler.Get();
@@ -44,11 +47,112 @@ namespace RemoteSoccer
 
         private void Start(object sender, RoutedEventArgs e)
         {
+            JoinButton.IsEnabled = false;
+            GameName.IsEnabled = false;
+            StartButton.IsEnabled = false;
+            var name = GameName.Text;
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await connecting;
+                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            LoadingText.Visibility = Visibility.Visible;
+                            LoadingText.Text = "Starting Game";
+                            Loading.IsActive = true;
+                        });
+                    var handler = await SingleSignalRHandler.Get();
+                    var res = await handler.Send(new CreateGame(name));
+                    if (res.Is1(out var gameCreated))
+                    {
+                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            this.Frame.Navigate(typeof(MainPage), gameCreated.Id);
+                        });
+                    }
+                    else if (res.Is2(out var gameAlreadyExists))
+                    {
+                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            // TODO tell the player the game already exists
+                            JoinButton.IsEnabled = false;
+                            GameName.IsEnabled = false;
+                            StartButton.IsEnabled = false;
+                            LoadingText.Visibility = Visibility.Collapsed;
+                            Loading.IsActive = false;
+                        });
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+                catch (Exception ex) {
+                    var db = 0;
+                }
+            });
         }
 
         private void Join(object sender, RoutedEventArgs e)
         {
+            JoinButton.IsEnabled = false;
+            GameName.IsEnabled = false;
+            StartButton.IsEnabled = false;
+            var name = GameName.Text;
+            Task.Run(async () =>
+            {
+                try
+                {
 
+                    await connecting;
+                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            LoadingText.Visibility = Visibility.Visible;
+                            LoadingText.Text = "Joining Game";
+                            Loading.IsActive = true;
+                        });
+                    var res = await (await SingleSignalRHandler.Get()).Send(new JoinGame(name));
+                    if (res.Is1(out var gameJoined))
+                    {
+                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            this.Frame.Navigate(typeof(MainPage), gameJoined.Id);
+                        });
+                    }
+                    else if (res.Is2(out var gameDoesNotExist))
+                    {
+                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            // TODO tell the player the game already exists
+                            JoinButton.IsEnabled = false;
+                            GameName.IsEnabled = false;
+                            StartButton.IsEnabled = false;
+                            LoadingText.Visibility = Visibility.Collapsed;
+                            Loading.IsActive = false;
+                        });
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+                catch (Exception ex) {
+                    var db = "";
+                }
+            });
         }
     }
 }

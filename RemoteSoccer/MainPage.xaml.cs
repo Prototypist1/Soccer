@@ -50,7 +50,7 @@ namespace RemoteSoccer
         private class LineScaling
         {
             public Line line;
-            public double x1,x2,y1,y2;
+            public double x1, x2, y1, y2;
 
             public LineScaling(Line line, double x1, double x2, double y1, double y2)
             {
@@ -62,7 +62,8 @@ namespace RemoteSoccer
             }
         }
 
-        private class EllipseScaling {
+        private class EllipseScaling
+        {
             public Ellipse Ellipse;
             public double diameter;
 
@@ -81,26 +82,17 @@ namespace RemoteSoccer
         private const double xMax = 1600;
         private const double yMax = 900;
 
-        private  Scaler scaler;
+        private Scaler scaler;
 
 
         public MainPage()
         {
             this.InitializeComponent();
-            
 
-            Task.Run(async () =>
-            {
-                var handler = await SignalRHandler.Create();
-                var game = Guid.NewGuid();
 
-                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                    CoreDispatcherPriority.Normal,
-                    () =>
-                    {
 
-                        scaler = new Scaler(GameHolder.ActualWidth, GameHolder.ActualHeight, xMax, yMax);
-                            var points = new[] {
+            scaler = new Scaler(GameHolder.ActualWidth, GameHolder.ActualHeight, xMax, yMax);
+            var points = new[] {
                             (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
                             (new Vector(0,footLen) ,new Vector(footLen,0)),
                             (new Vector(0,yMax - footLen) ,new Vector(0,footLen)),
@@ -111,48 +103,21 @@ namespace RemoteSoccer
                             (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
                         };
 
-                        foreach (var side in points)
-                        {
-                            var line = new Line()
-                            {
-                                X1 = scaler.ScaleX(side.Item1.x),
-                                X2 = scaler.ScaleX(side.Item2.x),
-                                Y1 = scaler.ScaleY(side.Item1.y),
-                                Y2 = scaler.ScaleY(side.Item2.y),
-                                Stroke = new SolidColorBrush(Colors.Black),
-                            };
+            foreach (var side in points)
+            {
+                var line = new Line()
+                {
+                    X1 = scaler.ScaleX(side.Item1.x),
+                    X2 = scaler.ScaleX(side.Item2.x),
+                    Y1 = scaler.ScaleY(side.Item1.y),
+                    Y2 = scaler.ScaleY(side.Item2.y),
+                    Stroke = new SolidColorBrush(Colors.Black),
+                };
 
-                            lines.Add(new LineScaling (line, side.Item1.x, side.Item2.x, side.Item1.y, side.Item2.y));
+                lines.Add(new LineScaling(line, side.Item1.x, side.Item2.x, side.Item1.y, side.Item2.y));
 
-                            GameArea.Children.Add(line);
-                        }
-                    });
-
-                handler.Send(new CreateGame(game),
-                    HandlePositions,
-                    HandleObjectsCreated);
-
-                var foot = Guid.NewGuid();
-                var body = Guid.NewGuid();
-                handler.Send(game, new CreatePlayer(
-                    foot,
-                    body,
-                    400,
-                    80,
-                    255,
-                    0,
-                    0,
-                    127,
-                    255,
-                    0,
-                    0,
-                    255));
-
-                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                    CoreDispatcherPriority.Normal,
-                    () => MainLoop(handler, foot, body, game));
-
-            });
+                GameArea.Children.Add(line);
+            }
         }
 
         private void HandleObjectsCreated(ObjectsCreated objectsCreated)
@@ -176,8 +141,8 @@ namespace RemoteSoccer
                                     objectCreated.G,
                                     objectCreated.B)),
                             };
-                            elements.Add(objectCreated.Id, new ElementEntry( ellispe,-1000,-1000, objectCreated.Diameter));
-                            ellipses.Add(new EllipseScaling( ellispe, objectCreated.Diameter));
+                            elements.Add(objectCreated.Id, new ElementEntry(ellispe, -1000, -1000, objectCreated.Diameter));
+                            ellipses.Add(new EllipseScaling(ellispe, objectCreated.Diameter));
                             GameArea.Children.Add(ellispe);
                         }
                     }
@@ -205,7 +170,7 @@ namespace RemoteSoccer
         }
 
         // assumed to be run on the main thread
-        private async void MainLoop(SignalRHandler handler, Guid foot, Guid body, Guid game)
+        private async void MainLoop(SignalRHandler handler, Guid foot, Guid body, string game)
         {
             try
             {
@@ -253,7 +218,7 @@ namespace RemoteSoccer
                     }
 
                     // let someone else have a go
-                    await Task.Delay((int)Math.Max(1, ((1000 * frame) / 60)- stopWatch.ElapsedMilliseconds));
+                    await Task.Delay((int)Math.Max(1, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
 
                     //while (stopWatch.ElapsedMilliseconds < ((1000 * frame) / 60))
                     //{
@@ -284,6 +249,42 @@ namespace RemoteSoccer
                 ellipse.Ellipse.Width = scaler.Scale(ellipse.diameter);
                 ellipse.Ellipse.Height = scaler.Scale(ellipse.diameter);
             }
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            var gameName = (string)e.Parameter;
+
+            Task.Run(async () =>
+            {
+                var foot = Guid.NewGuid();
+                var body = Guid.NewGuid();
+                var handler = await SingleSignalRHandler.Get();
+                handler.Send(
+                    gameName, 
+                    new CreatePlayer(
+                        foot,
+                        body,
+                        400,
+                        80,
+                        255,
+                        0,
+                        0,
+                        127,
+                        255,
+                        0,
+                        0,
+                        255), 
+                    HandlePositions, 
+                    HandleObjectsCreated);
+
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                    CoreDispatcherPriority.Normal,
+                    () => MainLoop(handler, foot, body, gameName));
+            });
+
         }
     }
 }

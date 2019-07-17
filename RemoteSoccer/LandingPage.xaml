@@ -10,7 +10,7 @@
     <Grid>
         <StackPanel VerticalAlignment="Center" Width="600">
             <TextBlock FontSize="70" TextAlignment="Center">Enter Game Name</TextBlock>
-            <TextBox Width="600" FontSize="35" />
+            <TextBox Width="600" FontSize="35" x:Name="GameName" />
             <Grid Width="600">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*" />
@@ -18,12 +18,12 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Border BorderThickness="10">
-                        <Button FontSize="35" Width="280" Click="Start" >Start Game</Button>
+                        <Button FontSize="35" Width="280" Click="Start" x:Name="StartButton">Start Game</Button>
                     </Border>
                 </StackPanel>
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Border BorderThickness="10">
-                        <Button FontSize="35" Width="280" Click="Join" >Join Game</Button>
+                        <Button FontSize="35" Width="280" Click="Join" x:Name="JoinButton" >Join Game</Button>
                     </Border>
                 </StackPanel>
             </Grid>
