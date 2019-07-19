@@ -55,7 +55,9 @@ namespace RemoteSoccer
         public static async Task<SignalRHandler> Create() {
 
             var connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:50737/GameHub")
+                .WithUrl(@"http://localhost:50737/GameHub")
+
+                //.WithUrl(@"https://soccerserver.azurewebsites.net/GameHub")
                 .Build();
 
             connection.Closed += async (error) =>
