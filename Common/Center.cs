@@ -59,8 +59,8 @@ namespace Common
                 vy = Math.Max(0, vy);
             }
 
-            fx = -vx / 100.0;
-            fy = -vy / 100.0;
+            fx = 0;
+            fy = 0;
 
         }
     }

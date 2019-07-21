@@ -41,7 +41,7 @@ namespace RemoteSoccer
                         () =>
                         {
                             LoadingText.Visibility = Visibility.Collapsed;
-                            Loading.IsActive = false;
+                            LoadingSpinner.IsActive = false;
                         });
                 }catch (Exception ex){
 
@@ -54,7 +54,7 @@ namespace RemoteSoccer
                             GameName.IsEnabled = false;
                             StartButton.IsEnabled = false;
                             LoadingText.Text = ex.Message;
-                            Loading.IsActive = false;
+                            LoadingSpinner.IsActive = false;
                         });
                 }
             });
@@ -77,7 +77,7 @@ namespace RemoteSoccer
                         {
                             LoadingText.Visibility = Visibility.Visible;
                             LoadingText.Text = "Starting Game";
-                            Loading.IsActive = true;
+                            LoadingSpinner.IsActive = true;
                         });
                     var handler = await SingleSignalRHandler.Get();
                     var res = await handler.Send(new CreateGame(name));
@@ -101,7 +101,7 @@ namespace RemoteSoccer
                             GameName.IsEnabled = false;
                             StartButton.IsEnabled = false;
                             LoadingText.Visibility = Visibility.Collapsed;
-                            Loading.IsActive = false;
+                            LoadingSpinner.IsActive = false;
                         });
                     }
                     else
@@ -120,7 +120,7 @@ namespace RemoteSoccer
                             GameName.IsEnabled = false;
                             StartButton.IsEnabled = false;
                             LoadingText.Text = ex.Message;
-                            Loading.IsActive = false;
+                            LoadingSpinner.IsActive = false;
                         });
                 }
             });
@@ -144,7 +144,7 @@ namespace RemoteSoccer
                         {
                             LoadingText.Visibility = Visibility.Visible;
                             LoadingText.Text = "Joining Game";
-                            Loading.IsActive = true;
+                            LoadingSpinner.IsActive = true;
                         });
                     var res = await (await SingleSignalRHandler.Get()).Send(new JoinGame(name));
                     if (res.Is1(out var gameJoined))
@@ -167,7 +167,7 @@ namespace RemoteSoccer
                             GameName.IsEnabled = false;
                             StartButton.IsEnabled = false;
                             LoadingText.Visibility = Visibility.Collapsed;
-                            Loading.IsActive = false;
+                            LoadingSpinner.IsActive = false;
                         });
                     }
                     else
@@ -186,7 +186,7 @@ namespace RemoteSoccer
                             GameName.IsEnabled = false;
                             StartButton.IsEnabled = false;
                             LoadingText.Text = ex.Message;
-                            Loading.IsActive = false;
+                            LoadingSpinner.IsActive = false;
                         });
                 }
             });

@@ -127,6 +127,8 @@ namespace Server
         private int simulationTime = 0;
         internal bool Apply(out Positions positions) {
 
+            const double maxSpeed = 40.0;
+            const double MaxForce = .5;
             positions = default;
 
             var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
@@ -164,30 +166,45 @@ namespace Server
                 foreach (var input in inputSet.Values)
                 {
                     var body = bodies[input.BodyId];
-                    var speed = .2;
-                    var keyForce = new Vector(input.BodyX, input.BodyY);
-                    if (keyForce.Length > 0)
+                    var f = new Vector(input.BodyX, input.BodyY);
+                    if (f.Length > 0)
                     {
-                        keyForce = keyForce.NewUnitized().NewScaled(speed);
-                        body.ApplyForce(keyForce.x, keyForce.y);
+                        f = f.NewUnitized().NewScaled(MaxForce);
                     }
+                    else {
+                        f = new Vector(-body.vx, -body.vy);
+                        if (f.Length > MaxForce)
+                        {
+                            f = f.NewUnitized().NewScaled(MaxForce);
+                        }
+                    }
+                    f = Bound(f, new Vector(body.vy, body.vy));
 
+                    body.ApplyForce(f.x,f.y);
+                }
+                foreach (var center in bodies.Values)
+                {
+                    center.Update();
+                }
+                foreach (var input in inputSet.Values)
+                {
+                    var body = bodies[input.BodyId];
                     var foot = feet[input.FootId];
                     var max = 200.0;
 
-                    var target = new Vector(foot.X + input.FootX - (body.X), foot.Y + input.FootY - (body.Y));
+                    var target = new Vector(foot.X + input.FootX  - body.X, foot.Y + input.FootY  - body.Y);
 
                     if (target.Length > max)
                     {
                         target = target.NewScaled(max / target.Length);
                     }
 
-                    var targetVx = (target.x + body.X + body.vx) - foot.X;
-                    var targetVy = (target.y + body.Y + body.vy) - foot.Y;
+                    var footTargetVx = (target.x + body.X + body.vx) - foot.X;
+                    var footTargetVy = (target.y + body.Y + body.vy) - foot.Y;
 
                     foot.ApplyForce(
-                        (targetVx - foot.Vx) * foot.Mass / 2.0,
-                        (targetVy - foot.Vy) * foot.Mass / 2.0);
+                        (footTargetVx - foot.Vx) / 2.0,
+                        (footTargetVy - foot.Vy) / 2.0);
                 }
                 simulationTime++;
                 physicsEngine.Run(x =>
@@ -195,14 +212,26 @@ namespace Server
                     x.Simulate(simulationTime);
                     return x;
                 });
-                foreach (var center in bodies.Values)
-                {
-                    center.Update();
-                }
+                
                 positions = new Positions(GetPosition().ToArray(), simulationTime);
             }
 
             return true;
+
+            Vector Bound(Vector force, Vector velocity)
+            {
+                if (force.Length == 0 || velocity.Length == 0)
+                {
+                    return force;
+                }
+
+                var with = velocity.NewUnitized().NewScaled(Math.Max(0, force.Dot(velocity.NewUnitized())));
+                var notWith = force.NewAdded(with.NewMinus());
+
+                with = with.NewScaled(Math.Max(0,(maxSpeed - velocity.Length)) / maxSpeed);
+
+                return with.NewAdded(notWith);
+            }
         }
 
         internal void PlayerInputs(PlayerInputs playerInputs)

@@ -13,7 +13,7 @@ namespace Server
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR().AddAzureSignalR();//;//
+            services.AddSignalR();//.AddAzureSignalR();//;//
             services.AddSingleton<GameHubState>();
         }
 
@@ -21,7 +21,7 @@ namespace Server
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             //.UseAzureSignalR
-            app.UseAzureSignalR(routes =>
+            app.UseSignalR(routes =>
             {
                 routes.MapHub<GameHub>($"/{nameof(GameHub)}");
             });

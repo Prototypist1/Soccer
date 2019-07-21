@@ -32,7 +32,7 @@
         <Border BorderThickness="10" VerticalAlignment="Bottom">
             <StackPanel>
                 <TextBlock x:Name="LoadingText" Text="Connecting..." TextAlignment="Center" />
-                <ProgressRing x:Name="Loading"  IsActive="True" />
+                <ProgressRing x:Name="LoadingSpinner"  IsActive="True" />
             </StackPanel>
         </Border>
     </Grid>
