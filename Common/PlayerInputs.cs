@@ -20,7 +20,6 @@ namespace Common
 
     public struct PlayerInputs
     {
-        public int Frame { get; set; }
         public double FootX { get; set; }
         public double FootY { get; set; }
         public double BodyX { get; set; }
@@ -28,9 +27,8 @@ namespace Common
         public Guid FootId { get; set; }
         public Guid BodyId { get; set; }
 
-        public PlayerInputs(int frame, double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId)
+        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId)
         {
-            this.Frame = frame;
             this.FootX = footX;
             this.FootY = footY;
             this.BodyX = bodyX;

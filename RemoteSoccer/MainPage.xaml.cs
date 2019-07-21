@@ -151,10 +151,14 @@ namespace RemoteSoccer
 
         double framesRecieved = 0;
         int currentDisplayFrame = 0;
+        int updated = 0;
+        List<double> times = new List<double>();
         private void HandlePositions(Positions positions)
         {
             if (positions.Frame > currentDisplayFrame)
             {
+                times.Add(DateTime.Now.Ticks* 60 / 10000000.0 );
+                updated++;
                 framesRecieved++;
                 currentDisplayFrame = positions.Frame;
                 foreach (var position in positions.PositionsList)
@@ -181,6 +185,8 @@ namespace RemoteSoccer
                 var stopWatch = new Stopwatch();
                 stopWatch.Start();
 
+                var distrib = new int[100];
+
                 while (true)
                 {
 
@@ -200,10 +206,11 @@ namespace RemoteSoccer
                     lastY = point.Y;
 
                     handler.Send(game,
-                        new PlayerInputs(frame, footX, footY, bodyX, bodyY, foot, body));
+                        new PlayerInputs(footX, footY, bodyX, bodyY, foot, body));
 
                     frame++;
-
+                    distrib[frame % 100] = updated;
+                    updated = 0;
                     foreach (var element in elements.Values)
                     {
                         Canvas.SetLeft(element.element, element.X);
@@ -213,8 +220,8 @@ namespace RemoteSoccer
                     if (frame % 60 == 0)
                     {
                         Fps.Text = $"frames send per second: {frame / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
-                            $"frame recieved {framesRecieved / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
-                            $"frame lag {frame - currentDisplayFrame}";
+                            $"frame recieved: {framesRecieved / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
+                            $"frame lag: {frame - currentDisplayFrame}";
                     }
 
                     // let someone else have a go
@@ -259,30 +266,41 @@ namespace RemoteSoccer
 
             Task.Run(async () =>
             {
-                var foot = Guid.NewGuid();
-                var body = Guid.NewGuid();
-                var handler = await SingleSignalRHandler.Get();
-                handler.Send(
-                    gameName, 
-                    new CreatePlayer(
-                        foot,
-                        body,
-                        400,
-                        80,
-                        255,
-                        0,
-                        0,
-                        127,
-                        255,
-                        0,
-                        0,
-                        255), 
-                    HandlePositions, 
-                    HandleObjectsCreated);
+                try
+                {
+                    var foot = Guid.NewGuid();
+                    var body = Guid.NewGuid();
+                    var handler = await SingleSignalRHandler.Get();
+                    handler.Send(
+                        gameName,
+                        new CreatePlayer(
+                            foot,
+                            body,
+                            400,
+                            80,
+                            255,
+                            0,
+                            0,
+                            127,
+                            255,
+                            0,
+                            0,
+                            255),
+                        HandlePositions,
+                        HandleObjectsCreated);
 
-                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                    CoreDispatcherPriority.Normal,
-                    () => MainLoop(handler, foot, body, gameName));
+                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () => MainLoop(handler, foot, body, gameName));
+                }
+#pragma warning disable CS0168 // Variable is declared but never used
+                catch (Exception ex)
+                {
+#pragma warning restore CS0168 // Variable is declared but never used
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
+                    var db = 0;
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
+                }
             });
 
         }

@@ -200,7 +200,7 @@ namespace RemoteSoccer
                     lastY = point.Y;
 
                     handler.Send(game,
-                        new PlayerInputs(frame, footX, footY, bodyX, bodyY, foot, body));
+                        new PlayerInputs( footX, footY, bodyX, bodyY, foot, body));
 
                     frame++;
 
@@ -227,10 +227,12 @@ namespace RemoteSoccer
             }
 #pragma warning disable CS0168 // Variable is declared but never used
             catch (Exception e)
-            {
-                var db = 0;
-            }
 #pragma warning restore CS0168 // Variable is declared but never used
+            {
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
+                var db = 0;
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
+            }
 
         }
 
@@ -259,30 +261,41 @@ namespace RemoteSoccer
 
             Task.Run(async () =>
             {
-                var foot = Guid.NewGuid();
-                var body = Guid.NewGuid();
-                var handler = await SingleSignalRHandler.Get();
-                handler.Send(
-                    gameName, 
-                    new CreatePlayer(
-                        foot,
-                        body,
-                        400,
-                        80,
-                        255,
-                        0,
-                        0,
-                        127,
-                        255,
-                        0,
-                        0,
-                        255), 
-                    HandlePositions, 
-                    HandleObjectsCreated);
+                try
+                {
+                    var foot = Guid.NewGuid();
+                    var body = Guid.NewGuid();
+                    var handler = await SingleSignalRHandler.Get();
+                    handler.Send(
+                        gameName,
+                        new CreatePlayer(
+                            foot,
+                            body,
+                            400,
+                            80,
+                            255,
+                            0,
+                            0,
+                            127,
+                            255,
+                            0,
+                            0,
+                            255),
+                        HandlePositions,
+                        HandleObjectsCreated);
 
-                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                    CoreDispatcherPriority.Normal,
-                    () => MainLoop(handler, foot, body, gameName));
+                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () => MainLoop(handler, foot, body, gameName));
+                }
+#pragma warning disable CS0168 // Variable is declared but never used
+                catch (Exception ex)
+                {
+#pragma warning restore CS0168 // Variable is declared but never used
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
+                    var db = 0;
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
+                }
             });
 
         }

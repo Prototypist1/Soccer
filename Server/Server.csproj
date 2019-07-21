@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Azure.SignalR" Version="1.1.0-preview1-10426" />
     <PackageReference Include="Prototypist.Fluent" Version="1.0.0.2" />
-    <PackageReference Include="Prototypist.TaskChain" Version="1.0.3" />
+    <PackageReference Include="Prototypist.TaskChain" Version="1.0.5" />
   </ItemGroup>
 
   <ItemGroup>

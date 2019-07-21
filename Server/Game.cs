@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,13 +8,10 @@ using Common;
 using Microsoft.AspNetCore.SignalR;
 using Physics;
 using Prototypist.TaskChain;
-using Prototypist.TaskChain.DataTypes;
 
 namespace Server
 {
     public class Game {
-        private int PlayerCount = 0;
-        private int frame=0;
         private const double footLen = 200;
         private const double xMax = 1600;
         private const double yMax = 900;
@@ -22,15 +20,15 @@ namespace Server
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
         private readonly PhysicsObject ball;
-        private readonly ConcurrentArrayList<ObjectCreated> objectsCreated = new ConcurrentArrayList<ObjectCreated>();
+        private readonly ConcurrentLinkedList<ObjectCreated> objectsCreated = new ConcurrentLinkedList<ObjectCreated>();
 
-        private readonly ConcurrentArrayList<ConcurrentArrayList<PlayerInputs>> frames = new ConcurrentArrayList<ConcurrentArrayList<PlayerInputs>>();
+        private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
 
         public Game() {
             ballId = Guid.NewGuid();
             ball = PhysicsObjectBuilder.Ball(1, 40, 450, 450);
 
-            objectsCreated.EnqueAdd(new ObjectCreated(
+            objectsCreated.Add(new ObjectCreated(
                 ball.X,
                 ball.Y,
                 ballId,
@@ -85,7 +83,6 @@ namespace Server
                 (createPlayer.BodyDiameter / 2.0),
                 yMax - (createPlayer.BodyDiameter / 2.0));
             bodies[createPlayer.Body] = body;
-            PlayerCount++;
 
             var res = new List<ObjectCreated>(){
                 new ObjectCreated(
@@ -106,76 +103,111 @@ namespace Server
                     createPlayer.FootB,
                     createPlayer.FootA) };
 
-            objectsCreated.EnqueAddSet(res);
+            foreach (var item in res)
+            {
+                objectsCreated.Add(item);
+            }
             return res;
         }
 
-        int processing = 0;
-
-        internal List<Positions> PlayerInputs(PlayerInputs playerInputs)
-        {
-            while (playerInputs.Frame >= frames.Count) {
-                frames.EnqueAdd(new ConcurrentArrayList<PlayerInputs>());
+        public async void Start(Func<Positions,Task> onPositionsUpdate) {
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+            var frame = 0;
+            while (true)
+            {
+                if (Apply(out var positions)){
+                    await onPositionsUpdate(positions);
+                };
+                frame++;
+                await Task.Delay((int)Math.Max(1, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
             }
-            frames[playerInputs.Frame].EnqueAdd(playerInputs);
-            var res = new List<Positions>();
+        }
 
-            bool tryIt = true;
+        private int simulationTime = 0;
+        internal bool Apply(out Positions positions) {
 
-            while (tryIt && frames.Count > frame && frames[frame].Count == PlayerCount) {
+            positions = default;
 
-                tryIt = Interlocked.CompareExchange(ref processing, 1, 0) == 0;
+            var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
 
-                if (tryIt)
+            if (!myPlayersInputs.Any()) {
+                return false;
+            }
+
+            var frames = new List<Dictionary<Guid,PlayerInputs>>();
+
+            foreach (var input in myPlayersInputs)
+            {
+                foreach (var frame in frames)
                 {
-
-                    ball.ApplyForce(
-                        -(ball.Vx * ball.Mass) / 100.0,
-                        -(ball.Vy * ball.Mass) / 100.0);
-
-                    foreach (var input in frames[frame])
+                    if (frame.TryAdd(input.BodyId, input))
                     {
-                        var body = bodies[input.BodyId];
-                        var speed = .2;
-                        var keyForce = new Vector(input.BodyX, input.BodyY);
-                        if (keyForce.Length > 0)
-                        {
-                            keyForce = keyForce.NewUnitized().NewScaled(speed);
-                            body.ApplyForce(keyForce.x, keyForce.y);
-                        }
-
-                        var foot = feet[input.FootId];
-                        var max = 200.0;
-
-                        var target = new Vector(foot.X + input.FootX - (body.X), foot.Y + input.FootY - (body.Y));
-
-                        if (target.Length > max)
-                        {
-                            target = target.NewScaled(max / target.Length);
-                        }
-
-                        var targetVx = ((target.x + body.X + body.vx) - foot.X);
-                        var targetVy = (target.y + body.Y + body.vy) - foot.Y;
-
-                        foot.ApplyForce(
-                            (targetVx - foot.Vx) * foot.Mass / 2.0,
-                            (targetVy - foot.Vy) * foot.Mass / 2.0);
+                        goto done;
                     }
-                    frame++;
-                    physicsEngine.Run(x =>
-                    {
-                        x.Simulate(frame); return x;
-                    });
-                    foreach (var center in bodies.Values)
-                    {
-                        center.Update();
-                    }
-                    res.Add(new Positions(GetPosition().ToArray(), frame - 1));
-
-                    processing = 0;
                 }
+
+                frames.Add(new Dictionary<Guid, PlayerInputs> {
+                    { input.BodyId,input}
+                });
+
+                done:;
             }
-            return res;
+
+
+            foreach (var inputSet in frames)
+            {
+                ball.ApplyForce(
+                    -(ball.Vx * ball.Mass) / 100.0,
+                    -(ball.Vy * ball.Mass) / 100.0);
+
+                foreach (var input in inputSet.Values)
+                {
+                    var body = bodies[input.BodyId];
+                    var speed = .2;
+                    var keyForce = new Vector(input.BodyX, input.BodyY);
+                    if (keyForce.Length > 0)
+                    {
+                        keyForce = keyForce.NewUnitized().NewScaled(speed);
+                        body.ApplyForce(keyForce.x, keyForce.y);
+                    }
+
+                    var foot = feet[input.FootId];
+                    var max = 200.0;
+
+                    var target = new Vector(foot.X + input.FootX - (body.X), foot.Y + input.FootY - (body.Y));
+
+                    if (target.Length > max)
+                    {
+                        target = target.NewScaled(max / target.Length);
+                    }
+
+                    var targetVx = (target.x + body.X + body.vx) - foot.X;
+                    var targetVy = (target.y + body.Y + body.vy) - foot.Y;
+
+                    foot.ApplyForce(
+                        (targetVx - foot.Vx) * foot.Mass / 2.0,
+                        (targetVy - foot.Vy) * foot.Mass / 2.0);
+                }
+                simulationTime++;
+                physicsEngine.Run(x =>
+                {
+                    x.Simulate(simulationTime);
+                    return x;
+                });
+                foreach (var center in bodies.Values)
+                {
+                    center.Update();
+                }
+                positions = new Positions(GetPosition().ToArray(), simulationTime);
+            }
+
+            return true;
+        }
+
+        internal void PlayerInputs(PlayerInputs playerInputs)
+        {
+            playersInputs.Add(playerInputs);
         }
 
         private IEnumerable<Position> GetPosition() {
