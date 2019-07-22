@@ -181,30 +181,27 @@ namespace Server
                     f = Bound(f, new Vector(body.vy, body.vy));
 
                     body.ApplyForce(f.x,f.y);
-                }
-                foreach (var center in bodies.Values)
-                {
-                    center.Update();
-                }
-                foreach (var input in inputSet.Values)
-                {
-                    var body = bodies[input.BodyId];
+
                     var foot = feet[input.FootId];
                     var max = 200.0;
 
-                    var target = new Vector(foot.X + input.FootX  - body.X, foot.Y + input.FootY  - body.Y);
+                    var target = new Vector(foot.X + input.FootX - body.X, foot.Y + input.FootY - body.Y);
 
                     if (target.Length > max)
                     {
                         target = target.NewScaled(max / target.Length);
                     }
 
-                    var footTargetVx = (target.x + body.X + body.vx) - foot.X;
-                    var footTargetVy = (target.y + body.Y + body.vy) - foot.Y;
+                    var footTargetVx = (target.x + body.X) - foot.X;
+                    var footTargetVy = (target.y + body.Y) - foot.Y;
 
                     foot.ApplyForce(
-                        (footTargetVx - foot.Vx) / 2.0,
-                        (footTargetVy - foot.Vy) / 2.0);
+                        ((footTargetVx - foot.Vx) / 2.0),//+ (f.x*foot.Mass)
+                        ((footTargetVy - foot.Vy) / 2.0)); //+ (f.y*foot.Mass)
+                }
+                foreach (var center in bodies.Values)
+                {
+                    center.Update();
                 }
                 simulationTime++;
                 physicsEngine.Run(x =>

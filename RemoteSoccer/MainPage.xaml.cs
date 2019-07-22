@@ -82,16 +82,57 @@ namespace RemoteSoccer
         private const double xMax = 1600;
         private const double yMax = 900;
 
-        private Scaler scaler;
+        private Guid body, foot;
+
+        private ScalerManager scalerManager = new ScalerManager(new DontScale());
+
+        private class ScalerManager {
+
+            private IScaler scaler;
+            private IScaler nextScaler;
+
+            public ScalerManager(IScaler scaler)
+            {
+                this.scaler = scaler ?? throw new ArgumentNullException(nameof(scaler));
+            }
+
+            public void SetNextScaler(IScaler scaler) {
+                this.nextScaler = scaler;
+            }
+
+            public bool RotateScalers(List<LineScaling> lines, List<EllipseScaling> ellipses) {
+                if (nextScaler == null) {
+                    return false;
+                }
+
+                this.scaler = nextScaler;
+                foreach (var line in lines)
+                {
+                    line.line.X1 = scaler.ScaleX(line.x1);
+                    line.line.X2 = scaler.ScaleX(line.x2);
+                    line.line.Y1 = scaler.ScaleY(line.y1);
+                    line.line.Y2 = scaler.ScaleY(line.y2);
+                }
+                foreach (var ellipse in ellipses)
+                {
+                    ellipse.Ellipse.Width = scaler.Scale(ellipse.diameter);
+                    ellipse.Ellipse.Height = scaler.Scale(ellipse.diameter);
+                }
+                return true;
+            }
+
+            public IScaler GetScaler() => scaler;
+        }
 
 
         public MainPage()
         {
             this.InitializeComponent();
 
+            viewFrameWidth = GameHolder.ActualWidth;
+            viewFrameHeight = GameHolder.ActualHeight;
 
-
-            scaler = new Scaler(GameHolder.ActualWidth, GameHolder.ActualHeight, xMax, yMax);
+            
             var points = new[] {
                             (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
                             (new Vector(0,footLen) ,new Vector(footLen,0)),
@@ -107,10 +148,10 @@ namespace RemoteSoccer
             {
                 var line = new Line()
                 {
-                    X1 = scaler.ScaleX(side.Item1.x),
-                    X2 = scaler.ScaleX(side.Item2.x),
-                    Y1 = scaler.ScaleY(side.Item1.y),
-                    Y2 = scaler.ScaleY(side.Item2.y),
+                    X1 = scalerManager.GetScaler().ScaleX(side.Item1.x),
+                    X2 = scalerManager.GetScaler().ScaleX(side.Item2.x),
+                    Y1 = scalerManager.GetScaler().ScaleY(side.Item1.y),
+                    Y2 = scalerManager.GetScaler().ScaleY(side.Item2.y),
                     Stroke = new SolidColorBrush(Colors.Black),
                 };
 
@@ -133,8 +174,8 @@ namespace RemoteSoccer
                         {
                             var ellispe = new Ellipse()
                             {
-                                Width = scaler.Scale(objectCreated.Diameter),
-                                Height = scaler.Scale(objectCreated.Diameter),
+                                Width = scalerManager.GetScaler().Scale(objectCreated.Diameter),
+                                Height = scalerManager.GetScaler().Scale(objectCreated.Diameter),
                                 Fill = new SolidColorBrush(Color.FromArgb(
                                     objectCreated.A,
                                     objectCreated.R,
@@ -151,26 +192,33 @@ namespace RemoteSoccer
 
         double framesRecieved = 0;
         int currentDisplayFrame = 0;
-        int updated = 0;
-        List<double> times = new List<double>();
+        private double viewFrameWidth;
+        private double viewFrameHeight;
+
         private void HandlePositions(Positions positions)
         {
             if (positions.Frame > currentDisplayFrame)
             {
-                times.Add(DateTime.Now.Ticks* 60 / 10000000.0 );
-                updated++;
                 framesRecieved++;
                 currentDisplayFrame = positions.Frame;
                 foreach (var position in positions.PositionsList)
                 {
                     if (elements.TryGetValue(position.Id, out var element))
                     {
-                        element.X = scaler.ScaleX(position.X - (element.Diameter / 2.0));
-                        element.Y = scaler.ScaleY(position.Y - (element.Diameter / 2.0));
+                        if (position.Id == body)
+                        {
+                            scalerManager.SetNextScaler(new FollowBodyScaler(
+                                1,
+                                position.X,
+                                position.Y,
+                                viewFrameWidth,
+                                viewFrameHeight));
+                        }
+                        element.X = position.X;
+                        element.Y = position.Y;
                     }
                 }
             }
-
         }
 
         // assumed to be run on the main thread
@@ -208,13 +256,13 @@ namespace RemoteSoccer
                     handler.Send(game,
                         new PlayerInputs(footX, footY, bodyX, bodyY, foot, body));
 
+                    scalerManager.RotateScalers(lines,ellipses);
+
                     frame++;
-                    distrib[frame % 100] = updated;
-                    updated = 0;
                     foreach (var element in elements.Values)
                     {
-                        Canvas.SetLeft(element.element, element.X);
-                        Canvas.SetTop(element.element, element.Y);
+                        Canvas.SetLeft(element.element, scalerManager.GetScaler().ScaleX(element.X -(element.Diameter/2.0)));
+                        Canvas.SetTop(element.element, scalerManager.GetScaler().ScaleY(element.Y - (element.Diameter / 2.0)));
                     }
 
                     if (frame % 60 == 0)
@@ -241,22 +289,15 @@ namespace RemoteSoccer
 
         }
 
+
+
         private void GameHolder_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            scaler = new Scaler(GameHolder.ActualWidth, GameHolder.ActualHeight, xMax, yMax);
-            foreach (var line in lines)
-            {
-                line.line.X1 = scaler.ScaleX(line.x1);
-                line.line.X2 = scaler.ScaleX(line.x2);
-                line.line.Y1 = scaler.ScaleY(line.y1);
-                line.line.Y2 = scaler.ScaleY(line.y2);
-            }
-            foreach (var ellipse in ellipses)
-            {
-                ellipse.Ellipse.Width = scaler.Scale(ellipse.diameter);
-                ellipse.Ellipse.Height = scaler.Scale(ellipse.diameter);
-            }
+            viewFrameWidth = GameHolder.ActualWidth;
+            viewFrameHeight = GameHolder.ActualHeight;
+            scalerManager.SetNextScaler(new Scaler(viewFrameWidth, viewFrameHeight, xMax, yMax));
         }
+
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -264,13 +305,19 @@ namespace RemoteSoccer
 
             var gameName = (string)e.Parameter;
 
+
             Task.Run(async () =>
             {
                 try
                 {
-                    var foot = Guid.NewGuid();
-                    var body = Guid.NewGuid();
+                    foot = Guid.NewGuid();
+                    body = Guid.NewGuid();
                     var handler = await SingleSignalRHandler.Get();
+                    var random = new Random();
+
+                    var color = new byte[3];
+                    random.NextBytes(color);
+
                     handler.Send(
                         gameName,
                         new CreatePlayer(
@@ -278,14 +325,14 @@ namespace RemoteSoccer
                             body,
                             400,
                             80,
-                            255,
-                            0,
-                            0,
-                            127,
-                            255,
-                            0,
-                            0,
-                            255),
+                            color[0],
+                            color[1],
+                            color[2],
+                            0x20,
+                            color[0],
+                            color[1],
+                            color[2],
+                            0xff),
                         HandlePositions,
                         HandleObjectsCreated);
 
