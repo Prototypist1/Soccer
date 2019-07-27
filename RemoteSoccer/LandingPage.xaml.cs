@@ -26,7 +26,7 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class LandingPage : Page
     {
-        private Task connecting;
+        private readonly Task connecting;
 
         public LandingPage()
         {
@@ -35,7 +35,12 @@ namespace RemoteSoccer
             {
                 try
                 {
-                    await SingleSignalRHandler.Get();
+                    var handler = await SingleSignalRHandler.Get(async (ex, b)=> {
+                        if (b)
+                        {
+                            await ConnectionLost(ex);
+                        }
+                    });
                     await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
                         () =>
@@ -44,19 +49,22 @@ namespace RemoteSoccer
                             LoadingSpinner.IsActive = false;
                         });
                 }catch (Exception ex){
-
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () =>
-                        {
-                            // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = false;
-                            GameName.IsEnabled = false;
-                            StartButton.IsEnabled = false;
-                            LoadingText.Text = ex.Message;
-                            LoadingSpinner.IsActive = false;
-                        });
+                    await ConnectionLost(ex);
                 }
+            });
+        }
+
+        private async Task ConnectionLost(Exception ex)
+        {
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+            CoreDispatcherPriority.Normal,
+            () =>
+            {
+                JoinButton.IsEnabled = false;
+                GameName.IsEnabled = false;
+                StartButton.IsEnabled = false;
+                LoadingText.Text = ex.Message;
+                LoadingSpinner.IsActive = false;
             });
         }
 
@@ -79,7 +87,7 @@ namespace RemoteSoccer
                             LoadingText.Text = "Starting Game";
                             LoadingSpinner.IsActive = true;
                         });
-                    var handler = await SingleSignalRHandler.Get();
+                    var handler = await SingleSignalRHandler.GetOrBug();
                     var res = await handler.Send(new CreateGame(name));
                     if (res.Is1(out var gameCreated))
                     {
@@ -97,10 +105,11 @@ namespace RemoteSoccer
                         () =>
                         {
                             // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = false;
-                            GameName.IsEnabled = false;
-                            StartButton.IsEnabled = false;
-                            LoadingText.Visibility = Visibility.Collapsed;
+                            JoinButton.IsEnabled = true;
+                            GameName.IsEnabled = true;
+                            StartButton.IsEnabled = true;
+                            LoadingText.Text = "Game already exists";
+                            LoadingText.Visibility = Visibility.Visible;
                             LoadingSpinner.IsActive = false;
                         });
                     }
@@ -116,9 +125,9 @@ namespace RemoteSoccer
                         () =>
                         {
                             // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = false;
-                            GameName.IsEnabled = false;
-                            StartButton.IsEnabled = false;
+                            JoinButton.IsEnabled = true;
+                            GameName.IsEnabled = true;
+                            StartButton.IsEnabled = true;
                             LoadingText.Text = ex.Message;
                             LoadingSpinner.IsActive = false;
                         });
@@ -146,7 +155,7 @@ namespace RemoteSoccer
                             LoadingText.Text = "Joining Game";
                             LoadingSpinner.IsActive = true;
                         });
-                    var res = await (await SingleSignalRHandler.Get()).Send(new JoinGame(name));
+                    var res = await (await SingleSignalRHandler.GetOrBug()).Send(new JoinGame(name));
                     if (res.Is1(out var gameJoined))
                     {
                         await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
@@ -163,10 +172,11 @@ namespace RemoteSoccer
                         () =>
                         {
                             // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = false;
-                            GameName.IsEnabled = false;
-                            StartButton.IsEnabled = false;
-                            LoadingText.Visibility = Visibility.Collapsed;
+                            JoinButton.IsEnabled = true;
+                            GameName.IsEnabled = true;
+                            StartButton.IsEnabled = true;
+                            LoadingText.Text = "Game does not exist";
+                            LoadingText.Visibility = Visibility.Visible;
                             LoadingSpinner.IsActive = false;
                         });
                     }
@@ -186,6 +196,7 @@ namespace RemoteSoccer
                             GameName.IsEnabled = false;
                             StartButton.IsEnabled = false;
                             LoadingText.Text = ex.Message;
+                            LoadingText.Visibility = Visibility.Visible;
                             LoadingSpinner.IsActive = false;
                         });
                 }

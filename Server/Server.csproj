@@ -9,9 +9,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.1.0-preview1-10426" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.1.0-preview1-10442" />
     <PackageReference Include="Prototypist.Fluent" Version="1.0.0.2" />
-    <PackageReference Include="Prototypist.TaskChain" Version="1.0.5" />
+    <PackageReference Include="Prototypist.TaskChain" Version="1.0.6" />
   </ItemGroup>
 
   <ItemGroup>

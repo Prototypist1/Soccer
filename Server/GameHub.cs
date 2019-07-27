@@ -9,10 +9,11 @@ using System.Threading.Tasks;
 
 namespace Server
 {
-
     public class GameHubState {
 
+        // I don't really like how I am storing this data
         public readonly ConcurrentIndexed<string, Game> games = new ConcurrentIndexed<string, Game>();
+        public readonly ConcurrentIndexed<string, string> connectionIdToGameName = new ConcurrentIndexed<string, string>();
         public readonly IHubContext<GameHub> connectionManager;
 
         public GameHubState(IHubContext<GameHub> connectionManager)
@@ -33,8 +34,7 @@ namespace Server
 
         public async Task CreateGame(CreateGame createGame) {
             var myGame = new Game();
-            var game = state.games.GetOrAdd(createGame.Id,myGame);
-            if (ReferenceEquals(game, myGame)) {
+            if (state.games.TryAdd(createGame.Id, myGame) && state.connectionIdToGameName.TryAdd(Context.ConnectionId, createGame.Id)) {
                 await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createGame.Id));
                 myGame.Start(async positions =>
                 {
@@ -48,7 +48,7 @@ namespace Server
 
         public async Task JoinGame(JoinGame joinGame)
         {
-            if (state.games.ContainsKey(joinGame.Id))
+            if (state.games.ContainsKey(joinGame.Id) && state.connectionIdToGameName.TryAdd(Context.ConnectionId,joinGame.Id))
             {
                 await Clients.Caller.SendAsync(nameof(GameJoined), new GameJoined(joinGame.Id));
             }
@@ -62,18 +62,39 @@ namespace Server
         public async Task CreatePlayer(string game, CreatePlayer createPlayer)
         {
             // create the player
-            var playerCreated = state.games[game].CreatePlayer(createPlayer);
+            var playerCreated = state.games[game].CreatePlayer(Context.ConnectionId,createPlayer);
             // tell the other players
-            await Clients.Group(game.ToString()).SendAsync(nameof(ObjectsCreated),new ObjectsCreated(playerCreated.ToArray()));
+            await Clients.Group(game).SendAsync(nameof(ObjectsCreated),new ObjectsCreated(playerCreated.ToArray()));
             // tell the new player about everyone
             await Clients.Caller.SendAsync(nameof(ObjectsCreated), new ObjectsCreated(state.games[game].GetObjectsCreated().ToArray()));
             // add the player to the group
-            await Groups.AddToGroupAsync(Context.ConnectionId, game.ToString());
+            await Groups.AddToGroupAsync(Context.ConnectionId, game);
         }
 
         public void PlayerInputs(string game, PlayerInputs playerInputs)
         {
             state.games[game].PlayerInputs(playerInputs);
+        }
+
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            if (state.connectionIdToGameName.TryRemove(Context.ConnectionId,out var gameName)
+                && state.games.TryGetValue(gameName, out var game)){
+                if (game.TryDisconnect(Context.ConnectionId, out var objectRemoveds)) {
+
+                    // tell the other players
+                    await Clients.Group(gameName).SendAsync(nameof(ObjectsRemoved), new ObjectsRemoved(objectRemoveds.ToArray()));
+                    var dontwait = Task.Run(async () =>
+                    {
+                        await Task.Delay(5000);
+                        if (game.LastInput.AddMinutes(5) < DateTime.Now)
+                        {
+                            state.games.TryRemove(gameName, out var _);
+                        }
+                    });
+                }
+            }
+            await base.OnDisconnectedAsync(exception);
         }
     }
 }

@@ -132,7 +132,20 @@ namespace RemoteSoccer
             viewFrameWidth = GameHolder.ActualWidth;
             viewFrameHeight = GameHolder.ActualHeight;
 
-            
+            var dontwait = SingleSignalRHandler.Get(async (ex, b) => {
+                if (b)
+                {
+                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                    CoreDispatcherPriority.Normal,
+                    () =>
+                    {
+                        this.Frame.Navigate(typeof(LandingPage));
+                    });
+                }
+
+            });
+
+
             var points = new[] {
                             (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
                             (new Vector(0,footLen) ,new Vector(footLen,0)),
@@ -189,6 +202,21 @@ namespace RemoteSoccer
                     }
                 });
         }
+
+
+        private void HandleObjectsRemoved(ObjectsRemoved objectsRemoved)
+        {
+            var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                CoreDispatcherPriority.Normal,
+                () =>
+                {
+                    foreach (var objectRemoved in objectsRemoved.List)
+                    {
+                        elements.Remove(objectRemoved.Id);
+                    }
+                });
+        }
+
 
         double framesRecieved = 0;
         int currentDisplayFrame = 0;
@@ -282,10 +310,12 @@ namespace RemoteSoccer
             }
 #pragma warning disable CS0168 // Variable is declared but never used
             catch (Exception e)
-            {
-                var db = 0;
-            }
 #pragma warning restore CS0168 // Variable is declared but never used
+            {
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
+                var db = 0;
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
+            }
 
         }
 
@@ -312,7 +342,7 @@ namespace RemoteSoccer
                 {
                     foot = Guid.NewGuid();
                     body = Guid.NewGuid();
-                    var handler = await SingleSignalRHandler.Get();
+                    var handler = await SingleSignalRHandler.GetOrBug();
                     var random = new Random();
 
                     var color = new byte[3];
@@ -334,7 +364,8 @@ namespace RemoteSoccer
                             color[2],
                             0xff),
                         HandlePositions,
-                        HandleObjectsCreated);
+                        HandleObjectsCreated,
+                        HandleObjectsRemoved);
 
                     await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,

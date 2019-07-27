@@ -1,7 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Common
 {
+
+    public struct ObjectRemoved {
+        public ObjectRemoved(Guid id)
+        {
+            Id = id;
+        }
+
+        public Guid Id { get; set; }
+    }
+
+    public struct ObjectsRemoved
+    {
+        public ObjectsRemoved(ObjectRemoved[] list)
+        {
+            List = list ?? throw new ArgumentNullException(nameof(list));
+        }
+
+        public ObjectRemoved[] List { get; set; }
+
+    }
 
     public struct ObjectCreated
     {

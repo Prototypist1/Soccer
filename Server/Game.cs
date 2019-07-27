@@ -21,8 +21,10 @@ namespace Server
         private readonly Guid ballId;
         private readonly PhysicsObject ball;
         private readonly ConcurrentLinkedList<ObjectCreated> objectsCreated = new ConcurrentLinkedList<ObjectCreated>();
+        private readonly ConcurrentIndexed<string, List<ObjectCreated>> connectionObjects = new ConcurrentIndexed<string, List<ObjectCreated>>();
 
         private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
+        public DateTime LastInput { get; private set; } = DateTime.Now;
 
         public Game() {
             ballId = Guid.NewGuid();
@@ -66,7 +68,7 @@ namespace Server
 
         public IReadOnlyList<ObjectCreated> GetObjectsCreated() => objectsCreated;
 
-        internal List<ObjectCreated> CreatePlayer(CreatePlayer createPlayer)
+        internal List<ObjectCreated> CreatePlayer(string connectionId,CreatePlayer createPlayer)
         {
             double startX = 400;
             double startY = 400;
@@ -84,32 +86,48 @@ namespace Server
                 yMax - (createPlayer.BodyDiameter / 2.0));
             bodies[createPlayer.Body] = body;
 
-            var res = new List<ObjectCreated>(){
-                new ObjectCreated(
-                    body.X, 
-                    body.Y, 
+            var bodyCreated = new ObjectCreated(
+                    body.X,
+                    body.Y,
                     createPlayer.Body,
                     createPlayer.BodyDiameter,
                     createPlayer.BodyR,
                     createPlayer.BodyG,
                     createPlayer.BodyB,
-                    createPlayer.BodyA),
-                new ObjectCreated(foot.X, 
-                    foot.Y, 
+                    createPlayer.BodyA);
+            var footCreated = new ObjectCreated(foot.X,
+                    foot.Y,
                     createPlayer.Foot,
                     createPlayer.FootDiameter,
                     createPlayer.FootR,
                     createPlayer.FootG,
                     createPlayer.FootB,
-                    createPlayer.FootA) };
+                    createPlayer.FootA);
+            var res = new List<ObjectCreated>(){
+                bodyCreated,
+                footCreated };
 
             foreach (var item in res)
             {
                 objectsCreated.Add(item);
             }
+
+            connectionObjects.AddOrThrow(connectionId, res);
+
             return res;
         }
 
+        internal bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
+        {
+            if (connectionObjects.TryGetValue(connectionId, out var objectCreated)) {
+                objectRemoveds=  objectCreated.Select(x => new ObjectRemoved(x.Id)).ToList();
+                return true;
+            }
+            objectRemoveds = default;
+            return false;
+        }
+
+        
         public async void Start(Func<Positions,Task> onPositionsUpdate) {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -163,45 +181,64 @@ namespace Server
                     -(ball.Vx * ball.Mass) / 100.0,
                     -(ball.Vy * ball.Mass) / 100.0);
 
-                foreach (var input in inputSet.Values)
+
+                foreach (var center in bodies)
                 {
-                    var body = bodies[input.BodyId];
-                    var f = new Vector(input.BodyX, input.BodyY);
-                    if (f.Length > 0)
+                    var body = center.Value;
+                    var lastX = body.X;
+                    var lastY = body.Y;
+
+                    body.Update();
+
+                    if (inputSet.TryGetValue(center.Key, out var input))
                     {
-                        f = f.NewUnitized().NewScaled(MaxForce);
-                    }
-                    else {
-                        f = new Vector(-body.vx, -body.vy);
-                        if (f.Length > MaxForce)
+
+                       
+
+                        var f = new Vector(input.BodyX, input.BodyY);
+                        if (f.Length > 0)
                         {
                             f = f.NewUnitized().NewScaled(MaxForce);
                         }
+                        else
+                        {
+                            f = new Vector(-body.vx, -body.vy);
+                            if (f.Length > MaxForce)
+                            {
+                                f = f.NewUnitized().NewScaled(MaxForce);
+                            }
+                        }
+                        f = Bound(f, new Vector(body.vy, body.vy));
+
+                        body.ApplyForce(f.x, f.y);
+
+                        var foot = feet[input.FootId];
+
+                        // apply full force to get us to the bodies current pos
+                        foot.ApplyForce(
+                            (body.X - lastX - foot.Vx)* foot.Mass,
+                            (body.Y - lastY - foot.Vy) * foot.Mass);
+                        
+                        // values assuming that has been applied
+                        var footX = foot.X + (body.X - lastX);
+                        var footY = foot.Y + (body.Y - lastY);
+
+                        var max = 200.0;
+
+                        var target = new Vector(footX + input.FootX - body.X, footY + input.FootY - body.Y);
+
+                        if (target.Length > max)
+                        {
+                            target = target.NewScaled(max / target.Length);
+                        }
+
+                        var targetX = target.x + body.X;
+                        var targetY = target.y + body.Y;
+
+                        foot.ApplyForce(
+                            (targetX - footX) * foot.Mass / 2.0,//+ (f.x*foot.Mass)
+                            (targetY - footY) * foot.Mass / 2.0); //+ (f.y*foot.Mass)
                     }
-                    f = Bound(f, new Vector(body.vy, body.vy));
-
-                    body.ApplyForce(f.x,f.y);
-
-                    var foot = feet[input.FootId];
-                    var max = 200.0;
-
-                    var target = new Vector(foot.X + input.FootX - body.X, foot.Y + input.FootY - body.Y);
-
-                    if (target.Length > max)
-                    {
-                        target = target.NewScaled(max / target.Length);
-                    }
-
-                    var footTargetVx = (target.x + body.X) - foot.X;
-                    var footTargetVy = (target.y + body.Y) - foot.Y;
-
-                    foot.ApplyForce(
-                        ((footTargetVx - foot.Vx) / 2.0),//+ (f.x*foot.Mass)
-                        ((footTargetVy - foot.Vy) / 2.0)); //+ (f.y*foot.Mass)
-                }
-                foreach (var center in bodies.Values)
-                {
-                    center.Update();
                 }
                 simulationTime++;
                 physicsEngine.Run(x =>
@@ -233,6 +270,7 @@ namespace Server
 
         internal void PlayerInputs(PlayerInputs playerInputs)
         {
+            LastInput = DateTime.Now;
             playersInputs.Add(playerInputs);
         }
 
