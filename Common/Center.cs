@@ -32,31 +32,34 @@ namespace Common
             vx += fx;
             vy += fy;
 
+            var lastX = X;
+            var lastY = Y;
+
             X += vx;
             Y += vy;
 
             if (X > maxX)
             {
                 X = maxX;
-                vx = Math.Min(0, vx);
+                vx = X - lastX;
             }
 
             if (Y > maxY)
             {
                 Y = maxY;
-                vy = Math.Min(0, vy);
+                vy = Y- lastY;
             }
 
             if (X < minX)
             {
                 X = minX;
-                vx = Math.Max(0, vx);
+                vx = X - lastX;
             }
 
             if (Y < minY)
             {
                 Y = minY;
-                vy = Math.Max(0, vy);
+                vy = Y - lastY;
             }
 
             fx = 0;

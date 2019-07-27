@@ -221,12 +221,6 @@ namespace Server
                             (body.vx - lastVx)* foot.Mass,
                             (body.vy - lastVy) * foot.Mass);
 
-
-                        if (body.vx != foot.Vx) {
-                            var db = 0;
-                        }
-
-
                         // values assuming that has been applied
                         //var footX = foot.X + (body.X - lastX);
                         //var footY = foot.Y + (body.Y - lastY);
@@ -260,30 +254,14 @@ namespace Server
                     }
                 }
 
-                var mybody = bodies.First().Value;
-                var myfoot = feet.First().Value;
-                var footlastX = myfoot.X;
-                var VX = myfoot.Velocity.x;
-                var simTime = 0;
+                simulationTime++;
                 physicsEngine.Run(x =>
                 {
-                    simTime =(simulationTime = simulationTime+1);
-                    x.Simulate(simTime);
-
-
+                    x.Simulate(simulationTime);
                     return x;
                 });
 
-                if (Math.Abs(myfoot.X - (footlastX + VX)) > .0002 ) {
-                    var db = 0;
-                }
-
-                if (Math.Abs(myfoot.X - mybody.X) > .0002)
-                {
-                    var db = 0;
-                }
-
-                positions = new Positions(GetPosition().ToArray(), simTime);
+                positions = new Positions(GetPosition().ToArray(), simulationTime);
             }
 
             return true;
