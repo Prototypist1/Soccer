@@ -235,8 +235,8 @@ namespace RemoteSoccer
         {
             if (positions.Frame > currentDisplayFrame)
             {
-                framesRecieved++;
                 currentDisplayFrame = positions.Frame;
+                framesRecieved++;
                 foreach (var position in positions.PositionsList)
                 {
                     if (elements.TryGetValue(position.Id, out var element))
@@ -290,7 +290,7 @@ namespace RemoteSoccer
                     lastY = point.Y;
 
                     handler.Send(game,
-                        new PlayerInputs(/*footX*/0, /*footY*/0, bodyX, bodyY, foot, body));
+                        new PlayerInputs(footX, footY, bodyX, bodyY, foot, body));
 
                     scalerManager.RotateScalers(lines,ellipses);
 

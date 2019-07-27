@@ -216,30 +216,27 @@ namespace Server
 
                         var foot = feet[input.FootId];
 
-                        // apply full force to get us to the bodies current pos
+                        // apply whatever force was applied to that body
                         foot.ApplyForce(
                             (body.vx - lastVx)* foot.Mass,
                             (body.vy - lastVy) * foot.Mass);
 
-                        // values assuming that has been applied
-                        //var footX = foot.X + (body.X - lastX);
-                        //var footY = foot.Y + (body.Y - lastY);
 
-                        //var max = 200.0;
+                        var max = 200.0;
 
-                        //var target = new Vector(footX + input.FootX - body.X, footY + input.FootY - body.Y);
+                        var target = new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
 
-                        //if (target.Length > max)
-                        //{
-                        //    target = target.NewScaled(max / target.Length);
-                        //}
+                        if (target.Length > max)
+                        {
+                            target = target.NewScaled(max / target.Length);
+                        }
 
-                        //var targetX = target.x + body.X;
-                        //var targetY = target.y + body.Y;
+                        var targetX = target.x + body.X;
+                        var targetY = target.y + body.Y;
 
-                        //foot.ApplyForce(
-                        //    (targetX - footX) * foot.Mass / 2.0,//+ (f.x*foot.Mass)
-                        //    (targetY - footY) * foot.Mass / 2.0); //+ (f.y*foot.Mass)
+                        foot.ApplyForce(
+                            (targetX - (foot.X + foot.Vx)) * foot.Mass / 1.0,
+                            (targetY - (foot.Y + foot.Vy)) * foot.Mass / 1.0); 
                     }
                     else
                     {
