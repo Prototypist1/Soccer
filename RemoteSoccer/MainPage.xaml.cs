@@ -132,19 +132,17 @@ namespace RemoteSoccer
             viewFrameWidth = GameHolder.ActualWidth;
             viewFrameHeight = GameHolder.ActualHeight;
 
-            var dontwait = SingleSignalRHandler.Get(async (ex, b) => {
-                if (b)
+            Task.Run(async () =>
+            {
+                try
                 {
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                    CoreDispatcherPriority.Normal,
-                    () =>
-                    {
-                        this.Frame.Navigate(typeof(LandingPage));
-                    });
+                    (await SingleSignalRHandler.GetOrThrow()).SetOnClosed(OnDisconnect);
                 }
-
+                catch (Exception ex)
+                {
+                    await OnDisconnect(ex);
+                }
             });
-
 
             var points = new[] {
                             (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
@@ -172,6 +170,16 @@ namespace RemoteSoccer
 
                 GameArea.Children.Add(line);
             }
+        }
+
+        private async Task OnDisconnect(Exception ex)
+        {
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                    CoreDispatcherPriority.Normal,
+                    () =>
+                    {
+                        this.Frame.Navigate(typeof(LandingPage));
+                    });
         }
 
         private void HandleObjectsCreated(ObjectsCreated objectsCreated)
@@ -250,7 +258,7 @@ namespace RemoteSoccer
         }
 
         // assumed to be run on the main thread
-        private async void MainLoop(SignalRHandler handler, Guid foot, Guid body, string game)
+        private async void MainLoop(SingleSignalRHandler.SignalRHandler handler, Guid foot, Guid body, string game)
         {
             try
             {
@@ -282,7 +290,7 @@ namespace RemoteSoccer
                     lastY = point.Y;
 
                     handler.Send(game,
-                        new PlayerInputs(footX, footY, bodyX, bodyY, foot, body));
+                        new PlayerInputs(/*footX*/0, /*footY*/0, bodyX, bodyY, foot, body));
 
                     scalerManager.RotateScalers(lines,ellipses);
 
@@ -342,7 +350,7 @@ namespace RemoteSoccer
                 {
                     foot = Guid.NewGuid();
                     body = Guid.NewGuid();
-                    var handler = await SingleSignalRHandler.GetOrBug();
+                    var handler = await SingleSignalRHandler.GetOrThrow();
                     var random = new Random();
 
                     var color = new byte[3];

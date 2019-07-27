@@ -35,12 +35,8 @@ namespace RemoteSoccer
             {
                 try
                 {
-                    var handler = await SingleSignalRHandler.Get(async (ex, b)=> {
-                        if (b)
-                        {
-                            await ConnectionLost(ex);
-                        }
-                    });
+                    var handler = await SingleSignalRHandler.GetCreateOrThrow();
+                    handler.SetOnClosed(ConnectionLost);
                     await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
                         () =>
@@ -87,14 +83,15 @@ namespace RemoteSoccer
                             LoadingText.Text = "Starting Game";
                             LoadingSpinner.IsActive = true;
                         });
-                    var handler = await SingleSignalRHandler.GetOrBug();
+                    var handler = await SingleSignalRHandler.GetOrThrow();
                     var res = await handler.Send(new CreateGame(name));
                     if (res.Is1(out var gameCreated))
                     {
                         await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
-                        () =>
+                        async () =>
                         {
+                            (await SingleSignalRHandler.GetOrThrow()).SetOnClosed(null);
                             this.Frame.Navigate(typeof(MainPage), gameCreated.Id);
                         });
                     }
@@ -155,13 +152,14 @@ namespace RemoteSoccer
                             LoadingText.Text = "Joining Game";
                             LoadingSpinner.IsActive = true;
                         });
-                    var res = await (await SingleSignalRHandler.GetOrBug()).Send(new JoinGame(name));
+                    var res = await (await SingleSignalRHandler.GetOrThrow()).Send(new JoinGame(name));
                     if (res.Is1(out var gameJoined))
                     {
                         await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
-                        () =>
+                        async () =>
                         {
+                            (await SingleSignalRHandler.GetOrThrow()).SetOnClosed(null);
                             this.Frame.Navigate(typeof(MainPage), gameJoined.Id);
                         });
                     }

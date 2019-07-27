@@ -21,10 +21,10 @@ namespace Physics
                 }
             }
 
-
-            if ((physicsObject.Vx != 0 || physicsObject.Vy != 0) && physicsObject.Time < endTime)
+            // we put in move events even if it is not moving so we update times
+            if (physicsObject.Mobile && physicsObject.Time < endTime)
             {
-                eventManager.AddMoveEent(nextStep, physicsObject);
+                eventManager.AddMoveEvent(nextStep, physicsObject);
             }
         }
 
@@ -232,7 +232,7 @@ namespace Physics
 
         private readonly LinkedList<IEvent> Events = new LinkedList<IEvent>();
 
-        public void AddMoveEent(double time, PhysicsObject physicsObject)
+        public void AddMoveEvent(double time, PhysicsObject physicsObject)
         {
             var toAdd = new MoveEvent(time, physicsObject, physicsObject.X + ((time - physicsObject.Time) * physicsObject.Vx), physicsObject.Y + ((time - physicsObject.Time) * physicsObject.Vy));
             AddEvent(toAdd);

@@ -28,7 +28,7 @@ namespace Server
 
         public Game() {
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(1, 40, 450, 450);
+            ball = PhysicsObjectBuilder.Ball(1, 40, 800, 450);
 
             objectsCreated.Add(new ObjectCreated(
                 ball.X,
@@ -188,7 +188,8 @@ namespace Server
                     var lastX = body.X;
                     var lastY = body.Y;
 
-                    body.Update();
+                    var lastVx = body.vx;
+                    var lastVy = body.vy;
 
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
@@ -211,43 +212,78 @@ namespace Server
                         f = Bound(f, new Vector(body.vy, body.vy));
 
                         body.ApplyForce(f.x, f.y);
+                        body.Update();
 
                         var foot = feet[input.FootId];
 
                         // apply full force to get us to the bodies current pos
                         foot.ApplyForce(
-                            (body.X - lastX - foot.Vx)* foot.Mass,
-                            (body.Y - lastY - foot.Vy) * foot.Mass);
-                        
-                        // values assuming that has been applied
-                        var footX = foot.X + (body.X - lastX);
-                        var footY = foot.Y + (body.Y - lastY);
+                            (body.vx - lastVx)* foot.Mass,
+                            (body.vy - lastVy) * foot.Mass);
 
-                        var max = 200.0;
 
-                        var target = new Vector(footX + input.FootX - body.X, footY + input.FootY - body.Y);
-
-                        if (target.Length > max)
-                        {
-                            target = target.NewScaled(max / target.Length);
+                        if (body.vx != foot.Vx) {
+                            var db = 0;
                         }
 
-                        var targetX = target.x + body.X;
-                        var targetY = target.y + body.Y;
 
+                        // values assuming that has been applied
+                        //var footX = foot.X + (body.X - lastX);
+                        //var footY = foot.Y + (body.Y - lastY);
+
+                        //var max = 200.0;
+
+                        //var target = new Vector(footX + input.FootX - body.X, footY + input.FootY - body.Y);
+
+                        //if (target.Length > max)
+                        //{
+                        //    target = target.NewScaled(max / target.Length);
+                        //}
+
+                        //var targetX = target.x + body.X;
+                        //var targetY = target.y + body.Y;
+
+                        //foot.ApplyForce(
+                        //    (targetX - footX) * foot.Mass / 2.0,//+ (f.x*foot.Mass)
+                        //    (targetY - footY) * foot.Mass / 2.0); //+ (f.y*foot.Mass)
+                    }
+                    else
+                    {
+                        body.Update();
+
+                        var foot = feet[input.FootId];
+
+                        // apply full force to get us to the bodies current pos
                         foot.ApplyForce(
-                            (targetX - footX) * foot.Mass / 2.0,//+ (f.x*foot.Mass)
-                            (targetY - footY) * foot.Mass / 2.0); //+ (f.y*foot.Mass)
+                            (body.vx - lastVx) * foot.Mass,
+                            (body.vy - lastVy) * foot.Mass);
                     }
                 }
-                simulationTime++;
+
+                var mybody = bodies.First().Value;
+                var myfoot = feet.First().Value;
+                var footlastX = myfoot.X;
+                var VX = myfoot.Velocity.x;
+                var simTime = 0;
                 physicsEngine.Run(x =>
                 {
-                    x.Simulate(simulationTime);
+                    simTime =(simulationTime = simulationTime+1);
+                    x.Simulate(simTime);
+
+
                     return x;
                 });
-                
-                positions = new Positions(GetPosition().ToArray(), simulationTime);
+
+                if (Math.Abs(myfoot.X - (footlastX + VX)) > .0002 ) {
+                    var db = 0;
+                }
+
+                if (Math.Abs(myfoot.X - mybody.X) > .0002)
+                {
+                    var db = 0;
+                }
+
+                positions = new Positions(GetPosition().ToArray(), simTime);
             }
 
             return true;
