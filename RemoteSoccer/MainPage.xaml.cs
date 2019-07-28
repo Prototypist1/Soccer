@@ -1,4 +1,5 @@
 ﻿using Common;
+using Microsoft.Toolkit.Uwp.UI.Controls;
 using Physics;
 using Prototypist.TaskChain;
 using System;
@@ -34,12 +35,12 @@ namespace RemoteSoccer
     {
         private class ElementEntry
         {
-            public readonly Ellipse element;
+            public readonly UIElement element;
             public double X;
             public double Y;
             public double Diameter;
 
-            public ElementEntry(Ellipse element, double x, double y, double diameter)
+            public ElementEntry(UIElement element, double x, double y, double diameter)
             {
                 this.element = element ?? throw new ArgumentNullException(nameof(element));
                 X = x;
@@ -65,12 +66,14 @@ namespace RemoteSoccer
 
         private class EllipseScaling
         {
-            public Ellipse Ellipse;
+            public readonly UIElement Element;
+            public readonly Ellipse ellipse;
             public double diameter;
 
-            public EllipseScaling(Ellipse ellipse, double diameter)
+            public EllipseScaling(UIElement element, Ellipse ellipse, double diameter)
             {
-                Ellipse = ellipse ?? throw new ArgumentNullException(nameof(ellipse));
+                Element = element ?? throw new ArgumentNullException(nameof(element));
+                this.ellipse = ellipse ?? throw new ArgumentNullException(nameof(ellipse));
                 this.diameter = diameter;
             }
         }
@@ -116,8 +119,8 @@ namespace RemoteSoccer
                 }
                 foreach (var ellipse in ellipses)
                 {
-                    ellipse.Ellipse.Width = scaler.Scale(ellipse.diameter);
-                    ellipse.Ellipse.Height = scaler.Scale(ellipse.diameter);
+                    ellipse.ellipse.Width = scaler.Scale(ellipse.diameter);
+                    ellipse.ellipse.Height = scaler.Scale(ellipse.diameter);
                 }
                 return true;
             }
@@ -194,7 +197,7 @@ namespace RemoteSoccer
 
                         if (!elements.ContainsKey(objectCreated.Id))
                         {
-                            var ellispe = new Ellipse()
+                            var ellipse = new Ellipse()
                             {
                                 Width = scalerManager.GetScaler().Scale(objectCreated.Diameter),
                                 Height = scalerManager.GetScaler().Scale(objectCreated.Diameter),
@@ -204,9 +207,21 @@ namespace RemoteSoccer
                                     objectCreated.G,
                                     objectCreated.B)),
                             };
-                            elements.Add(objectCreated.Id, new ElementEntry(ellispe, -1000, -1000, objectCreated.Diameter));
-                            ellipses.Add(new EllipseScaling(ellispe, objectCreated.Diameter));
-                            GameArea.Children.Add(ellispe);
+
+                            var dropShadow = new DropShadowPanel()
+                            {
+                                Content = ellipse,
+                                BlurRadius = 30,
+                                ShadowOpacity = .8,
+                                Color = Color.FromArgb(0xff,(byte)((int)0xff - (int)objectCreated.R), (byte)((int)0xff - (int)objectCreated.G), (byte)((int)0xff - (int)objectCreated.B))
+                            };
+
+                            elements.Add(objectCreated.Id, new ElementEntry(dropShadow, -1000, -1000, objectCreated.Diameter) {
+                                X =objectCreated.X,
+                                Y = objectCreated.Y
+                            });
+                            ellipses.Add(new EllipseScaling(dropShadow, ellipse, objectCreated.Diameter));
+                            GameArea.Children.Add(dropShadow);
                         }
                     }
                 });

@@ -55,7 +55,6 @@ namespace Physics
         public abstract void RemoveFromGrid(PhysicsObject physicsObject, GridManager gridManager);
     }
 
-
     internal class Line : Shape
     {
         /// <summary>
@@ -271,15 +270,16 @@ namespace Physics
 
     internal class Ball: Shape
     {
-        
 
         private readonly double Radius;
 
-        public override bool Mobile => true;
 
-        public Ball(double radius)
+        public override bool Mobile { get; }
+
+        public Ball(double radius, bool  mobile)
         {
             Radius = radius;
+            Mobile = mobile;
         }
 
         protected override bool TryNextCollisionBall(PhysicsObject myPhysicsObject, PhysicsObject<Ball> that, double endTime, out IEvent collision) 
@@ -575,12 +575,15 @@ namespace Physics
 
     public static class PhysicsObjectBuilder {
 
-        public static PhysicsObject Player(double mass, double radius, double x, double y) => new PhysicsObject<Ball>(mass, new Ball(radius), x, y);
-        public static PhysicsObject Ball(double mass,double radius, double x, double y) => new PhysicsObject<Ball>(mass,new Ball(radius),x,y);
+        public static PhysicsObject Player(double mass, double radius, double x, double y) => new PhysicsObject<Ball>(mass, new Ball(radius, true), x, y);
+        public static PhysicsObject Ball(double mass,double radius, double x, double y) => new PhysicsObject<Ball>(mass,new Ball(radius, true),x,y);
         public static PhysicsObject Line(Vector start, Vector end)
         {
             return new PhysicsObject<Line>(0, new Line(start,end), 0, 0);
         }
+
+        public static PhysicsObject Goal(double radius, double x, double y, Action<PhysicsObject> callback) => new Trigger<Ball>(new Ball(radius, false), x, y, callback);
+
     }
 
     public abstract class PhysicsObject
@@ -653,6 +656,37 @@ namespace Physics
         internal override void RemoveFromGrid(GridManager gridManager) => shape.RemoveFromGrid(this,gridManager);
 
     }
+
+    internal class Trigger<TShape> : PhysicsObject
+        where TShape : IShape
+    {
+
+        public Trigger(TShape shape, double x, double y, Action<PhysicsObject> callback) : base(0, x, y)
+        {
+            this.shape = shape;
+            this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
+        }
+
+        public readonly TShape shape;
+        private readonly Action<PhysicsObject> callback;
+
+        public override bool Mobile => shape.Mobile;
+
+        internal override bool TryNextCollision(PhysicsObject that, double endTime, out IEvent collision)
+        {
+            if (shape.TryNextCollision(this, that, endTime, out _)) {
+                callback(that);
+            }
+            collision = default;
+            return false;
+        }
+
+        internal override HashSet<PhysicsObject> AddToGrid(GridManager gridManager) => shape.AddToGrid(this, gridManager);
+
+        internal override void RemoveFromGrid(GridManager gridManager) => shape.RemoveFromGrid(this, gridManager);
+
+    }
+
 
     public static class Help {
         public static double BoundAddition(double x1, double x2) {

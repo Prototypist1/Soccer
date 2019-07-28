@@ -31,14 +31,48 @@ namespace Server
             ball = PhysicsObjectBuilder.Ball(1, 40, 800, 450);
 
             objectsCreated.AddOrThrow(new ObjectCreated(
-                ball.X,
-                ball.Y,
-                ballId,
-                80,
-                0,
-                0,
-                0,
-                255));
+               ball.X,
+               ball.Y,
+               ballId,
+               80,
+               0,
+               0,
+               0,
+               255));
+
+            var leftGoalId = Guid.NewGuid();
+            var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=> {
+                if (x == ball) {
+
+                }
+            });
+            objectsCreated.AddOrThrow(new ObjectCreated(
+               leftGoal.X,
+               leftGoal.Y,
+               leftGoalId,
+               footLen*2,
+               0xff,
+               0,
+               0,
+               0xff));
+
+            var rightGoalId = Guid.NewGuid();
+            var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x => {
+                if (x == ball)
+                {
+
+                }
+            });
+            objectsCreated.AddOrThrow(new ObjectCreated(
+               rightGoal.X,
+               rightGoal.Y,
+               rightGoalId,
+               footLen * 2,
+               0,
+               0xff,
+               0,
+               0xff));
+
 
             var points = new[] {
                 (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
@@ -55,6 +89,8 @@ namespace Server
             physicsEngine.Run(x =>
             {
                 x.AddObject(ball);
+                x.AddObject(leftGoal);
+                x.AddObject(rightGoal);
                 foreach (var side in points)
                 {
                     var line = PhysicsObjectBuilder.Line(side.Item1, side.Item2);
