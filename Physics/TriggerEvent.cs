@@ -1,30 +1,25 @@
-﻿namespace Physics
-{
+﻿using System;
 
-    internal readonly struct UpdatePositionVelocityEvent : IEvent
+namespace Physics
+{
+    internal readonly struct TriggerEvent : IEvent
     {
         private readonly PhysicsObject myPhysicsObject;
         private readonly double start_vx;
         private readonly double start_vy;
         private readonly double start_x;
         private readonly double start_y;
-        private readonly double x;
-        private readonly double y;
-        private readonly double vx;
-        private readonly double vy;
+        private readonly Action<PhysicsObject> callback;
 
-        public UpdatePositionVelocityEvent(double time, PhysicsObject myPhysicsObject, double x, double y, double vx, double vy)
+        public TriggerEvent(double time, PhysicsObject myPhysicsObject, Action<PhysicsObject> callback)
         {
             this.Time = time;
-            this.myPhysicsObject = myPhysicsObject;
+            this.myPhysicsObject = myPhysicsObject ?? throw new ArgumentNullException(nameof(myPhysicsObject));
+            this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
             this.start_vx = myPhysicsObject.Vx;
             this.start_vy = myPhysicsObject.Vy;
             this.start_x = myPhysicsObject.X;
             this.start_y = myPhysicsObject.Y;
-            this.x = x;
-            this.y = y;
-            this.vx = vx;
-            this.vy = vy;
         }
 
         public double Time { get; }
@@ -41,11 +36,11 @@
 
             myPhysicsObject.RemoveFromGrid(gridManager);
 
-            myPhysicsObject.X = x;
-            myPhysicsObject.Y = y;
-            myPhysicsObject.Vx = vx;
-            myPhysicsObject.Vy = vy;
+            myPhysicsObject.X = myPhysicsObject.X + (Time - myPhysicsObject.Time) * myPhysicsObject.Vx;
+            myPhysicsObject.Y = myPhysicsObject.Y + (Time - myPhysicsObject.Time) * myPhysicsObject.Vy;
             myPhysicsObject.Time = Time;
+
+            callback(myPhysicsObject);
 
             EventManager.WhatHappensNext(myPhysicsObject, gridManager, eventManager, endtime);
         }

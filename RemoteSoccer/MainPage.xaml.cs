@@ -208,23 +208,24 @@ namespace RemoteSoccer
                                     objectCreated.B)),
                             };
 
-                            var dropShadow = new DropShadowPanel()
-                            {
-                                Content = ellipse,
-                                BlurRadius = 30,
-                                ShadowOpacity = .8,
-                                Color = Color.FromArgb(0xff,
-                                0x00,
-                                0x00,
-                                0x00)
-                            };
+                            //var dropShadow = new DropShadowPanel()
+                            //{
+                            //    Content = ellipse,
+                            //    BlurRadius = 30,
+                            //    ShadowOpacity = .8,
+                            //    Color = Color.FromArgb(0xff,
+                            //    0x00,
+                            //    0x00,
+                            //    0x00)
+                            //};
+                            Canvas.SetZIndex(ellipse, objectCreated.Z);
 
-                            elements.Add(objectCreated.Id, new ElementEntry(dropShadow, -1000, -1000, objectCreated.Diameter) {
+                            elements.Add(objectCreated.Id, new ElementEntry(ellipse, -1000, -1000, objectCreated.Diameter) {
                                 X =objectCreated.X,
                                 Y = objectCreated.Y
                             });
-                            ellipses.Add(new EllipseScaling(dropShadow, ellipse, objectCreated.Diameter));
-                            GameArea.Children.Add(dropShadow);
+                            ellipses.Add(new EllipseScaling(ellipse, ellipse, objectCreated.Diameter));
+                            GameArea.Children.Add(ellipse);
                         }
                     }
                 });

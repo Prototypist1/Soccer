@@ -26,10 +26,11 @@ namespace Common
 
     public struct ObjectCreated
     {
-        public ObjectCreated(double x, double y, Guid id, double diameter, byte r, byte g, byte b, byte a)
+        public ObjectCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a)
         {
             X = x;
             Y = y;
+            Z = z;
             Id = id;
             Diameter = diameter;
             R = r;
@@ -40,6 +41,7 @@ namespace Common
 
         public double X { get; set; }
         public double Y { get; set; }
+        public int Z { get; set; }
         public Guid Id { get; set; }
         public double Diameter { get; set; }
         public byte R { get; set; }

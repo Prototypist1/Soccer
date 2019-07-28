@@ -29,7 +29,7 @@ namespace Physics
         }
 
 
-        internal struct CollisiphysicsObjectEven : IEvent
+        internal readonly struct CollisiphysicsObjectEven : IEvent
         {
             public double Time { get; }
             private readonly PhysicsObject physicsObject1, physicsObject2;

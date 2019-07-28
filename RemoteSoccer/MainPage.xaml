@@ -10,6 +10,8 @@
 
     <Grid x:Name="GameHolder" SizeChanged="GameHolder_SizeChanged" >
 
+        <Canvas x:Name="GameArea" />
+
         <Border BorderThickness="10" VerticalAlignment="Bottom">
             <TextBlock x:Name="Fps" Text="" />
         </Border>
@@ -21,8 +23,6 @@
         <Border BorderThickness="10" HorizontalAlignment="Right">
             <TextBlock x:Name="RightScore" Text="0" FontSize="100" />
         </Border>
-
-        <Canvas x:Name="GameArea" />
         
     </Grid>
 </Page>

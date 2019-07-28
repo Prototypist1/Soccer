@@ -9,7 +9,8 @@ using static Physics.EventManager;
 // sub classes...
 namespace Physics
 {
-    public struct Bounds {
+    public struct Bounds
+    {
         public readonly double maxX, maxY, minX, minY;
 
         public Bounds(double maxX, double maxY, double minX, double minY)
@@ -21,20 +22,20 @@ namespace Physics
         }
     }
 
-    internal interface IShape {
+    internal interface IShape
+    {
         bool Mobile { get; }
         bool TryNextCollision(PhysicsObject self, PhysicsObject that, double endTime, out IEvent collision);
         HashSet<PhysicsObject> AddToGrid(PhysicsObject physicsObject, GridManager gridManager);
         void RemoveFromGrid(PhysicsObject physicsObject, GridManager gridManager);
     }
 
-    internal abstract class Shape: IShape
+    internal abstract class Shape : IShape
     {
         public abstract bool Mobile { get; }
 
         public bool TryNextCollision(PhysicsObject self, PhysicsObject that, double endTime, out IEvent collision)
         {
-
             if (that is PhysicsObject<Ball> ball)
             {
                 return TryNextCollisionBall(self, ball, endTime, out collision);
@@ -43,9 +44,7 @@ namespace Physics
             {
                 return TryNextCollisionLine(self, line, endTime, out collision);
             }
-            //if (that is Trigger<Ball> trigger) {
-            //    return TryNextCollisionBall(self, trigger, endTime, out collision);
-            //}
+
             else
             {
                 throw new NotImplementedException();
@@ -74,8 +73,8 @@ namespace Physics
             NormalDistance = end.Dot(NormalUnit);
         }
 
-        public Vector NormalUnit { get;  }
-        public double NormalDistance { get;  }
+        public Vector NormalUnit { get; }
+        public double NormalDistance { get; }
         public Vector Start { get; }
         public Vector End { get; }
 
@@ -117,7 +116,7 @@ namespace Physics
                     proposals.Add(new Proposal(
                         (((Math.Floor(at.x / gridManager.stepSize) + 1) * gridManager.stepSize) - at.x) / v.x,
                         (int)Math.Floor(at.x / gridManager.stepSize) + 1,
-                        (int)Math.Floor(at.y/ gridManager.stepSize)));
+                        (int)Math.Floor(at.y / gridManager.stepSize)));
                 }
                 if (v.x < 0)
                 {
@@ -162,7 +161,7 @@ namespace Physics
                     throw new Exception();
                 }
 
-                var take = proposals.OrderBy(x=>x.time).First();
+                var take = proposals.OrderBy(x => x.time).First();
                 timeAt += take.time;
 
                 var current = gridManager.Grid[take.x, take.y];
@@ -271,28 +270,28 @@ namespace Physics
         }
     }
 
-    internal class Ball: Shape
+    internal class Ball : Shape
     {
 
         private readonly double Radius;
 
-
         public override bool Mobile { get; }
 
-        public Ball(double radius, bool  mobile)
+        // nullable
+        private readonly Func<PhysicsObject, bool> wouldTrigger;
+
+        private readonly Action<PhysicsObject> trigger;
+
+        public Ball(double radius, bool mobile, Action<PhysicsObject> trigger, Func<PhysicsObject, bool> wouldTrigger)
         {
             Radius = radius;
             Mobile = mobile;
+            this.trigger = trigger;
+            this.wouldTrigger = wouldTrigger;
         }
 
-        protected override bool TryNextCollisionBall(PhysicsObject myPhysicsObject, PhysicsObject<Ball> that, double endTime, out IEvent collision) 
+        private bool TryCollisionBallTime(PhysicsObject<Ball> self, PhysicsObject<Ball> that, double endTime, out double time)
         {
-            // slop town
-            // i think shapes should be more public and own or exten physics object
-            // but 🤷‍ whatever
-            if (!(myPhysicsObject is PhysicsObject<Ball> self)) {
-                throw new Exception();
-            }
 
             double startTime, thisX0, thatX0, thisY0, thatY0, DX, DY;
             // how  are they moving relitive to us
@@ -319,12 +318,11 @@ namespace Physics
             DX = thatX0 - thisX0;
             DY = thatY0 - thisY0;
 
-
             // if the objects are not moving towards each other dont bother
             var V = -new Vector(DVX, DVY).Dot(new Vector(DX, DY).NewUnitized());
             if (V <= 0)
             {
-                collision = default;
+                time = default;
                 return false;
             }
 
@@ -338,17 +336,66 @@ namespace Physics
             if (TrySolveQuadratic(A, B, C, out var res) && startTime + res <= endTime)
             {
 
-                collision = new CollisiphysicsObjectEven(
-                    startTime + res,
-                    self,
-                    that,
-#pragma warning disable IDE0047 // Remove unnecessary parentheses
-                    self.X + (self.Vx * ((startTime + res) - self.Time)),
-                    self.Y + (self.Vy * ((startTime + res) - self.Time)),
-                    that.X + (that.Vx * ((startTime + res) - that.Time)),
-                    that.Y + (that.Vy * ((startTime + res) - that.Time)));
-#pragma warning restore IDE0047 // Remove unnecessary parentheses
+                time = startTime + res;
+                return true;
+            }
+            time = default;
+            return false;
 
+
+        }
+
+        protected override bool TryNextCollisionBall(PhysicsObject myPhysicsObject, PhysicsObject<Ball> that, double endTime, out IEvent collision)
+        {
+            if (!(myPhysicsObject is PhysicsObject<Ball> self))
+            {
+                throw new Exception();
+            }
+
+            if (TryCollisionBallTime(self, that, endTime, out double res))
+            {
+                if (trigger == null && that.shape.trigger == null)
+                {
+                    collision = new CollisiphysicsObjectEven(
+                        res,
+                        self,
+                        that,
+#pragma warning disable IDE0047 // Remove unnecessary parentheses
+                    self.X + (self.Vx * (res - self.Time)),
+                        self.Y + (self.Vy * (res - self.Time)),
+                        that.X + (that.Vx * (res - that.Time)),
+                        that.Y + (that.Vy * (res - that.Time)));
+#pragma warning restore IDE0047 // Remove unnecessary parentheses
+                }
+                else if (trigger != null && that.shape.trigger == null)
+                {
+                    if (that.Time >= res || !wouldTrigger(that)) {
+                        collision = default;
+                        return false;
+                    }
+
+                    collision = new TriggerEvent(
+                        res,
+                        that,
+                        trigger);
+                }
+                else if (trigger == null && that.shape.trigger != null)
+                {
+                    if (self.Time >= res || !that.shape.wouldTrigger(self))
+                    {
+                        collision = default;
+                        return false;
+                    }
+
+                    collision = new TriggerEvent(
+                        res,
+                        self,
+                        that.shape.trigger);
+                }
+                else
+                {
+                    throw new Exception("two triggers set to collide?");
+                }
                 return true;
             }
             collision = default;
@@ -363,8 +410,8 @@ namespace Physics
                 throw new Exception();
             }
 
-            var normalDistance =  new Vector(self.X, self.Y).Dot(line.shape.NormalUnit.NewUnitized()) ;//myPhysicsObject.X
-            var normalVelocity = new Vector(self.Vx, self.Vy).Dot(line.shape.NormalUnit.NewUnitized()) ;//myPhysicsObject.Vx
+            var normalDistance = new Vector(self.X, self.Y).Dot(line.shape.NormalUnit.NewUnitized());//myPhysicsObject.X
+            var normalVelocity = new Vector(self.Vx, self.Vy).Dot(line.shape.NormalUnit.NewUnitized());//myPhysicsObject.Vx
             var lineNormalDistance = line.shape.NormalDistance;//line.X
 
             if (lineNormalDistance > normalDistance)
@@ -501,7 +548,7 @@ namespace Physics
             }
         }
 
-        public override HashSet<PhysicsObject> AddToGrid(PhysicsObject physicsObject,GridManager gridManager)
+        public override HashSet<PhysicsObject> AddToGrid(PhysicsObject physicsObject, GridManager gridManager)
         {
             var couldHits = new HashSet<PhysicsObject>();
 
@@ -515,10 +562,11 @@ namespace Physics
                     Help.BoundAddition(inner.minX, -gridManager.stepSize) / gridManager.stepSize,
                     Help.BoundAddition(inner.minY, -gridManager.stepSize) / gridManager.stepSize);
             }
-            else {
+            else
+            {
 
                 inner = new Bounds(
-                    inner.maxX/ gridManager.stepSize,
+                    inner.maxX / gridManager.stepSize,
                     inner.maxY / gridManager.stepSize,
                     inner.minX / gridManager.stepSize,
                     inner.minY / gridManager.stepSize);
@@ -548,7 +596,7 @@ namespace Physics
 
         private Bounds GetBounds(PhysicsObject physicsObject)
         {
-            var inner =  new Bounds(Radius, Radius, -Radius, -Radius);
+            var inner = new Bounds(Radius, Radius, -Radius, -Radius);
 
             return new Bounds(
                 Help.BoundAddition(inner.maxX, physicsObject.X),
@@ -584,18 +632,21 @@ namespace Physics
                 }
             }
         }
+
+
     }
 
-    public static class PhysicsObjectBuilder {
+    public static class PhysicsObjectBuilder
+    {
 
-        public static PhysicsObject Player(double mass, double radius, double x, double y) => new PhysicsObject<Ball>(mass, new Ball(radius, true), x, y);
-        public static PhysicsObject Ball(double mass,double radius, double x, double y) => new PhysicsObject<Ball>(mass,new Ball(radius, true),x,y);
+        public static PhysicsObject Player(double mass, double radius, double x, double y) => new PhysicsObject<Ball>(mass, new Ball(radius, true,null, null), x, y);
+        public static PhysicsObject Ball(double mass, double radius, double x, double y) => new PhysicsObject<Ball>(mass, new Ball(radius, true,null,null), x, y);
         public static PhysicsObject Line(Vector start, Vector end)
         {
-            return new PhysicsObject<Line>(0, new Line(start,end), 0, 0);
+            return new PhysicsObject<Line>(0, new Line(start, end), 0, 0);
         }
 
-        public static PhysicsObject Goal(double radius, double x, double y, Action<PhysicsObject> callback) => new Trigger<Ball>(new Ball(radius, false), x, y, callback);
+        public static PhysicsObject Goal(double radius, double x, double y, Func<PhysicsObject, bool> wouldTrigger, Action<PhysicsObject> callback) => new PhysicsObject<Ball>(0,new Ball(radius, false, callback, wouldTrigger), x, y );
 
     }
 
@@ -645,11 +696,11 @@ namespace Physics
         internal abstract void RemoveFromGrid(GridManager gridManager);
     }
 
-    internal class  PhysicsObject<TShape>: PhysicsObject
+    internal class PhysicsObject<TShape> : PhysicsObject
         where TShape : IShape
     {
 
-        public PhysicsObject(double mass, TShape shape, double x, double y): base(mass,x,y)
+        public PhysicsObject(double mass, TShape shape, double x, double y) : base(mass, x, y)
         {
             this.shape = shape;
         }
@@ -664,39 +715,18 @@ namespace Physics
         }
 
 
-        internal override HashSet<PhysicsObject> AddToGrid(GridManager gridManager) => shape.AddToGrid(this,gridManager);
+        internal override HashSet<PhysicsObject> AddToGrid(GridManager gridManager) => shape.AddToGrid(this, gridManager);
 
-        internal override void RemoveFromGrid(GridManager gridManager) => shape.RemoveFromGrid(this,gridManager);
+        internal override void RemoveFromGrid(GridManager gridManager) => shape.RemoveFromGrid(this, gridManager);
 
     }
 
-    internal class Trigger<TShape> : PhysicsObject<TShape>
-        where TShape:IShape
+    public static class Help
     {
-
-        public Trigger(TShape shape, double x, double y, Action<PhysicsObject> callback) : base(0, shape, x, y)
+        public static double BoundAddition(double x1, double x2)
         {
-            this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
-        }
-
-        private readonly Action<PhysicsObject> callback;
-
-
-        internal override bool TryNextCollision(PhysicsObject that, double endTime, out IEvent collision)
-        {
-            if (shape.TryNextCollision(this, that, endTime, out _)) {
-                callback(that);
-            }
-            collision = default;
-            return false;
-        }
-
-    }
-
-
-    public static class Help {
-        public static double BoundAddition(double x1, double x2) {
-            if (x1 == double.MaxValue || x1 == double.MinValue) {
+            if (x1 == double.MaxValue || x1 == double.MinValue)
+            {
                 return x1;
             }
             return x1 + x2;

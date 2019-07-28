@@ -15,6 +15,7 @@ namespace Server
         private const double footLen = 200;
         private const double xMax = 3200;
         private const double yMax = 1800;
+        private const int Radius = 40;
         private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>( new PhysicsEngine(100, xMax+100, yMax+100));
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
@@ -27,6 +28,12 @@ namespace Server
         public DateTime LastInput { get; private set; } = DateTime.Now;
         private int leftScore=0, rightScore=0;
 
+
+        private const int goalZ = 0;
+        private const int bodyZ = 1;
+        private const int ballZ = 2;
+        private const int footZ = 2;
+
         public Game(Action<UpdateScore> onUpdateScore) {
             if (onUpdateScore == null)
             {
@@ -34,11 +41,12 @@ namespace Server
             }
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(1, 40, 800, 450);
+            ball = PhysicsObjectBuilder.Ball(1, Radius, 800, 450);
 
             objectsCreated.AddOrThrow(new ObjectCreated(
                ball.X,
                ball.Y,
+               ballZ,
                ballId,
                80,
                0,
@@ -47,15 +55,14 @@ namespace Server
                255));
 
             var leftGoalId = Guid.NewGuid();
-            var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=> {
-                if (x == ball) {
+            var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=>x== ball, x=>{
                     rightScore++;
                     onUpdateScore(new UpdateScore() { Left= leftScore, Right = rightScore});
-                }
             });
             objectsCreated.AddOrThrow(new ObjectCreated(
                leftGoal.X,
                leftGoal.Y,
+               goalZ,
                leftGoalId,
                footLen*2,
                0xff,
@@ -64,16 +71,14 @@ namespace Server
                0xff));
 
             var rightGoalId = Guid.NewGuid();
-            var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x => {
-                if (x == ball)
-                {
-                    leftScore++;
-                    onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
-                }
+            var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x =>x==ball, x=> {
+                leftScore++;
+                onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
             });
             objectsCreated.AddOrThrow(new ObjectCreated(
                rightGoal.X,
                rightGoal.Y,
+               goalZ,
                rightGoalId,
                footLen * 2,
                0,
@@ -134,14 +139,17 @@ namespace Server
             var bodyCreated = new ObjectCreated(
                     body.X,
                     body.Y,
+                    bodyZ,
                     createPlayer.Body,
                     createPlayer.BodyDiameter,
                     createPlayer.BodyR,
                     createPlayer.BodyG,
                     createPlayer.BodyB,
                     createPlayer.BodyA);
-            var footCreated = new ObjectCreated(foot.X,
+            var footCreated = new ObjectCreated(
+                    foot.X,
                     foot.Y,
+                    footZ,
                     createPlayer.Foot,
                     createPlayer.FootDiameter,
                     createPlayer.FootR,
@@ -268,7 +276,7 @@ namespace Server
                             (body.vy - lastVy) * foot.Mass);
 
 
-                        var max = 200.0;
+                        var max = footLen- Radius;
 
                         var target = new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
 
