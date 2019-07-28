@@ -78,21 +78,31 @@ namespace Server
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            if (state.connectionIdToGameName.TryRemove(Context.ConnectionId,out var gameName)
-                && state.games.TryGetValue(gameName, out var game)){
-                if (game.TryDisconnect(Context.ConnectionId, out var objectRemoveds)) {
-
-                    // tell the other players
-                    await Clients.Group(gameName).SendAsync(nameof(ObjectsRemoved), new ObjectsRemoved(objectRemoveds.ToArray()));
-                    var dontwait = Task.Run(async () =>
+            try
+            {
+                if (state.connectionIdToGameName.TryRemove(Context.ConnectionId, out var gameName))
+                {
+                    if (state.games.TryGetValue(gameName, out var game))
                     {
-                        await Task.Delay(5000);
-                        if (game.LastInput.AddMinutes(5) < DateTime.Now)
+                        if (game.TryDisconnect(Context.ConnectionId, out var objectRemoveds))
                         {
-                            state.games.TryRemove(gameName, out var _);
+
+                            // tell the other players
+                            await Clients.Group(gameName).SendAsync(nameof(ObjectsRemoved), new ObjectsRemoved(objectRemoveds.ToArray()));
+                            var dontwait = Task.Run(async () =>
+                            {
+                                await Task.Delay(5000);
+                                if (game.LastInput.AddMinutes(5) < DateTime.Now)
+                                {
+                                    state.games.TryRemove(gameName, out var _);
+                                }
+                            });
                         }
-                    });
+                    }
                 }
+            }
+            catch (Exception e) {
+                var db = 0;
             }
             await base.OnDisconnectedAsync(exception);
         }

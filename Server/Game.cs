@@ -13,14 +13,14 @@ namespace Server
 {
     public class Game {
         private const double footLen = 200;
-        private const double xMax = 1600;
-        private const double yMax = 900;
+        private const double xMax = 3200;
+        private const double yMax = 1800;
         private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>( new PhysicsEngine(100, xMax+100, yMax+100));
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
         private readonly PhysicsObject ball;
-        private readonly ConcurrentLinkedList<ObjectCreated> objectsCreated = new ConcurrentLinkedList<ObjectCreated>();
+        private readonly ConcurrentSet<ObjectCreated> objectsCreated = new ConcurrentSet<ObjectCreated>();
         private readonly ConcurrentIndexed<string, List<ObjectCreated>> connectionObjects = new ConcurrentIndexed<string, List<ObjectCreated>>();
 
         private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
@@ -30,7 +30,7 @@ namespace Server
             ballId = Guid.NewGuid();
             ball = PhysicsObjectBuilder.Ball(1, 40, 800, 450);
 
-            objectsCreated.Add(new ObjectCreated(
+            objectsCreated.AddOrThrow(new ObjectCreated(
                 ball.X,
                 ball.Y,
                 ballId,
@@ -66,7 +66,7 @@ namespace Server
             
         }
 
-        public IReadOnlyList<ObjectCreated> GetObjectsCreated() => objectsCreated;
+        public IReadOnlyList<ObjectCreated> GetObjectsCreated() => objectsCreated.ToArray();
 
         internal List<ObjectCreated> CreatePlayer(string connectionId,CreatePlayer createPlayer)
         {
@@ -83,7 +83,8 @@ namespace Server
                 xMax - (createPlayer.BodyDiameter / 2.0),
                 (createPlayer.BodyDiameter / 2.0),
                 (createPlayer.BodyDiameter / 2.0),
-                yMax - (createPlayer.BodyDiameter / 2.0));
+                yMax - (createPlayer.BodyDiameter / 2.0),
+                foot);
             bodies[createPlayer.Body] = body;
 
             var bodyCreated = new ObjectCreated(
@@ -109,7 +110,7 @@ namespace Server
 
             foreach (var item in res)
             {
-                objectsCreated.Add(item);
+                objectsCreated.AddOrThrow(item);
             }
 
             connectionObjects.AddOrThrow(connectionId, res);
@@ -119,8 +120,12 @@ namespace Server
 
         internal bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
         {
-            if (connectionObjects.TryGetValue(connectionId, out var objectCreated)) {
-                objectRemoveds=  objectCreated.Select(x => new ObjectRemoved(x.Id)).ToList();
+            if (connectionObjects.TryRemove(connectionId, out var toRemoves)) {
+                objectRemoveds=  toRemoves.Select(x => new ObjectRemoved(x.Id)).ToList();
+                foreach (var item in toRemoves)
+                {
+                    objectsCreated.RemoveOrThrow(item);
+                }
                 return true;
             }
             objectRemoveds = default;
@@ -146,7 +151,7 @@ namespace Server
         internal bool Apply(out Positions positions) {
 
             const double maxSpeed = 40.0;
-            const double MaxForce = .5;
+            const double MaxForce = 1;
             positions = default;
 
             var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
@@ -193,9 +198,6 @@ namespace Server
 
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
-
-                       
-
                         var f = new Vector(input.BodyX, input.BodyY);
                         if (f.Length > 0)
                         {
@@ -209,12 +211,12 @@ namespace Server
                                 f = f.NewUnitized().NewScaled(MaxForce);
                             }
                         }
-                        f = Bound(f, new Vector(body.vy, body.vy));
+                        f = Bound(f, new Vector(body.vx, body.vy));
 
                         body.ApplyForce(f.x, f.y);
                         body.Update();
 
-                        var foot = feet[input.FootId];
+                        var foot = body.Foot;
 
                         // apply whatever force was applied to that body
                         foot.ApplyForce(
@@ -242,12 +244,28 @@ namespace Server
                     {
                         body.Update();
 
-                        var foot = feet[input.FootId];
+                        var foot = body.Foot;
 
                         // apply full force to get us to the bodies current pos
                         foot.ApplyForce(
                             (body.vx - lastVx) * foot.Mass,
                             (body.vy - lastVy) * foot.Mass);
+
+                        var max = 200.0;
+
+                        var target = new Vector(foot.X - lastX, foot.Y - lastY);
+
+                        if (target.Length > max)
+                        {
+                            target = target.NewScaled(max / target.Length);
+                        }
+
+                        var targetX = target.x + body.X;
+                        var targetY = target.y + body.Y;
+
+                        foot.ApplyForce(
+                            (targetX - (foot.X + foot.Vx)) * foot.Mass / 1.0,
+                            (targetY - (foot.Y + foot.Vy)) * foot.Mass / 1.0);
                     }
                 }
 
@@ -273,7 +291,8 @@ namespace Server
                 var with = velocity.NewUnitized().NewScaled(Math.Max(0, force.Dot(velocity.NewUnitized())));
                 var notWith = force.NewAdded(with.NewMinus());
 
-                with = with.NewScaled(Math.Max(0,(maxSpeed - velocity.Length)) / maxSpeed);
+                with = with.NewScaled(Math.Pow( Math.Max(0,(maxSpeed - velocity.Length)) / maxSpeed,2));
+
 
                 return with.NewAdded(notWith);
             }

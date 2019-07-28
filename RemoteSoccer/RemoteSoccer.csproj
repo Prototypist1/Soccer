@@ -176,6 +176,9 @@
     <PackageReference Include="Prototypist.Fluent">
       <Version>1.0.0.2</Version>
     </PackageReference>
+    <PackageReference Include="Prototypist.TaskChain">
+      <Version>1.0.8</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">

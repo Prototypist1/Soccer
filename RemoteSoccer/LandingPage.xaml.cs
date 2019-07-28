@@ -110,6 +110,20 @@ namespace RemoteSoccer
                             LoadingSpinner.IsActive = false;
                         });
                     }
+                    else if (res.Is3(out var exception)) {
+                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            // TODO tell the player the game already exists
+                            JoinButton.IsEnabled = true;
+                            GameName.IsEnabled = true;
+                            StartButton.IsEnabled = true;
+                            LoadingText.Text = exception.Message;
+                            LoadingText.Visibility = Visibility.Visible;
+                            LoadingSpinner.IsActive = false;
+                        });
+                    }
                     else
                     {
                         throw new NotImplementedException();
@@ -174,6 +188,21 @@ namespace RemoteSoccer
                             GameName.IsEnabled = true;
                             StartButton.IsEnabled = true;
                             LoadingText.Text = "Game does not exist";
+                            LoadingText.Visibility = Visibility.Visible;
+                            LoadingSpinner.IsActive = false;
+                        });
+                    }
+                    else if (res.Is3(out var exception))
+                    {
+                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            // TODO tell the player the game already exists
+                            JoinButton.IsEnabled = true;
+                            GameName.IsEnabled = true;
+                            StartButton.IsEnabled = true;
+                            LoadingText.Text = exception.Message;
                             LoadingText.Visibility = Visibility.Visible;
                             LoadingSpinner.IsActive = false;
                         });

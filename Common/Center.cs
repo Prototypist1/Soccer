@@ -6,11 +6,12 @@ namespace Common
     public class Center 
     {
         public double Y { get; private set; }
+        public PhysicsObject Foot { get; }
         public double X { get; private set; }
         public double vx, vy, maxX, minX, minY, maxY;
         private double fx, fy;
 
-        public Center(double x, double y, double maxX, double minX, double minY, double maxY)
+        public Center(double x, double y, double maxX, double minX, double minY, double maxY, PhysicsObject foot)
         {
             Y = y;
             X = x;
@@ -18,6 +19,7 @@ namespace Common
             this.minX = minX;
             this.minY = minY;
             this.maxY = maxY;
+            Foot = foot ?? throw new ArgumentNullException(nameof(foot));
         }
 
         public void ApplyForce(double fx, double fy)

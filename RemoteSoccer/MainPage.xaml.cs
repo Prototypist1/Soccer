@@ -1,5 +1,6 @@
 ﻿using Common;
 using Physics;
+using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -79,8 +80,8 @@ namespace RemoteSoccer
         private readonly List<EllipseScaling> ellipses = new List<EllipseScaling>();
 
         private const double footLen = 200;
-        private const double xMax = 1600;
-        private const double yMax = 900;
+        private const double xMax = 3200;
+        private const double yMax = 1800;
 
         private Guid body, foot;
 
@@ -227,34 +228,20 @@ namespace RemoteSoccer
 
 
         double framesRecieved = 0;
-        int currentDisplayFrame = 0;
         private double viewFrameWidth;
         private double viewFrameHeight;
+        private JumpBallConcurrent<Positions> currentPositions = new JumpBallConcurrent<Positions>(new Positions(new Position[0], -1));
 
         private void HandlePositions(Positions positions)
         {
-            if (positions.Frame > currentDisplayFrame)
+            currentPositions.Run(x =>
             {
-                currentDisplayFrame = positions.Frame;
-                framesRecieved++;
-                foreach (var position in positions.PositionsList)
-                {
-                    if (elements.TryGetValue(position.Id, out var element))
-                    {
-                        if (position.Id == body)
-                        {
-                            scalerManager.SetNextScaler(new FollowBodyScaler(
-                                1,
-                                position.X,
-                                position.Y,
-                                viewFrameWidth,
-                                viewFrameHeight));
-                        }
-                        element.X = position.X;
-                        element.Y = position.Y;
-                    }
+                if (x.Frame < positions.Frame) {
+                    framesRecieved++;
+                    return positions;
                 }
-            }
+                return x;
+            });
         }
 
         // assumed to be run on the main thread
@@ -292,6 +279,27 @@ namespace RemoteSoccer
                     handler.Send(game,
                         new PlayerInputs(footX, footY, bodyX, bodyY, foot, body));
 
+                    var myPositions = currentPositions.Read();
+
+                    foreach (var position in myPositions.PositionsList)
+                    {
+
+                        if (elements.TryGetValue(position.Id, out var element))
+                        {
+                            if (position.Id == body)
+                            {
+                                scalerManager.SetNextScaler(new FollowBodyScaler(
+                                    .5,
+                                    position.X,
+                                    position.Y,
+                                    viewFrameWidth,
+                                    viewFrameHeight));
+                            }
+                            element.X = position.X;
+                            element.Y = position.Y;
+                        }
+                    }
+
                     scalerManager.RotateScalers(lines,ellipses);
 
                     frame++;
@@ -305,7 +313,7 @@ namespace RemoteSoccer
                     {
                         Fps.Text = $"frames send per second: {frame / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
                             $"frame recieved: {framesRecieved / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
-                            $"frame lag: {frame - currentDisplayFrame}";
+                            $"frame lag: {frame - myPositions.Frame}";
                     }
 
                     // let someone else have a go
