@@ -274,11 +274,17 @@ namespace RemoteSoccer
                 return await taskCompletionSource.Task;
             }
 
-            public async void Send(string game, CreatePlayer createPlayer, Action<Positions> handlePossitions, Action<ObjectsCreated> handleObjectsCreated, Action<ObjectsRemoved> handleObjectsRemoved)
+            public async void Send(string game, 
+                CreatePlayer createPlayer, 
+                Action<Positions> handlePossitions, 
+                Action<ObjectsCreated> handleObjectsCreated, 
+                Action<ObjectsRemoved> handleObjectsRemoved,
+                Action<UpdateScore> handleUpdateScore)
             {
                 connection.On(nameof(Positions), handlePossitions);
                 connection.On(nameof(ObjectsCreated), handleObjectsCreated);
                 connection.On(nameof(ObjectsRemoved), handleObjectsRemoved);
+                connection.On(nameof(UpdateScore), handleUpdateScore);
 
                 try
                 {

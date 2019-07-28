@@ -213,7 +213,10 @@ namespace RemoteSoccer
                                 Content = ellipse,
                                 BlurRadius = 30,
                                 ShadowOpacity = .8,
-                                Color = Color.FromArgb(0xff,(byte)((int)0xff - (int)objectCreated.R), (byte)((int)0xff - (int)objectCreated.G), (byte)((int)0xff - (int)objectCreated.B))
+                                Color = Color.FromArgb(0xff,
+                                0x00,
+                                0x00,
+                                0x00)
                             };
 
                             elements.Add(objectCreated.Id, new ElementEntry(dropShadow, -1000, -1000, objectCreated.Diameter) {
@@ -396,7 +399,8 @@ namespace RemoteSoccer
                             0xff),
                         HandlePositions,
                         HandleObjectsCreated,
-                        HandleObjectsRemoved);
+                        HandleObjectsRemoved,
+                        HandleUpdateScore);
 
                     await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
@@ -412,6 +416,16 @@ namespace RemoteSoccer
                 }
             });
 
+        }
+
+        private async void HandleUpdateScore(UpdateScore obj)
+        {
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () => {
+                            LeftScore.Text = obj.Left.ToString();
+                            RightScore.Text = obj.Right.ToString();
+                        });
         }
     }
 }

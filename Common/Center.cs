@@ -3,6 +3,7 @@ using System;
 
 namespace Common
 {
+
     public class Center 
     {
         public double Y { get; private set; }

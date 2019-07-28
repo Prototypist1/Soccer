@@ -33,7 +33,9 @@ namespace Server
         }
 
         public async Task CreateGame(CreateGame createGame) {
-            var myGame = new Game();
+            var myGame = new Game(x =>{
+                state.connectionManager.Clients.Group(createGame.Id).SendAsync(nameof(UpdateScore), x);
+            });
             if (state.games.TryAdd(createGame.Id, myGame) && state.connectionIdToGameName.TryAdd(Context.ConnectionId, createGame.Id)) {
                 await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createGame.Id));
                 myGame.Start(async positions =>

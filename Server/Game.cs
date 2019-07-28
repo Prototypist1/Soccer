@@ -25,8 +25,14 @@ namespace Server
 
         private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
         public DateTime LastInput { get; private set; } = DateTime.Now;
+        private int leftScore=0, rightScore=0;
 
-        public Game() {
+        public Game(Action<UpdateScore> onUpdateScore) {
+            if (onUpdateScore == null)
+            {
+                throw new ArgumentNullException(nameof(onUpdateScore));
+            }
+
             ballId = Guid.NewGuid();
             ball = PhysicsObjectBuilder.Ball(1, 40, 800, 450);
 
@@ -43,7 +49,8 @@ namespace Server
             var leftGoalId = Guid.NewGuid();
             var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=> {
                 if (x == ball) {
-
+                    rightScore++;
+                    onUpdateScore(new UpdateScore() { Left= leftScore, Right = rightScore});
                 }
             });
             objectsCreated.AddOrThrow(new ObjectCreated(
@@ -60,7 +67,8 @@ namespace Server
             var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x => {
                 if (x == ball)
                 {
-
+                    leftScore++;
+                    onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
                 }
             });
             objectsCreated.AddOrThrow(new ObjectCreated(

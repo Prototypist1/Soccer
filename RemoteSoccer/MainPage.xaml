@@ -9,8 +9,20 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid x:Name="GameHolder" SizeChanged="GameHolder_SizeChanged" >
-        <TextBlock x:Name="Fps" Text=""/>
-        <Canvas x:Name="GameArea" >
-        </Canvas>
+
+        <Border BorderThickness="10" VerticalAlignment="Bottom">
+            <TextBlock x:Name="Fps" Text="" />
+        </Border>
+
+        <Border BorderThickness="10">
+            <TextBlock x:Name="LeftScore" Text="0"  FontSize="100"/>
+        </Border>
+
+        <Border BorderThickness="10" HorizontalAlignment="Right">
+            <TextBlock x:Name="RightScore" Text="0" FontSize="100" />
+        </Border>
+
+        <Canvas x:Name="GameArea" />
+        
     </Grid>
 </Page>

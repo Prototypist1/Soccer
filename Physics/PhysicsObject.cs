@@ -43,6 +43,9 @@ namespace Physics
             {
                 return TryNextCollisionLine(self, line, endTime, out collision);
             }
+            //if (that is Trigger<Ball> trigger) {
+            //    return TryNextCollisionBall(self, trigger, endTime, out collision);
+            //}
             else
             {
                 throw new NotImplementedException();
@@ -512,6 +515,16 @@ namespace Physics
                     Help.BoundAddition(inner.minX, -gridManager.stepSize) / gridManager.stepSize,
                     Help.BoundAddition(inner.minY, -gridManager.stepSize) / gridManager.stepSize);
             }
+            else {
+
+                inner = new Bounds(
+                    inner.maxX/ gridManager.stepSize,
+                    inner.maxY / gridManager.stepSize,
+                    inner.minX / gridManager.stepSize,
+                    inner.minY / gridManager.stepSize);
+            }
+
+
 
             var bound = new Bounds(
                 Math.Floor(gridManager.width / gridManager.stepSize) - 1,
@@ -657,20 +670,17 @@ namespace Physics
 
     }
 
-    internal class Trigger<TShape> : PhysicsObject
-        where TShape : IShape
+    internal class Trigger<TShape> : PhysicsObject<TShape>
+        where TShape:IShape
     {
 
-        public Trigger(TShape shape, double x, double y, Action<PhysicsObject> callback) : base(0, x, y)
+        public Trigger(TShape shape, double x, double y, Action<PhysicsObject> callback) : base(0, shape, x, y)
         {
-            this.shape = shape;
             this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
         }
 
-        public readonly TShape shape;
         private readonly Action<PhysicsObject> callback;
 
-        public override bool Mobile => shape.Mobile;
 
         internal override bool TryNextCollision(PhysicsObject that, double endTime, out IEvent collision)
         {
@@ -680,10 +690,6 @@ namespace Physics
             collision = default;
             return false;
         }
-
-        internal override HashSet<PhysicsObject> AddToGrid(GridManager gridManager) => shape.AddToGrid(this, gridManager);
-
-        internal override void RemoveFromGrid(GridManager gridManager) => shape.RemoveFromGrid(this, gridManager);
 
     }
 
