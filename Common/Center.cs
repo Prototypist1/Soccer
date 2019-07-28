@@ -29,7 +29,7 @@ namespace Common
             this.fy += fy;
         }
 
-        public void Update()
+        public void Update(bool useBallWall,(double x, double y, double radius) ballWall)
         {
 
             vx += fx;
@@ -44,26 +44,42 @@ namespace Common
             if (X > maxX)
             {
                 X = maxX;
-                vx = X - lastX;
             }
 
             if (Y > maxY)
             {
                 Y = maxY;
-                vy = Y- lastY;
             }
 
             if (X < minX)
             {
                 X = minX;
-                vx = X - lastX;
             }
 
             if (Y < minY)
             {
                 Y = minY;
-                vy = Y - lastY;
             }
+
+            if (useBallWall)
+            {
+                var dis = new Vector(X - ballWall.x, Y - ballWall.y);
+
+                if (dis.Length == 0)
+                {
+                    dis = new Vector(0, .1);
+                }
+
+                if (dis.Length < ballWall.radius)
+                {
+                    dis = dis.NewUnitized().NewScaled(ballWall.radius);
+                    X = ballWall.x + dis.x;
+                    Y = ballWall.y + dis.y;
+                }
+            }
+
+            vx = X - lastX;
+            vy = Y - lastY;
 
             fx = 0;
             fy = 0;

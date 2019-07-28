@@ -663,8 +663,8 @@ namespace Physics
         public double Time { get; internal set; } = 0;
         public double Vx { get; set; }
         public double Vy { get; set; }
-        public double X { get; internal set; }
-        public double Y { get; internal set; }
+        public double X { get; set; }
+        public double Y { get; set; }
         public double Mass { get; }
         public double Speed => Math.Sqrt((Vx * Vx) + (Vy * Vy));
         public abstract bool Mobile { get; }

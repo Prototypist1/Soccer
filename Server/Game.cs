@@ -28,11 +28,77 @@ namespace Server
         public DateTime LastInput { get; private set; } = DateTime.Now;
         private int leftScore=0, rightScore=0;
 
-
         private const int goalZ = 0;
         private const int bodyZ = 1;
         private const int ballZ = 2;
         private const int footZ = 2;
+
+        private readonly GameStateTracker gameStateTracker;
+
+        private class GameStateTracker {
+
+            private readonly Action<double> updateCountDown;
+            private readonly Action resetBallAction;
+            private readonly double ballStartX, ballStartY;
+
+            public void UpdateGameState() {
+                if (gameState != play) {
+                    gameState++;
+                }
+                if (gameState == resetBall) {
+                    resetBallAction();
+                }
+                if (gameState >= startCountDown && gameState < endCountDown) {
+                    updateCountDown(gameState - startCountDown / 60.0);
+                }
+                if (gameState == endCountDown) {
+                    gameState = play;
+                }
+            }
+
+            private const double circleSize = 600;
+
+            private const int play = -1;
+            private const int startGrowingCircle = 0;
+            private const int stopGrowingCircle = 300;
+            private const int resetBall = 300;
+            private const int startCountDown = 300;
+            private const int endCountDown = 600;
+
+            private int gameState = play;
+
+            public GameStateTracker(Action<double> updateCountDown, Action resetBallAction, double ballStartX, double ballStartY)
+            {
+                this.updateCountDown = updateCountDown ?? throw new ArgumentNullException(nameof(updateCountDown));
+                this.resetBallAction = resetBallAction ?? throw new ArgumentNullException(nameof(resetBallAction));
+                this.ballStartX = ballStartX;
+                this.ballStartY = ballStartY;
+            }
+
+            public bool CanScore() => gameState== play;
+
+            public void Scored()
+            {
+                if (gameState == play)
+                {
+                    gameState = 1;
+                }
+                else {
+                    throw new Exception("bug");
+                }
+            }
+
+            public bool TryGetBallWall(out (double x, double y, double radius) ballWall) {
+                if (gameState >= startGrowingCircle)
+                {
+                    ballWall = (ballStartX, ballStartY, circleSize*((Math.Min(gameState,stopGrowingCircle)- startGrowingCircle)/(double)(stopGrowingCircle- startGrowingCircle)));
+                    return true;
+                }
+                ballWall = default;
+                return false;
+            }
+        }
+
 
         public Game(Action<UpdateScore> onUpdateScore) {
             if (onUpdateScore == null)
@@ -56,8 +122,12 @@ namespace Server
 
             var leftGoalId = Guid.NewGuid();
             var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=>x== ball, x=>{
+                if (gameStateTracker.CanScore())
+                {
+                    gameStateTracker.Scored();
                     rightScore++;
-                    onUpdateScore(new UpdateScore() { Left= leftScore, Right = rightScore});
+                    onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
+                }
             });
             objectsCreated.AddOrThrow(new ObjectCreated(
                leftGoal.X,
@@ -65,15 +135,19 @@ namespace Server
                goalZ,
                leftGoalId,
                footLen*2,
-               0xff,
-               0,
-               0,
+               0xdd,
+               0xdd,
+               0xdd,
                0xff));
 
             var rightGoalId = Guid.NewGuid();
             var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x =>x==ball, x=> {
-                leftScore++;
-                onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
+                if (gameStateTracker.CanScore())
+                {
+                    gameStateTracker.Scored();
+                    leftScore++;
+                    onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
+                }
             });
             objectsCreated.AddOrThrow(new ObjectCreated(
                rightGoal.X,
@@ -81,9 +155,9 @@ namespace Server
                goalZ,
                rightGoalId,
                footLen * 2,
-               0,
-               0xff,
-               0,
+               0xdd,
+               0xdd,
+               0xdd,
                0xff));
 
 
@@ -98,6 +172,16 @@ namespace Server
                 (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
             };
 
+            gameStateTracker = new GameStateTracker(x => { }, () =>
+            {
+                ball.X = xMax / 2.0;
+                ball.Y = yMax / 2.0;
+                ball.Vx = 0;
+                ball.Vy = 0;
+            },
+            xMax / 2.0,
+            yMax / 2.0
+            );
 
             physicsEngine.Run(x =>
             {
@@ -234,6 +318,8 @@ namespace Server
 
             foreach (var inputSet in frames)
             {
+                gameStateTracker.UpdateGameState();
+
                 ball.ApplyForce(
                     -(ball.Vx * ball.Mass) / 100.0,
                     -(ball.Vy * ball.Mass) / 100.0);
@@ -266,7 +352,7 @@ namespace Server
                         f = Bound(f, new Vector(body.vx, body.vy));
 
                         body.ApplyForce(f.x, f.y);
-                        body.Update();
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup),tup);
 
                         var foot = body.Foot;
 
@@ -294,7 +380,7 @@ namespace Server
                     }
                     else
                     {
-                        body.Update();
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
 
                         var foot = body.Foot;
 
