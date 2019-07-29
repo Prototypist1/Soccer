@@ -21,11 +21,13 @@ namespace Common
     {
         public Position[] PositionsList { get; set; }
         public int Frame { get; set; }
+        public CountDownState CountDownState { get;set;}
 
-        public Positions(Position[] positions,int frame)
+        public Positions(Position[] positions, int frame, CountDownState countDownState)
         {
             this.PositionsList = positions ?? throw new ArgumentNullException(nameof(positions));
             Frame = frame;
+            this.CountDownState = countDownState;
         }
     }
 }

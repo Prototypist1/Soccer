@@ -2,6 +2,7 @@
 
 namespace Common
 {
+
     public struct CreateGame {
         public string Id { get; set; }
 

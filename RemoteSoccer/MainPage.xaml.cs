@@ -64,6 +64,8 @@ namespace RemoteSoccer
             }
         }
 
+        // this scaling code is confusing 
+        // why do I have diameter in two places?
         private class EllipseScaling
         {
             public readonly UIElement Element;
@@ -81,10 +83,12 @@ namespace RemoteSoccer
         private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
         private readonly List<LineScaling> lines = new List<LineScaling>();
         private readonly List<EllipseScaling> ellipses = new List<EllipseScaling>();
-
+        private readonly Ellipse ballWall;
+        private readonly EllipseScaling ballWallScaler;
+        private readonly ElementEntry ballWallEntry;
         private const double footLen = 200;
-        private const double xMax = 3200;
-        private const double yMax = 1800;
+        private const double xMax = 6400;
+        private const double yMax = 3200;
 
         private Guid body, foot;
 
@@ -147,6 +151,19 @@ namespace RemoteSoccer
                     await OnDisconnect(ex);
                 }
             });
+
+            ballWall = new Ellipse
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(0x20, 0x00, 0x00, 0x00)),
+                Visibility= Visibility.Collapsed
+            };
+            Canvas.SetZIndex(ballWall, 0);
+            ballWallScaler = new EllipseScaling(ballWall, ballWall, 0);
+            ellipses.Add(ballWallScaler);
+
+            ballWallEntry = new ElementEntry(ballWall, xMax / 2.0, yMax / 2.0, 0);
+
+            GameArea.Children.Add(ballWall);
 
             var points = new[] {
                             (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
@@ -249,7 +266,7 @@ namespace RemoteSoccer
         double framesRecieved = 0;
         private double viewFrameWidth;
         private double viewFrameHeight;
-        private JumpBallConcurrent<Positions> currentPositions = new JumpBallConcurrent<Positions>(new Positions(new Position[0], -1));
+        private JumpBallConcurrent<Positions> currentPositions = new JumpBallConcurrent<Positions>(new Positions(new Position[0], -1, new CountDownState { Countdown = false}));
 
         private void HandlePositions(Positions positions)
         {
@@ -300,6 +317,17 @@ namespace RemoteSoccer
 
                     var myPositions = currentPositions.Read();
 
+
+                    ballWall.Visibility = myPositions.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
+
+                    if (myPositions.CountDownState.Countdown)
+                    {
+                        ballWallScaler.diameter = myPositions.CountDownState.Radius * 2;
+                        ballWallEntry.Diameter = myPositions.CountDownState.Radius * 2;
+                        ballWallEntry.X = myPositions.CountDownState.X;
+                        ballWallEntry.Y = myPositions.CountDownState.Y;
+                    }
+
                     foreach (var position in myPositions.PositionsList)
                     {
 
@@ -319,6 +347,7 @@ namespace RemoteSoccer
                         }
                     }
 
+
                     scalerManager.RotateScalers(lines,ellipses);
 
                     frame++;
@@ -327,6 +356,9 @@ namespace RemoteSoccer
                         Canvas.SetLeft(element.element, scalerManager.GetScaler().ScaleX(element.X -(element.Diameter/2.0)));
                         Canvas.SetTop(element.element, scalerManager.GetScaler().ScaleY(element.Y - (element.Diameter / 2.0)));
                     }
+
+                    Canvas.SetLeft(ballWallEntry.element, scalerManager.GetScaler().ScaleX(ballWallEntry.X - (ballWallEntry.Diameter / 2.0)));
+                    Canvas.SetTop(ballWallEntry.element, scalerManager.GetScaler().ScaleY(ballWallEntry.Y - (ballWallEntry.Diameter / 2.0)));
 
                     if (frame % 60 == 0)
                     {

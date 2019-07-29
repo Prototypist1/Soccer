@@ -13,8 +13,8 @@ namespace Server
 {
     public class Game {
         private const double footLen = 200;
-        private const double xMax = 3200;
-        private const double yMax = 1800;
+        private const double xMax = 6400;
+        private const double yMax = 3200;
         private const int Radius = 40;
         private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>( new PhysicsEngine(100, xMax+100, yMax+100));
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
@@ -37,11 +37,12 @@ namespace Server
 
         private class GameStateTracker {
 
-            private readonly Action<double> updateCountDown;
             private readonly Action resetBallAction;
             private readonly double ballStartX, ballStartY;
 
-            public void UpdateGameState() {
+            public CountDownState UpdateGameState() {
+                var res = new CountDownState();
+                res.Countdown = false;
                 if (gameState != play) {
                     gameState++;
                 }
@@ -49,27 +50,37 @@ namespace Server
                     resetBallAction();
                 }
                 if (gameState >= startCountDown && gameState < endCountDown) {
-                    updateCountDown(gameState - startCountDown / 60.0);
+                    res.Countdown = true;
+                    res.CurrentFrame = gameState;
+                    res.FinalFrame = endCountDown;
+                    if (TryGetBallWall(out var tuple)) {
+                        res.Radius = tuple.radius;
+                        res.X = tuple.x;
+                        res.Y = tuple.y;
+                    }
+                    else {
+                        throw new Exception("bug");
+                    }
                 }
                 if (gameState == endCountDown) {
                     gameState = play;
                 }
+                return res;
             }
 
-            private const double circleSize = 600;
+            private const double circleSize = 200;
 
             private const int play = -1;
             private const int startGrowingCircle = 0;
             private const int stopGrowingCircle = 300;
             private const int resetBall = 300;
-            private const int startCountDown = 300;
+            private const int startCountDown = 0;
             private const int endCountDown = 600;
 
             private int gameState = play;
 
-            public GameStateTracker(Action<double> updateCountDown, Action resetBallAction, double ballStartX, double ballStartY)
+            public GameStateTracker(Action resetBallAction, double ballStartX, double ballStartY)
             {
-                this.updateCountDown = updateCountDown ?? throw new ArgumentNullException(nameof(updateCountDown));
                 this.resetBallAction = resetBallAction ?? throw new ArgumentNullException(nameof(resetBallAction));
                 this.ballStartX = ballStartX;
                 this.ballStartY = ballStartY;
@@ -172,7 +183,7 @@ namespace Server
                 (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
             };
 
-            gameStateTracker = new GameStateTracker(x => { }, () =>
+            gameStateTracker = new GameStateTracker(() =>
             {
                 ball.X = xMax / 2.0;
                 ball.Y = yMax / 2.0;
@@ -213,11 +224,13 @@ namespace Server
             var body = new Center(
                 startX,
                 startY,
-                xMax - (createPlayer.BodyDiameter / 2.0),
-                (createPlayer.BodyDiameter / 2.0),
-                (createPlayer.BodyDiameter / 2.0),
-                yMax - (createPlayer.BodyDiameter / 2.0),
-                foot);
+                xMax,
+                0,
+                0,
+                yMax,
+                foot,
+                createPlayer.BodyDiameter / 2.0
+                );
             bodies[createPlayer.Body] = body;
 
             var bodyCreated = new ObjectCreated(
@@ -318,7 +331,7 @@ namespace Server
 
             foreach (var inputSet in frames)
             {
-                gameStateTracker.UpdateGameState();
+                var countDownSate = gameStateTracker.UpdateGameState();
 
                 ball.ApplyForce(
                     -(ball.Vx * ball.Mass) / 100.0,
@@ -414,7 +427,7 @@ namespace Server
                     return x;
                 });
 
-                positions = new Positions(GetPosition().ToArray(), simulationTime);
+                positions = new Positions(GetPosition().ToArray(), simulationTime, countDownSate);
             }
 
             return true;

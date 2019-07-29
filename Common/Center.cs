@@ -9,10 +9,10 @@ namespace Common
         public double Y { get; private set; }
         public PhysicsObject Foot { get; }
         public double X { get; private set; }
-        public double vx, vy, maxX, minX, minY, maxY;
+        public double vx, vy, maxX, minX, minY, maxY , radius;
         private double fx, fy;
 
-        public Center(double x, double y, double maxX, double minX, double minY, double maxY, PhysicsObject foot)
+        public Center(double x, double y, double maxX, double minX, double minY, double maxY, PhysicsObject foot, double radius)
         {
             Y = y;
             X = x;
@@ -21,6 +21,7 @@ namespace Common
             this.minY = minY;
             this.maxY = maxY;
             Foot = foot ?? throw new ArgumentNullException(nameof(foot));
+            this.radius = radius;
         }
 
         public void ApplyForce(double fx, double fy)
@@ -41,24 +42,24 @@ namespace Common
             X += vx;
             Y += vy;
 
-            if (X > maxX)
+            if (X > maxX-radius)
             {
-                X = maxX;
+                X = maxX - radius;
             }
 
-            if (Y > maxY)
+            if (Y > maxY - radius)
             {
-                Y = maxY;
+                Y = maxY - radius;
             }
 
-            if (X < minX)
+            if (X < minX + radius)
             {
-                X = minX;
+                X = minX + radius;
             }
 
-            if (Y < minY)
+            if (Y < minY + radius)
             {
-                Y = minY;
+                Y = minY + radius;
             }
 
             if (useBallWall)
@@ -70,9 +71,9 @@ namespace Common
                     dis = new Vector(0, .1);
                 }
 
-                if (dis.Length < ballWall.radius)
+                if (dis.Length < ballWall.radius + radius)
                 {
-                    dis = dis.NewUnitized().NewScaled(ballWall.radius);
+                    dis = dis.NewUnitized().NewScaled(ballWall.radius + radius);
                     X = ballWall.x + dis.x;
                     Y = ballWall.y + dis.y;
                 }
