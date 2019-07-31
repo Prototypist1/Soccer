@@ -78,8 +78,8 @@ namespace RemoteSoccer
         {
 
             var connection = new HubConnectionBuilder()
-                .WithUrl(@"http://localhost:50737/GameHub")
-                //.WithUrl(@"https://soccerserver.azurewebsites.net/GameHub")
+                //.WithUrl(@"http://localhost:50737/GameHub")
+                .WithUrl(@"https://soccerserver.azurewebsites.net/GameHub")
                 .Build();
 
             var res = new SignalRHandler(connection, myGetter);
@@ -187,8 +187,6 @@ namespace RemoteSoccer
                        if (x.Id == createGame.Id)
                        {
                            taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(x));
-                           gameCreatedHandlers.Remove(actions.Item1);
-                           gameAlreadyExistsHandlers.Remove(actions.Item2);
                        }
                    },
                     (GameAlreadyExists x) =>
@@ -196,8 +194,6 @@ namespace RemoteSoccer
                         if (x.Id == createGame.Id)
                         {
                             taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(x));
-                            gameCreatedHandlers.Remove(actions.Item1);
-                            gameAlreadyExistsHandlers.Remove(actions.Item2);
                         }
                     }
                 );
@@ -212,12 +208,12 @@ namespace RemoteSoccer
                 catch (TimeoutException e)
                 {
                     taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(e));
-                    gameCreatedHandlers.Remove(actions.Item1);
-                    gameAlreadyExistsHandlers.Remove(actions.Item2);
                 }
                 catch (InvalidOperationException e)
                 {
                     taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(e));
+                }
+                finally {
                     gameCreatedHandlers.Remove(actions.Item1);
                     gameAlreadyExistsHandlers.Remove(actions.Item2);
                 }

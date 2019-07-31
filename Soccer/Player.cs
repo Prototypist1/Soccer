@@ -32,7 +32,8 @@ namespace Soccer
                 minX,
                 minY,
                 maxY,
-                physicsObject);
+                physicsObject,
+                200);
 
             this.Element = Element;
             this.area = area;

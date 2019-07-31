@@ -1,6 +1,7 @@
 ﻿using Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -135,7 +136,6 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         () =>
                         {
-                            // TODO tell the player the game already exists
                             JoinButton.IsEnabled = true;
                             GameName.IsEnabled = true;
                             StartButton.IsEnabled = true;
@@ -218,12 +218,10 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         () =>
                         {
-                            // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = false;
-                            GameName.IsEnabled = false;
-                            StartButton.IsEnabled = false;
+                            JoinButton.IsEnabled = true;
+                            GameName.IsEnabled = true;
+                            StartButton.IsEnabled = true;
                             LoadingText.Text = ex.Message;
-                            LoadingText.Visibility = Visibility.Visible;
                             LoadingSpinner.IsActive = false;
                         });
                 }
