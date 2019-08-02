@@ -42,24 +42,24 @@ namespace Common
             X += vx;
             Y += vy;
 
-            if (X > maxX-radius)
+            if (X > maxX)
             {
-                X = maxX - radius;
+                X = maxX;
             }
 
-            if (Y > maxY - radius)
+            if (Y > maxY)
             {
-                Y = maxY - radius;
+                Y = maxY;
             }
 
-            if (X < minX + radius)
+            if (X < minX)
             {
-                X = minX + radius;
+                X = minX;
             }
 
-            if (Y < minY + radius)
+            if (Y < minY)
             {
-                Y = minY + radius;
+                Y = minY;
             }
 
             if (useBallWall)
