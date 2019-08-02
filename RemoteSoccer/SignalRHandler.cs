@@ -78,8 +78,8 @@ namespace RemoteSoccer
         {
 
             var connection = new HubConnectionBuilder()
-                //.WithUrl(@"http://localhost:50737/GameHub")
-                .WithUrl(@"https://soccerserver.azurewebsites.net/GameHub")
+                .WithUrl(@"http://localhost:50737/GameHub")
+                //.WithUrl(@"https://soccerserver.azurewebsites.net/GameHub")
                 .Build();
 
             var res = new SignalRHandler(connection, myGetter);

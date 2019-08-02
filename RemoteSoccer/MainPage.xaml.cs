@@ -1,6 +1,7 @@
 ﻿using Common;
 using Microsoft.Toolkit.Uwp.UI.Controls;
 using Physics;
+using Prototypist.Fluent;
 using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
@@ -49,88 +50,87 @@ namespace RemoteSoccer
             }
         }
 
-        private class LineScaling
-        {
-            public Line line;
-            public double x1, x2, y1, y2;
+        //private class LineScaling
+        //{
+        //    public Line line;
+        //    public double x1, x2, y1, y2;
 
-            public LineScaling(Line line, double x1, double x2, double y1, double y2)
-            {
-                this.line = line ?? throw new ArgumentNullException(nameof(line));
-                this.x1 = x1;
-                this.x2 = x2;
-                this.y1 = y1;
-                this.y2 = y2;
-            }
-        }
+        //    public LineScaling(Line line, double x1, double x2, double y1, double y2)
+        //    {
+        //        this.line = line ?? throw new ArgumentNullException(nameof(line));
+        //        this.x1 = x1;
+        //        this.x2 = x2;
+        //        this.y1 = y1;
+        //        this.y2 = y2;
+        //    }
+        //}
 
         // this scaling code is confusing 
         // why do I have diameter in two places?
-        private class EllipseScaling
-        {
-            public readonly UIElement Element;
-            public readonly Ellipse ellipse;
-            public double diameter;
+        //private class EllipseScaling
+        //{
+        //    public readonly UIElement Element;
+        //    public readonly Ellipse ellipse;
+        //    public double diameter;
 
-            public EllipseScaling(UIElement element, Ellipse ellipse, double diameter)
-            {
-                Element = element ?? throw new ArgumentNullException(nameof(element));
-                this.ellipse = ellipse ?? throw new ArgumentNullException(nameof(ellipse));
-                this.diameter = diameter;
-            }
-        }
+        //    public EllipseScaling(UIElement element, Ellipse ellipse, double diameter)
+        //    {
+        //        Element = element ?? throw new ArgumentNullException(nameof(element));
+        //        this.ellipse = ellipse ?? throw new ArgumentNullException(nameof(ellipse));
+        //        this.diameter = diameter;
+        //    }
+        //}
 
         private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
-        private readonly List<LineScaling> lines = new List<LineScaling>();
-        private readonly List<EllipseScaling> ellipses = new List<EllipseScaling>();
+        //private readonly List<LineScaling> lines = new List<LineScaling>();
+        //private readonly List<EllipseScaling> ellipses = new List<EllipseScaling>();
         private readonly Ellipse ballWall;
-        private readonly EllipseScaling ballWallScaler;
-        private readonly ElementEntry ballWallEntry;
+        //private readonly EllipseScaling ballWallScaler;
         private const double footLen = 200;
         private const double xMax = 6400;
         private const double yMax = 3200;
 
         private Guid body, foot;
 
-        private ScalerManager scalerManager = new ScalerManager(new DontScale());
+        //private ScalerManager scalerManager = new ScalerManager(new DontScale());
 
-        private class ScalerManager {
+        //private class ScalerManager {
 
-            private IScaler scaler;
-            private IScaler nextScaler;
+        //    private IScaler scaler;
+        //    private IScaler nextScaler;
 
-            public ScalerManager(IScaler scaler)
-            {
-                this.scaler = scaler ?? throw new ArgumentNullException(nameof(scaler));
-            }
+        //    public ScalerManager(IScaler scaler)
+        //    {
+        //        this.scaler = scaler ?? throw new ArgumentNullException(nameof(scaler));
+        //    }
 
-            public void SetNextScaler(IScaler scaler) {
-                this.nextScaler = scaler;
-            }
+        //    public void SetNextScaler(IScaler scaler) {
+        //        this.nextScaler = scaler;
+        //    }
 
-            public bool RotateScalers(List<LineScaling> lines, List<EllipseScaling> ellipses) {
-                if (nextScaler == null) {
-                    return false;
-                }
+        //    public bool RotateScalers(List<LineScaling> lines, List<EllipseScaling> ellipses) {
+        //        if (nextScaler == null) {
+        //            return false;
+        //        }
 
-                this.scaler = nextScaler;
-                foreach (var line in lines)
-                {
-                    line.line.X1 = scaler.ScaleX(line.x1);
-                    line.line.X2 = scaler.ScaleX(line.x2);
-                    line.line.Y1 = scaler.ScaleY(line.y1);
-                    line.line.Y2 = scaler.ScaleY(line.y2);
-                }
-                foreach (var ellipse in ellipses)
-                {
-                    ellipse.ellipse.Width = scaler.Scale(ellipse.diameter);
-                    ellipse.ellipse.Height = scaler.Scale(ellipse.diameter);
-                }
-                return true;
-            }
+        //        this.scaler = nextScaler;
+        //        foreach (var line in lines)
+        //        {
+        //            line.line.X1 = scaler.ScaleX(line.x1);
+        //            line.line.X2 = scaler.ScaleX(line.x2);
+        //            line.line.Y1 = scaler.ScaleY(line.y1);
+        //            line.line.Y2 = scaler.ScaleY(line.y2);
+        //        }
+        //        foreach (var ellipse in ellipses)
+        //        {
+        //            ellipse.ellipse.Width = scaler.Scale(ellipse.diameter);
+        //            ellipse.ellipse.Height = scaler.Scale(ellipse.diameter);
+        //        }
+        //        return true;
+        //    }
 
-            public IScaler GetScaler() => scaler;
-        }
+        //    public IScaler GetScaler() => scaler;
+        //}
 
 
         public MainPage()
@@ -154,14 +154,16 @@ namespace RemoteSoccer
 
             ballWall = new Ellipse
             {
-                Fill = new SolidColorBrush(Color.FromArgb(0x20, 0x00, 0x00, 0x00)),
-                Visibility= Visibility.Collapsed
+                //Fill = new SolidColorBrush(Color.FromArgb(0x20, 0x00, 0x00, 0x00)),
+                Visibility = Visibility.Collapsed,
+                Stroke = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00)),
+                StrokeThickness = 20
             };
-            Canvas.SetZIndex(ballWall, 0);
-            ballWallScaler = new EllipseScaling(ballWall, ballWall, 0);
-            ellipses.Add(ballWallScaler);
 
-            ballWallEntry = new ElementEntry(ballWall, xMax / 2.0, yMax / 2.0, 0);
+            Canvas.SetZIndex(ballWall, 0);
+            //ballWallScaler = new EllipseScaling(ballWall, ballWall, 0);
+            //ellipses.Add(ballWallScaler);
+
 
             GameArea.Children.Add(ballWall);
 
@@ -180,14 +182,12 @@ namespace RemoteSoccer
             {
                 var line = new Line()
                 {
-                    X1 = scalerManager.GetScaler().ScaleX(side.Item1.x),
-                    X2 = scalerManager.GetScaler().ScaleX(side.Item2.x),
-                    Y1 = scalerManager.GetScaler().ScaleY(side.Item1.y),
-                    Y2 = scalerManager.GetScaler().ScaleY(side.Item2.y),
+                    X1 = side.Item1.x,
+                    X2 = side.Item2.x,
+                    Y1 = side.Item1.y,
+                    Y2 = side.Item2.y,
                     Stroke = new SolidColorBrush(Colors.Black),
                 };
-
-                lines.Add(new LineScaling(line, side.Item1.x, side.Item2.x, side.Item1.y, side.Item2.y));
 
                 GameArea.Children.Add(line);
             }
@@ -216,14 +216,19 @@ namespace RemoteSoccer
                         {
                             var ellipse = new Ellipse()
                             {
-                                Width = scalerManager.GetScaler().Scale(objectCreated.Diameter),
-                                Height = scalerManager.GetScaler().Scale(objectCreated.Diameter),
+                                Width = objectCreated.Diameter,
+                                Height = objectCreated.Diameter,
                                 Fill = new SolidColorBrush(Color.FromArgb(
                                     objectCreated.A,
                                     objectCreated.R,
                                     objectCreated.G,
                                     objectCreated.B)),
                             };
+
+                            // hack!
+                            if (objectCreated.Name == "ball") {
+                                ball = ellipse;
+                            }
 
                             //var dropShadow = new DropShadowPanel()
                             //{
@@ -237,11 +242,8 @@ namespace RemoteSoccer
                             //};
                             Canvas.SetZIndex(ellipse, objectCreated.Z);
 
-                            elements.Add(objectCreated.Id, new ElementEntry(ellipse, -1000, -1000, objectCreated.Diameter) {
-                                X =objectCreated.X,
-                                Y = objectCreated.Y
-                            });
-                            ellipses.Add(new EllipseScaling(ellipse, ellipse, objectCreated.Diameter));
+                            elements.Add(objectCreated.Id, new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
+                            //ellipses.Add(new EllipseScaling(ellipse, ellipse, objectCreated.Diameter));
                             GameArea.Children.Add(ellipse);
                         }
                     }
@@ -267,6 +269,10 @@ namespace RemoteSoccer
         private double viewFrameWidth;
         private double viewFrameHeight;
         private JumpBallConcurrent<Positions> currentPositions = new JumpBallConcurrent<Positions>(new Positions(new Position[0], -1, new CountDownState { Countdown = false}));
+        private double times=.5;
+        private double xPlus=0;
+        private double yPlus=0;
+        private Ellipse ball;
 
         private void HandlePositions(Positions positions)
         {
@@ -318,16 +324,6 @@ namespace RemoteSoccer
                     var myPositions = currentPositions.Read();
 
 
-                    ballWall.Visibility = myPositions.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
-
-                    if (myPositions.CountDownState.Countdown)
-                    {
-                        ballWallScaler.diameter = myPositions.CountDownState.Radius * 2;
-                        ballWallEntry.Diameter = myPositions.CountDownState.Radius * 2;
-                        ballWallEntry.X = myPositions.CountDownState.X;
-                        ballWallEntry.Y = myPositions.CountDownState.Y;
-                    }
-
                     foreach (var position in myPositions.PositionsList)
                     {
 
@@ -335,30 +331,43 @@ namespace RemoteSoccer
                         {
                             if (position.Id == body)
                             {
-                                scalerManager.SetNextScaler(new FollowBodyScaler(
-                                    .5,
-                                    position.X,
-                                    position.Y,
-                                    viewFrameWidth,
-                                    viewFrameHeight));
+                                times = .5;
+                                xPlus = (viewFrameWidth / 2.0) - (position.X * times);
+                                yPlus = (viewFrameHeight / 2.0) - (position.Y * times);
                             }
                             element.X = position.X;
                             element.Y = position.Y;
                         }
                     }
 
-
-                    scalerManager.RotateScalers(lines,ellipses);
+                    GameArea.TransformMatrix = new System.Numerics.Matrix4x4(
+                        (float)times, 0, 0, 0,
+                        0, (float)times, 0, 0,
+                        0, 0, 1, 0,
+                        (float)xPlus, (float)yPlus, 0, 1);
 
                     frame++;
                     foreach (var element in elements.Values)
                     {
-                        Canvas.SetLeft(element.element, scalerManager.GetScaler().ScaleX(element.X -(element.Diameter/2.0)));
-                        Canvas.SetTop(element.element, scalerManager.GetScaler().ScaleY(element.Y - (element.Diameter / 2.0)));
+                        Canvas.SetLeft(element.element, element.X -(element.Diameter/2.0));
+                        Canvas.SetTop(element.element, element.Y - (element.Diameter / 2.0));
                     }
 
-                    Canvas.SetLeft(ballWallEntry.element, scalerManager.GetScaler().ScaleX(ballWallEntry.X - (ballWallEntry.Diameter / 2.0)));
-                    Canvas.SetTop(ballWallEntry.element, scalerManager.GetScaler().ScaleY(ballWallEntry.Y - (ballWallEntry.Diameter / 2.0)));
+                    Canvas.SetLeft(ballWall, myPositions.CountDownState.X - myPositions.CountDownState.Radius );
+                    Canvas.SetTop(ballWall, myPositions.CountDownState.Y - myPositions.CountDownState.Radius );
+
+
+                    ballWall.Visibility = myPositions.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
+
+                    if (myPositions.CountDownState.Countdown)
+                    {
+                        ballWall.Width = myPositions.CountDownState.Radius*2;
+                        ballWall.Height = myPositions.CountDownState.Radius*2;
+                        ballWall.StrokeThickness = myPositions.CountDownState.StrokeThickness;
+                        if (ball != null) {
+                            ball.Opacity = myPositions.CountDownState.BallOpacity;
+                        }
+                    }
 
                     if (frame % 60 == 0)
                     {
@@ -369,10 +378,6 @@ namespace RemoteSoccer
 
                     // let someone else have a go
                     await Task.Delay((int)Math.Max(1, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
-
-                    //while (stopWatch.ElapsedMilliseconds < ((1000 * frame) / 60))
-                    //{
-                    //}
                 }
             }
 #pragma warning disable CS0168 // Variable is declared but never used
@@ -392,7 +397,6 @@ namespace RemoteSoccer
         {
             viewFrameWidth = GameHolder.ActualWidth;
             viewFrameHeight = GameHolder.ActualHeight;
-            scalerManager.SetNextScaler(new Scaler(viewFrameWidth, viewFrameHeight, xMax, yMax));
         }
 
 

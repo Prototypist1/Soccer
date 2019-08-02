@@ -51,10 +51,11 @@ namespace Server
                 }
                 if (gameState >= startCountDown && gameState < endCountDown) {
                     res.Countdown = true;
-                    res.CurrentFrame = gameState;
-                    res.FinalFrame = endCountDown;
-                    if (TryGetBallWall(out var tuple)) {
+                    if (TryGetBallWall(out var tuple))
+                    {
+                        res.StrokeThickness = tuple.radius - (circleSize*(gameState-startCountDown)/((double)(endCountDown - startCountDown)));
                         res.Radius = tuple.radius;
+                        res.BallOpacity = Math.Min(1.0, Math.Abs(((endCountDown - startCountDown) - 2*(gameState-startCountDown))/ ((double)(endCountDown - startCountDown))));
                         res.X = tuple.x;
                         res.Y = tuple.y;
                     }
@@ -102,7 +103,9 @@ namespace Server
             public bool TryGetBallWall(out (double x, double y, double radius) ballWall) {
                 if (gameState >= startGrowingCircle)
                 {
-                    ballWall = (ballStartX, ballStartY, circleSize*((Math.Min(gameState,stopGrowingCircle)- startGrowingCircle)/(double)(stopGrowingCircle- startGrowingCircle)));
+                    ballWall = (ballStartX,
+                        ballStartY,
+                        circleSize * ((Math.Min(gameState, stopGrowingCircle) - startGrowingCircle) / (double)(stopGrowingCircle - startGrowingCircle)));
                     return true;
                 }
                 ballWall = default;
@@ -129,7 +132,8 @@ namespace Server
                0,
                0,
                0,
-               255));
+               255,
+               "ball"));
 
             var leftGoalId = Guid.NewGuid();
             var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=>x== ball, x=>{
@@ -149,7 +153,8 @@ namespace Server
                0xdd,
                0xdd,
                0xdd,
-               0xff));
+               0xff,
+               "left-goal"));
 
             var rightGoalId = Guid.NewGuid();
             var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x =>x==ball, x=> {
@@ -169,7 +174,8 @@ namespace Server
                0xdd,
                0xdd,
                0xdd,
-               0xff));
+               0xff,
+               "right-goal"));
 
 
             var points = new[] {
@@ -242,7 +248,8 @@ namespace Server
                     createPlayer.BodyR,
                     createPlayer.BodyG,
                     createPlayer.BodyB,
-                    createPlayer.BodyA);
+                    createPlayer.BodyA,
+                    "body");
             var footCreated = new ObjectCreated(
                     foot.X,
                     foot.Y,
@@ -252,7 +259,8 @@ namespace Server
                     createPlayer.FootR,
                     createPlayer.FootG,
                     createPlayer.FootB,
-                    createPlayer.FootA);
+                    createPlayer.FootA,
+                    "foot");
             var res = new List<ObjectCreated>(){
                 bodyCreated,
                 footCreated };

@@ -103,8 +103,13 @@ namespace Server
                     }
                 }
             }
-            catch (Exception e) {
+#pragma warning disable CS0168 // Variable is declared but never used
+            catch (Exception e)
+            {
+#pragma warning restore CS0168 // Variable is declared but never used
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
                 var db = 0;
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
             }
             await base.OnDisconnectedAsync(exception);
         }
