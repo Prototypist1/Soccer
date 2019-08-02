@@ -13,7 +13,7 @@ namespace Server
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR();//.AddAzureSignalR();//;//
+            services.AddSignalR().AddMessagePackProtocol();//.AddAzureSignalR();//;//
             services.AddSingleton<GameHubState>();
         }
 
