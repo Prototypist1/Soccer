@@ -7,13 +7,17 @@ namespace Common
     public struct Position {
         public double X { get; set; }
         public double Y { get; set; }
+        public double Vx { get; set; }
+        public double Vy { get; set; }
         public Guid Id { get; set; }
 
-        public Position(double x, double y, Guid id)
+        public Position(double x, double y, Guid id, double vx, double vy)
         {
             X = x;
             Y = y;
             Id = id;
+            Vx = vx;
+            Vy = vy;
         }
     }
 

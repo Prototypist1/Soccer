@@ -28,6 +28,7 @@ namespace Server
         public DateTime LastInput { get; private set; } = DateTime.Now;
         private int leftScore=0, rightScore=0;
 
+        private const int fieldZ = -1;
         private const int goalZ = 0;
         private const int bodyZ = 1;
         private const int ballZ = 2;
@@ -136,7 +137,7 @@ namespace Server
                "ball"));
 
             var leftGoalId = Guid.NewGuid();
-            var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=>x== ball, x=>{
+            var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=>x== ball && gameStateTracker.CanScore(), x=>{
                 if (gameStateTracker.CanScore())
                 {
                     gameStateTracker.Scored();
@@ -157,7 +158,7 @@ namespace Server
                "left-goal"));
 
             var rightGoalId = Guid.NewGuid();
-            var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x =>x==ball, x=> {
+            var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x =>x==ball&& gameStateTracker.CanScore(), x=> {
                 if (gameStateTracker.CanScore())
                 {
                     gameStateTracker.Scored();
@@ -464,14 +465,14 @@ namespace Server
         }
 
         private IEnumerable<Position> GetPosition() {
-            yield return new Position(ball.X, ball.Y, ballId);
+            yield return new Position(ball.X, ball.Y, ballId, ball.Vx, ball.Vy);
             foreach (var foot in feet)
             {
-                yield return new Position(foot.Value.X, foot.Value.Y, foot.Key);
+                yield return new Position(foot.Value.X, foot.Value.Y, foot.Key, foot.Value.Vx, foot.Value.Vy);
             }
             foreach (var body in bodies)
             {
-                yield return new Position(body.Value.X, body.Value.Y, body.Key);
+                yield return new Position(body.Value.X, body.Value.Y, body.Key, body.Value.vx, body.Value.vy);
             }
         }
     }

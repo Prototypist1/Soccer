@@ -1,5 +1,7 @@
 ﻿using Common;
+using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Toolkit.Uwp.UI.Controls;
+using Microsoft.Toolkit.Uwp.UI.Media;
 using Physics;
 using Prototypist.Fluent;
 using Prototypist.TaskChain;
@@ -15,11 +17,13 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.System;
 using Windows.UI;
+using Windows.UI.Composition;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
+using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
@@ -34,33 +38,54 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private class ElementEntry
-        {
-            public readonly Ellipse element;
-            public double X;
-            public double Y;
-            public double Diameter;
+        //private class ElementEntry
+        //{
+        //    public readonly Ellipse element;
+        //    public double X;
+        //    public double Y;
+        //    public double Diameter;
 
-            public ElementEntry(Ellipse element, double x, double y, double diameter)
-            {
-                this.element = element ?? throw new ArgumentNullException(nameof(element));
-                X = x;
-                Y = y;
-                Diameter = diameter;
-            }
-        }
+        //    public ElementEntry(Ellipse element, double x, double y, double diameter)
+        //    {
+        //        this.element = element ?? throw new ArgumentNullException(nameof(element));
+        //        X = x;
+        //        Y = y;
+        //        Diameter = diameter;
+        //    }
+        //}
 
         private readonly Dictionary<Guid, Ellipse> elements = new Dictionary<Guid, Ellipse>();
         private readonly Ellipse ballWall;
         private const double footLen = 200;
         private const double xMax = 6400;
         private const double yMax = 3200;
+        private readonly Brush[] brushes;
 
         private Guid body, foot;
 
         public MainPage()
         {
             this.InitializeComponent();
+
+            brushes = new Brush[100];
+            var color = Color.FromArgb(0x80, 0x00, 0x80, 0x00);
+            var deadColor = Color.FromArgb(0x00, 0x00, 0x80, 0x00);
+            brushes[0] = new SolidColorBrush(color);
+            for (int i = 1; i < 100; i++)
+            {
+                var stops = new GradientStopCollection();
+                stops.Add(new GradientStop()
+                {
+                    Color = deadColor,
+                    Offset = 1,
+                });
+                stops.Add(new GradientStop()
+                {
+                    Color = color,
+                    Offset = 1 - (i/100.0),
+                });
+                brushes[i] = new RadialGradientBrush(stops);
+            }
 
             viewFrameWidth = GameHolder.ActualWidth;
             viewFrameHeight = GameHolder.ActualHeight;
@@ -88,30 +113,42 @@ namespace RemoteSoccer
 
             GameArea.Children.Add(ballWall);
 
-            var points = new[] {
-                            (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
-                            (new Vector(0,footLen) ,new Vector(footLen,0)),
-                            (new Vector(0,yMax - footLen) ,new Vector(0,footLen)),
-                            (new Vector(footLen,yMax),new Vector(0,yMax - footLen)),
-                            (new Vector(xMax - footLen,yMax),new Vector(footLen,yMax)),
-                            (new Vector(xMax,yMax - footLen),new Vector(xMax - footLen,yMax)),
-                            (new Vector(xMax,footLen),new Vector(xMax,yMax - footLen)),
-                            (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
-                        };
-
-            foreach (var side in points)
+            var pointsCollection = new PointCollection();
+            pointsCollection.Add(new Point(footLen, 0));
+            pointsCollection.Add(new Point(0, footLen));
+            pointsCollection.Add(new Point(0, yMax - footLen));
+            pointsCollection.Add(new Point(footLen, yMax));
+            pointsCollection.Add(new Point(xMax - footLen, yMax));
+            pointsCollection.Add(new Point(xMax, yMax - footLen));
+            pointsCollection.Add(new Point(xMax, footLen));
+            pointsCollection.Add(new Point(xMax - footLen, 0));
             {
-                var line = new Line()
+                var stops = new GradientStopCollection();
+                stops.Add(new GradientStop()
                 {
-                    X1 = side.Item1.x,
-                    X2 = side.Item2.x,
-                    Y1 = side.Item1.y,
-                    Y2 = side.Item2.y,
-                    Stroke = new SolidColorBrush(Colors.Black),
-                };
+                    Offset = 0,
+                    Color = Colors.Blue,//.FromArgb(0xff, 0x33, 0x33, 0x33)
+                });
+                stops.Add(new GradientStop()
+                {
+                    Offset = 1,
+                    Color = Colors.Red,//.FromArgb(0xff, 0x66, 0x66, 0x66)
+                });
 
-                GameArea.Children.Add(line);
+                var poly = new Polygon()
+                {
+                    Points = pointsCollection,
+                    Fill = new LinearGradientBrush()
+                    {
+                        GradientStops = stops,
+                        StartPoint = new Point(0, 0),
+                        EndPoint = new Point(1, 0)
+                    },
+                };
+                Canvas.SetZIndex(poly, -1);
+                GameArea.Children.Add(poly);
             }
+
         }
 
         private async Task OnDisconnect(Exception ex)
@@ -146,15 +183,25 @@ namespace RemoteSoccer
                                     objectCreated.B)),
                             };
 
-                            // hack!
-                            if (objectCreated.Name == "ball")
-                            {
+                            Canvas.SetZIndex(ellipse, objectCreated.Z);
+                            ellipse.TransformMatrix =
+                            // first we center
+                            new System.Numerics.Matrix4x4(
+                                1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                (float)(-ellipse.Width / 2.0), (float)(-ellipse.Height / 2.0), 0, 1)
+                            *
+                            // then we move to the right spot
+                            new System.Numerics.Matrix4x4(
+                                1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
+
+                            if (objectCreated.Name == "ball") {
                                 ball = ellipse;
                             }
-
-                            Canvas.SetZIndex(ellipse, objectCreated.Z);
-                            Canvas.SetLeft(ellipse, objectCreated.X - ellipse.Width / 2.0);
-                            Canvas.SetTop(ellipse, objectCreated.Y - ellipse.Height / 2.0);
 
                             elements.Add(objectCreated.Id, ellipse);// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
                             GameArea.Children.Add(ellipse);
@@ -210,8 +257,70 @@ namespace RemoteSoccer
                             xPlus = (viewFrameWidth / 2.0) - (position.X * times);
                             yPlus = (viewFrameHeight / 2.0) - (position.Y * times);
                         }
-                        Canvas.SetLeft(element, position.X - (element.Width / 2.0));
-                        Canvas.SetTop(element, position.Y - (element.Height / 2.0));
+
+
+                        var v = Math.Sqrt((position.Vx * position.Vx) + (position.Vy * position.Vy));
+
+                        var Stretch = (v/ element.Width);
+
+                        element.Fill = brushes[Math.Min(99, (int)(100 * v / element.Width))];
+
+                        if (v != 0)
+                        {
+                           
+
+                            element.TransformMatrix = 
+                                // first we center
+                            new System.Numerics.Matrix4x4(
+                                1, 0, 0, 0,
+                                0,1, 0, 0,
+                                0, 0, 1, 0,
+                                (float)(-element.Width/2.0), (float)(-element.Height / 2.0), 0, 1) 
+                                // then we stretch
+                            * new System.Numerics.Matrix4x4(
+                               (float)(1 + Stretch), 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                0, 0, 0, 1)
+                            // slide it back a little bit
+                            * new System.Numerics.Matrix4x4(
+                                1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                (float)(-v/2.0), 0, 0, 1)
+                            // then we rotate
+                            * new System.Numerics.Matrix4x4(
+                                (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
+                                (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
+                                0, 0, 1, 0,
+                                0, 0, 0, 1)
+                            // then we move to the right spot
+                            * new System.Numerics.Matrix4x4(
+                                1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                (float)(position.X), (float)(position.Y), 0, 1);
+                        }
+                        else {
+
+                            element.TransformMatrix =
+                            // first we center
+                            new System.Numerics.Matrix4x4(
+                                1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                (float)(-element.Width / 2.0), (float)(-element.Height / 2.0), 0, 1)
+                            *
+                            // then we move to the right spot
+                            new System.Numerics.Matrix4x4(
+                                1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                (float)(position.X ), (float)(position.Y ), 0, 1);
+                        }
+
+                        //Canvas.SetLeft(element, position.X - (element.Width / 2.0));
+                        //Canvas.SetTop(element, position.Y - (element.Height / 2.0));
                     }
                 }
 
@@ -286,7 +395,7 @@ namespace RemoteSoccer
                     frame++;
 
                     // let someone else have a go
-                    await Task.Delay((int)Math.Max(1, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
+                    await Task.Delay((int)Math.Max(1, (1000 * frame / 60) - stopWatch.ElapsedMilliseconds));
                 }
             }
 #pragma warning disable CS0168 // Variable is declared but never used
