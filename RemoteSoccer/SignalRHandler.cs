@@ -1,5 +1,6 @@
 ﻿using Common;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Prototypist.Fluent;
 using System;
 using System.Collections.Generic;
@@ -78,8 +79,14 @@ namespace RemoteSoccer
         {
 
             var connection = new HubConnectionBuilder()
-                .WithUrl(@"http://localhost:50737/GameHub")
+                .WithUrl(@"http://localhost:50737/GameHub", x=> {
+                    x.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+                    x.SkipNegotiation = true;
+                })
                 .AddMessagePackProtocol()
+                .ConfigureLogging(x=> {
+                    x.Services.AddLogging();
+                })
                 //.WithUrl(@"https://soccerserver.azurewebsites.net/GameHub")
                 .Build();
 

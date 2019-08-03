@@ -170,6 +170,9 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client">
       <Version>3.0.0-preview7.19365.7</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack">
+      <Version>1.1.5</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.8</Version>
     </PackageReference>

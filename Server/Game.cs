@@ -32,7 +32,7 @@ namespace Server
         private const int bodyZ = 1;
         private const int ballZ = 2;
         private const int footZ = 2;
-
+        private const int Diameter = 80;
         private readonly GameStateTracker gameStateTracker;
 
         private class GameStateTracker {
@@ -121,14 +121,14 @@ namespace Server
             }
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(1, Radius, 800, 450);
+            ball = PhysicsObjectBuilder.Ball(4, Radius*2, 800, 450);
 
             objectsCreated.AddOrThrow(new ObjectCreated(
                ball.X,
                ball.Y,
                ballZ,
                ballId,
-               80,
+               Radius * 2 *2,
                0,
                0,
                0,

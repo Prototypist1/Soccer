@@ -23,9 +23,9 @@ namespace Common
         public int Frame { get; set; }
         public CountDownState CountDownState { get;set;}
 
-        public Positions(Position[] positions, int frame, CountDownState countDownState)
+        public Positions(Position[] positionsList, int frame, CountDownState countDownState)
         {
-            this.PositionsList = positions ?? throw new ArgumentNullException(nameof(positions));
+            this.PositionsList = positionsList ?? throw new ArgumentNullException(nameof(positionsList));
             Frame = frame;
             this.CountDownState = countDownState;
         }

@@ -36,12 +36,12 @@ namespace RemoteSoccer
     {
         private class ElementEntry
         {
-            public readonly UIElement element;
+            public readonly Ellipse element;
             public double X;
             public double Y;
             public double Diameter;
 
-            public ElementEntry(UIElement element, double x, double y, double diameter)
+            public ElementEntry(Ellipse element, double x, double y, double diameter)
             {
                 this.element = element ?? throw new ArgumentNullException(nameof(element));
                 X = x;
@@ -81,7 +81,7 @@ namespace RemoteSoccer
         //    }
         //}
 
-        private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
+        private readonly Dictionary<Guid, Ellipse> elements = new Dictionary<Guid, Ellipse>();
         //private readonly List<LineScaling> lines = new List<LineScaling>();
         //private readonly List<EllipseScaling> ellipses = new List<EllipseScaling>();
         private readonly Ellipse ballWall;
@@ -226,7 +226,8 @@ namespace RemoteSoccer
                             };
 
                             // hack!
-                            if (objectCreated.Name == "ball") {
+                            if (objectCreated.Name == "ball")
+                            {
                                 ball = ellipse;
                             }
 
@@ -241,8 +242,10 @@ namespace RemoteSoccer
                             //    0x00)
                             //};
                             Canvas.SetZIndex(ellipse, objectCreated.Z);
+                            Canvas.SetLeft(ellipse, objectCreated.X - ellipse.Width / 2.0);
+                            Canvas.SetTop(ellipse, objectCreated.Y - ellipse.Height / 2.0);
 
-                            elements.Add(objectCreated.Id, new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
+                            elements.Add(objectCreated.Id, ellipse);// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
                             //ellipses.Add(new EllipseScaling(ellipse, ellipse, objectCreated.Diameter));
                             GameArea.Children.Add(ellipse);
                         }
@@ -268,21 +271,70 @@ namespace RemoteSoccer
         double framesRecieved = 0;
         private double viewFrameWidth;
         private double viewFrameHeight;
-        private JumpBallConcurrent<Positions> currentPositions = new JumpBallConcurrent<Positions>(new Positions(new Position[0], -1, new CountDownState { Countdown = false}));
-        private double times=.5;
-        private double xPlus=0;
-        private double yPlus=0;
+        //private JumpBallConcurrent<Positions> currentPositions = new JumpBallConcurrent<Positions>(new Positions(new Position[0], -1, new CountDownState { Countdown = false}));
+        private double times = .5;
+        private double xPlus = 0;
+        private double yPlus = 0;
         private Ellipse ball;
+        private int frame = 0;
+        private Stopwatch stopWatch;
 
         private void HandlePositions(Positions positions)
         {
-            currentPositions.Run(x =>
+
+            framesRecieved++;
+
+            var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+            CoreDispatcherPriority.Normal,
+            () =>
             {
-                if (x.Frame < positions.Frame) {
-                    framesRecieved++;
-                    return positions;
+
+
+                foreach (var position in positions.PositionsList)
+                {
+
+                    if (elements.TryGetValue(position.Id, out var element))
+                    {
+                        if (position.Id == body)
+                        {
+                            times = .5;
+                            xPlus = (viewFrameWidth / 2.0) - (position.X * times);
+                            yPlus = (viewFrameHeight / 2.0) - (position.Y * times);
+                        }
+                        Canvas.SetLeft(element, position.X - (element.Width / 2.0));
+                        Canvas.SetTop(element, position.Y - (element.Height / 2.0));
+                    }
                 }
-                return x;
+
+                Canvas.SetLeft(ballWall, positions.CountDownState.X - positions.CountDownState.Radius);
+                Canvas.SetTop(ballWall, positions.CountDownState.Y - positions.CountDownState.Radius);
+
+
+                ballWall.Visibility = positions.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
+
+                if (positions.CountDownState.Countdown)
+                {
+                    ballWall.Width = positions.CountDownState.Radius * 2;
+                    ballWall.Height = positions.CountDownState.Radius * 2;
+                    ballWall.StrokeThickness = positions.CountDownState.StrokeThickness;
+                    if (ball != null)
+                    {
+                        ball.Opacity = positions.CountDownState.BallOpacity;
+                    }
+                }
+
+                GameArea.TransformMatrix = new System.Numerics.Matrix4x4(
+                    (float)times, 0, 0, 0,
+                    0, (float)times, 0, 0,
+                    0, 0, 1, 0,
+                    (float)xPlus, (float)yPlus, 0, 1);
+
+                if (frame % 60 == 0 && stopWatch != null)
+                {
+                    Fps.Text = $"frames send per second: {frame / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
+                        $"frame recieved: {framesRecieved / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
+                        $"frame lag: {frame - positions.Frame}";
+                }
             });
         }
 
@@ -291,12 +343,13 @@ namespace RemoteSoccer
         {
             try
             {
-                var frame = 0;
+                var pointer = CoreWindow.GetForCurrentThread().PointerPosition;
+                double lastX = pointer.X, lastY = pointer.Y;
 
-                double lastX = 0, lastY = 0;
+                var sw = new Stopwatch();
+                sw.Start();
 
-                var stopWatch = new Stopwatch();
-                stopWatch.Start();
+                stopWatch = sw;
 
                 var distrib = new int[100];
 
@@ -312,8 +365,8 @@ namespace RemoteSoccer
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
 
-                    var footX = frame == 0 ? 0 : point.X - lastX;
-                    var footY = frame == 0 ? 0 : point.Y - lastY;
+                    var footX = point.X - lastX;
+                    var footY = point.Y - lastY;
 
                     lastX = point.X;
                     lastY = point.Y;
@@ -321,60 +374,7 @@ namespace RemoteSoccer
                     handler.Send(game,
                         new PlayerInputs(footX, footY, bodyX, bodyY, foot, body));
 
-                    var myPositions = currentPositions.Read();
-
-
-                    foreach (var position in myPositions.PositionsList)
-                    {
-
-                        if (elements.TryGetValue(position.Id, out var element))
-                        {
-                            if (position.Id == body)
-                            {
-                                times = .5;
-                                xPlus = (viewFrameWidth / 2.0) - (position.X * times);
-                                yPlus = (viewFrameHeight / 2.0) - (position.Y * times);
-                            }
-                            element.X = position.X;
-                            element.Y = position.Y;
-                        }
-                    }
-
-                    GameArea.TransformMatrix = new System.Numerics.Matrix4x4(
-                        (float)times, 0, 0, 0,
-                        0, (float)times, 0, 0,
-                        0, 0, 1, 0,
-                        (float)xPlus, (float)yPlus, 0, 1);
-
                     frame++;
-                    foreach (var element in elements.Values)
-                    {
-                        Canvas.SetLeft(element.element, element.X -(element.Diameter/2.0));
-                        Canvas.SetTop(element.element, element.Y - (element.Diameter / 2.0));
-                    }
-
-                    Canvas.SetLeft(ballWall, myPositions.CountDownState.X - myPositions.CountDownState.Radius );
-                    Canvas.SetTop(ballWall, myPositions.CountDownState.Y - myPositions.CountDownState.Radius );
-
-
-                    ballWall.Visibility = myPositions.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
-
-                    if (myPositions.CountDownState.Countdown)
-                    {
-                        ballWall.Width = myPositions.CountDownState.Radius*2;
-                        ballWall.Height = myPositions.CountDownState.Radius*2;
-                        ballWall.StrokeThickness = myPositions.CountDownState.StrokeThickness;
-                        if (ball != null) {
-                            ball.Opacity = myPositions.CountDownState.BallOpacity;
-                        }
-                    }
-
-                    if (frame % 60 == 0)
-                    {
-                        Fps.Text = $"frames send per second: {frame / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
-                            $"frame recieved: {framesRecieved / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
-                            $"frame lag: {frame - myPositions.Frame}";
-                    }
 
                     // let someone else have a go
                     await Task.Delay((int)Math.Max(1, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
@@ -459,7 +459,8 @@ namespace RemoteSoccer
         {
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
-                        () => {
+                        () =>
+                        {
                             LeftScore.Text = obj.Left.ToString();
                             RightScore.Text = obj.Right.ToString();
                         });

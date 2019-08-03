@@ -13,7 +13,11 @@ namespace Server
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR().AddMessagePackProtocol();//.AddAzureSignalR();//;//
+            services.AddSignalR(x=> {
+#if DEGBU
+                x.EnableDetailedErrors = true;
+#endif
+            }).AddMessagePackProtocol();//.AddAzureSignalR();//;//
             services.AddSingleton<GameHubState>();
         }
 
@@ -24,7 +28,9 @@ namespace Server
             //.UseAzureSignalR
             app.UseSignalR(routes =>
             {
-                routes.MapHub<GameHub>($"/{nameof(GameHub)}");
+                routes.MapHub<GameHub>($"/{nameof(GameHub)}", x=> {
+                    x.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+                });
             });
 
 
