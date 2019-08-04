@@ -151,9 +151,9 @@ namespace Server
                goalZ,
                leftGoalId,
                footLen*2,
-               0xdd,
-               0xdd,
-               0xdd,
+               0xee,
+               0xee,
+               0xee,
                0xff,
                "left-goal"));
 
@@ -172,9 +172,9 @@ namespace Server
                goalZ,
                rightGoalId,
                footLen * 2,
-               0xdd,
-               0xdd,
-               0xdd,
+               0xee,
+               0xee,
+               0xee,
                0xff,
                "right-goal"));
 
