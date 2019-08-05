@@ -13,11 +13,11 @@ namespace Server
 {
     public class Game
     {
-        private const double footLen =300;
+        private const double footLen =400;
         private const double xMax = 12800;
         private const double yMax = 6400;
         private const int Radius = 40;
-        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(100, xMax + 100, yMax + 100));
+        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(1280, xMax + 100, yMax + 100));
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
@@ -29,7 +29,8 @@ namespace Server
         public DateTime LastInput { get; private set; } = DateTime.Now;
         private int leftScore = 0, rightScore = 0;
 
-        private const int fieldZ = -1;
+        private const int fieldZ = -2;
+        private const int lineZ = -1;
         private const int goalZ = 0;
         private const int bodyZ = 1;
         private const int ballZ = 2;
@@ -138,7 +139,7 @@ namespace Server
             }
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(4, Radius * 2, 800, 450);
+            ball = PhysicsObjectBuilder.Ball(8, Radius * 2, xMax/2, yMax/2);
 
             objectsCreated.AddOrThrow(new ObjectCreated(
                ball.X,
@@ -322,14 +323,26 @@ namespace Server
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             var frame = 0;
+            var hit = 0;
+            var nothit = 0;
             while (true)
             {
                 if (Apply(out var positions))
                 {
-                    await onPositionsUpdate(positions);
+                    var dontWait = onPositionsUpdate(positions);
                 };
                 frame++;
-                await Task.Delay((int)Math.Max(1, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
+
+                await Task.Delay((int)Math.Max(0, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
+                //await Task.Yield();
+                //var whatIsIt = ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds;
+                //if (whatIsIt > 0)
+                //{
+                //    hit++;
+                //}
+                //else {
+                //    nothit++;
+                //}
             }
         }
 

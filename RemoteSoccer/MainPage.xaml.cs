@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
@@ -41,18 +42,19 @@ namespace RemoteSoccer
     {
         private class ElementEntry
         {
-            private const int V = 1;
+            private const int V = 0;
             public readonly Ellipse element;
             private readonly Brush[] brushes;
 
             public ElementEntry(Ellipse element, Color color)
             {
                 this.element = element ?? throw new ArgumentNullException(nameof(element));
-                this.brushes = GenerateBrushes(color);
+                //this.brushes = GenerateBrushes(color);
             }
 
-            public Brush GetBrush(double width, double velocity) {
-                return brushes[Math.Min(V-1, (int)(V * velocity / width))];
+            public Brush GetBrush(double width, double velocity)
+            {
+                return brushes[Math.Min(V - 1, (int)(V * velocity / width))];
             }
 
             private Brush[] GenerateBrushes(Color color)
@@ -61,6 +63,7 @@ namespace RemoteSoccer
                 var deadColor = Color.FromArgb(0x00, darkColor.R, darkColor.G, darkColor.B);
 
                 var brushes = new Brush[V];
+
                 {
                     var stops = new GradientStopCollection();
                     stops.Add(new GradientStop()
@@ -121,7 +124,7 @@ namespace RemoteSoccer
 
         private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
         private readonly Ellipse ballWall;
-        private const double footLen = 300;
+        private const double footLen = 400;
         private const double xMax = 12800;
         private const double yMax = 6400;
 
@@ -157,7 +160,7 @@ namespace RemoteSoccer
 
             GameArea.Children.Add(ballWall);
 
-                
+
             var field = new Rectangle()
             {
                 Width = xMax,
@@ -175,15 +178,16 @@ namespace RemoteSoccer
 
             var lineBrush =
                 new SolidColorBrush(Color.FromArgb(0xff, 0xcc, 0xcc, 0xcc));
-            for (double i = 0; i <= yMax; i += yMax / 4) {
+            for (double i = 0; i <= yMax; i += yMax / 4)
+            {
                 var line = new Line()
                 {
-                    X1=0,
-                    X2=xMax,
-                    Y1 =i,
-                    Y2=i,
+                    X1 = 0,
+                    X2 = xMax,
+                    Y1 = i,
+                    Y2 = i,
                     Stroke = lineBrush,
-                    StrokeThickness= 5,
+                    StrokeThickness = 5,
                 };
                 Canvas.SetZIndex(line, -1);
                 GameArea.Children.Add(line);
@@ -253,11 +257,12 @@ namespace RemoteSoccer
                                 0, 0, 1, 0,
                                 (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
 
-                            if (objectCreated.Name == "ball") {
+                            if (objectCreated.Name == "ball")
+                            {
                                 ball = ellipse;
                             }
 
-                            elements.Add(objectCreated.Id, new ElementEntry( ellipse,color));// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
+                            elements.Add(objectCreated.Id, new ElementEntry(ellipse, color));// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
                             GameArea.Children.Add(ellipse);
                         }
                     }
@@ -289,16 +294,37 @@ namespace RemoteSoccer
         private int frame = 0;
         private Stopwatch stopWatch;
 
+
+        private long longestGap = 0;
+        private long lastHandlePositions = 0;
+        private int currentFrame = 0;
         private void HandlePositions(Positions positions)
         {
 
             framesRecieved++;
 
+            Top:
+            var myCurrentFrame = currentFrame;
+            if (myCurrentFrame > positions.Frame)
+            {
+                return;
+            }
+            if (Interlocked.CompareExchange(ref currentFrame, positions.Frame, myCurrentFrame) != myCurrentFrame)
+            {
+                goto Top;
+            }
+
+            var gap = (stopWatch.ElapsedTicks - lastHandlePositions) / TimeSpan.TicksPerMillisecond;
+            longestGap = Math.Max(gap, longestGap);
+            lastHandlePositions = stopWatch.ElapsedTicks;
+
+            var ticks = stopWatch.ElapsedTicks;
+
+
             var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-            CoreDispatcherPriority.Normal,
+            CoreDispatcherPriority.High,
             () =>
             {
-                var ms = stopWatch.ElapsedMilliseconds;
 
                 foreach (var position in positions.PositionsList)
                 {
@@ -314,20 +340,20 @@ namespace RemoteSoccer
 
                         var v = Math.Sqrt((position.Vx * position.Vx) + (position.Vy * position.Vy));
 
-                        var Stretch = (v/ element.element.Width);
+                        var Stretch = (v / element.element.Width);
 
-                        //element.element.Fill = element.GetBrush( element.element.Width,v);
+                            //element.element.Fill = element.GetBrush( element.element.Width,v);
 
-                        if (v != 0)
+                            if (v != 0)
                         {
-                            element.element.TransformMatrix = 
-                                // first we center
+                            element.element.TransformMatrix =
+                            // first we center
                             new System.Numerics.Matrix4x4(
                                 1, 0, 0, 0,
-                                0,1, 0, 0,
+                                0, 1, 0, 0,
                                 0, 0, 1, 0,
-                                (float)(-element.element.Width/2.0), (float)(-element.element.Height / 2.0), 0, 1) 
-                                // then we stretch
+                                (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
+                            // then we stretch
                             * new System.Numerics.Matrix4x4(
                                (float)(1 + Stretch), 0, 0, 0,
                                 0, 1, 0, 0,
@@ -338,7 +364,7 @@ namespace RemoteSoccer
                                 1, 0, 0, 0,
                                 0, 1, 0, 0,
                                 0, 0, 1, 0,
-                                (float)(-v/2.0), 0, 0, 1)
+                                (float)(-v / 2.0), 0, 0, 1)
                             // then we rotate
                             * new System.Numerics.Matrix4x4(
                                 (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
@@ -352,7 +378,8 @@ namespace RemoteSoccer
                                 0, 0, 1, 0,
                                 (float)(position.X), (float)(position.Y), 0, 1);
                         }
-                        else {
+                        else
+                        {
 
                             element.element.TransformMatrix =
                             // first we center
@@ -367,12 +394,12 @@ namespace RemoteSoccer
                                 1, 0, 0, 0,
                                 0, 1, 0, 0,
                                 0, 0, 1, 0,
-                                (float)(position.X ), (float)(position.Y ), 0, 1);
+                                (float)(position.X), (float)(position.Y), 0, 1);
                         }
 
-                        //Canvas.SetLeft(element, position.X - (element.Width / 2.0));
-                        //Canvas.SetTop(element, position.Y - (element.Height / 2.0));
-                    }
+                            //Canvas.SetLeft(element, position.X - (element.Width / 2.0));
+                            //Canvas.SetTop(element, position.Y - (element.Height / 2.0));
+                        }
                 }
 
                 Canvas.SetLeft(ballWall, positions.CountDownState.X - positions.CountDownState.Radius);
@@ -398,14 +425,16 @@ namespace RemoteSoccer
                     0, 0, 1, 0,
                     (float)xPlus, (float)yPlus, 0, 1);
 
-                if (frame % 60 == 0 && stopWatch != null)
+                if (frame % 20 == 0 && stopWatch != null)
                 {
-                    Fps.Text = $"time to draw: {stopWatch.ElapsedMilliseconds - ms}{Environment.NewLine}" +
-                        $"frame recieved: {framesRecieved / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
+                    Fps.Text = $"time to draw: {(stopWatch.ElapsedTicks - ticks)/ (double)TimeSpan.TicksPerMillisecond:f2}{Environment.NewLine}" +
+                        $"longest gap: {longestGap}{Environment.NewLine}" +
                         $"frame lag: {frame - positions.Frame}{Environment.NewLine}" +
-                        $"hold shift to use mouse" ;
+                        $"hold shift to use mouse";
+                    longestGap = 0;
                 }
             });
+
         }
 
         // assumed to be run on the main thread
@@ -418,7 +447,7 @@ namespace RemoteSoccer
 
                 var sw = new Stopwatch();
                 sw.Start();
-
+                lastHandlePositions = sw.ElapsedTicks;
                 stopWatch = sw;
 
                 var distrib = new int[100];
@@ -426,7 +455,8 @@ namespace RemoteSoccer
                 while (true)
                 {
 
-                    if (Window.Current.CoreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down)) {
+                    if (Window.Current.CoreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
+                    {
                         handler.Send(new ResetGame(game));
                     }
 
@@ -438,8 +468,8 @@ namespace RemoteSoccer
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
 
                     var point = CoreWindow.GetForCurrentThread().PointerPosition;
-                    var footX = point.X - lastX;
-                    var footY = point.Y - lastY;
+                    var footX = (point.X - lastX) * .75;
+                    var footY = (point.Y - lastY) * .75;
 
                     if (!Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down))
                     {
@@ -447,15 +477,18 @@ namespace RemoteSoccer
                         Window.Current.CoreWindow.PointerPosition = point;
                         Window.Current.CoreWindow.PointerCursor = null;
                     }
-                    else {
-                        if (Window.Current.CoreWindow.PointerCursor == null) {
+                    else
+                    {
+                        if (Window.Current.CoreWindow.PointerCursor == null)
+                        {
                             Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
                         }
                     }
                     lastX = point.X;
                     lastY = point.Y;
 
-                    if (Window.Current.CoreWindow.GetKeyState(VirtualKey.Escape).HasFlag(CoreVirtualKeyStates.Down)) {
+                    if (Window.Current.CoreWindow.GetKeyState(VirtualKey.Escape).HasFlag(CoreVirtualKeyStates.Down))
+                    {
                         Application.Current.Exit();
                     }
 
@@ -464,8 +497,10 @@ namespace RemoteSoccer
 
                     frame++;
 
+                    
                     // let someone else have a go
-                    await Task.Delay((int)Math.Max(1, (1000 * frame / 60) - stopWatch.ElapsedMilliseconds));
+                    await Task.Delay((int)Math.Max(0, (1000 * frame / 60) - stopWatch.ElapsedMilliseconds));
+                 
                 }
             }
 #pragma warning disable CS0168 // Variable is declared but never used
@@ -505,14 +540,18 @@ namespace RemoteSoccer
                     var random = new Random();
 
                     var color = new byte[3];
-                    random.NextBytes(color);
+
+                    while (color[0] + color[1] + color[2] < (0xCC) || color[0] + color[1] + color[2] > (0x143 ))
+                    {
+                        random.NextBytes(color);
+                    }
 
                     handler.Send(
                         gameName,
                         new CreatePlayer(
                             foot,
                             body,
-                            footLen*2,
+                            footLen * 2,
                             80,
                             color[0],
                             color[1],
@@ -547,7 +586,7 @@ namespace RemoteSoccer
         {
             var delta = e.GetCurrentPoint(GameHolder).Properties.MouseWheelDelta;
 
-            times = times * Math.Pow(1.1, delta/100.0);
+            times = times * Math.Pow(1.1, delta / 100.0);
         }
 
         private async void HandleUpdateScore(UpdateScore obj)
