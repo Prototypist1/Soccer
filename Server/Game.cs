@@ -11,12 +11,13 @@ using Prototypist.TaskChain;
 
 namespace Server
 {
-    public class Game {
-        private const double footLen = 200;
-        private const double xMax = 6400;
-        private const double yMax = 3200;
+    public class Game
+    {
+        private const double footLen =300;
+        private const double xMax = 12800;
+        private const double yMax = 6400;
         private const int Radius = 40;
-        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>( new PhysicsEngine(100, xMax+100, yMax+100));
+        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(100, xMax + 100, yMax + 100));
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
@@ -26,7 +27,7 @@ namespace Server
 
         private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
         public DateTime LastInput { get; private set; } = DateTime.Now;
-        private int leftScore=0, rightScore=0;
+        private int leftScore = 0, rightScore = 0;
 
         private const int fieldZ = -1;
         private const int goalZ = 0;
@@ -36,41 +37,48 @@ namespace Server
         private const int Diameter = 80;
         private readonly GameStateTracker gameStateTracker;
 
-        private class GameStateTracker {
+        private class GameStateTracker
+        {
 
             private readonly Action resetBallAction;
             private readonly double ballStartX, ballStartY;
 
-            public CountDownState UpdateGameState() {
+            public CountDownState UpdateGameState()
+            {
                 var res = new CountDownState();
                 res.Countdown = false;
-                if (gameState != play) {
+                if (gameState != play)
+                {
                     gameState++;
                 }
-                if (gameState == resetBall) {
+                if (gameState == resetBall)
+                {
                     resetBallAction();
                 }
-                if (gameState >= startCountDown && gameState < endCountDown) {
+                if (gameState >= startCountDown && gameState < endCountDown)
+                {
                     res.Countdown = true;
                     if (TryGetBallWall(out var tuple))
                     {
-                        res.StrokeThickness = tuple.radius - (circleSize*(gameState-startCountDown)/((double)(endCountDown - startCountDown)));
+                        res.StrokeThickness = tuple.radius - (circleSize * (gameState - startCountDown) / ((double)(endCountDown - startCountDown)));
                         res.Radius = tuple.radius;
-                        res.BallOpacity = Math.Min(1.0, Math.Abs(((endCountDown - startCountDown) - 2*(gameState-startCountDown))/ ((double)(endCountDown - startCountDown))));
+                        res.BallOpacity = Math.Min(1.0, Math.Abs(((endCountDown - startCountDown) - 2 * (gameState - startCountDown)) / ((double)(endCountDown - startCountDown))));
                         res.X = tuple.x;
                         res.Y = tuple.y;
                     }
-                    else {
+                    else
+                    {
                         throw new Exception("bug");
                     }
                 }
-                if (gameState == endCountDown) {
+                if (gameState == endCountDown)
+                {
                     gameState = play;
                 }
                 return res;
             }
 
-            private const double circleSize = 200;
+            private const double circleSize = 300;
 
             private const int play = -1;
             private const int startGrowingCircle = 0;
@@ -88,20 +96,15 @@ namespace Server
                 this.ballStartY = ballStartY;
             }
 
-            public bool CanScore() => gameState== play;
+            public bool CanScore() => gameState == play;
 
             public void Scored()
             {
-                if (gameState == play)
-                {
-                    gameState = 1;
-                }
-                else {
-                    throw new Exception("bug");
-                }
+                gameState = 1;
             }
 
-            public bool TryGetBallWall(out (double x, double y, double radius) ballWall) {
+            public bool TryGetBallWall(out (double x, double y, double radius) ballWall)
+            {
                 if (gameState >= startGrowingCircle)
                 {
                     ballWall = (ballStartX,
@@ -114,22 +117,35 @@ namespace Server
             }
         }
 
+        internal void Reset(Action<UpdateScore> onUpdateScore)
+        {
+            if (onUpdateScore == null)
+            {
+                throw new ArgumentNullException(nameof(onUpdateScore));
+            }
 
-        public Game(Action<UpdateScore> onUpdateScore) {
+            gameStateTracker.Scored();
+            leftScore = 0;
+            rightScore = 0;
+            onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
+        }
+
+        public Game(Action<UpdateScore> onUpdateScore)
+        {
             if (onUpdateScore == null)
             {
                 throw new ArgumentNullException(nameof(onUpdateScore));
             }
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(4, Radius*2, 800, 450);
+            ball = PhysicsObjectBuilder.Ball(4, Radius * 2, 800, 450);
 
             objectsCreated.AddOrThrow(new ObjectCreated(
                ball.X,
                ball.Y,
                ballZ,
                ballId,
-               Radius * 2 *2,
+               Radius * 2 * 2,
                0,
                0,
                0,
@@ -137,7 +153,8 @@ namespace Server
                "ball"));
 
             var leftGoalId = Guid.NewGuid();
-            var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0,x=>x== ball && gameStateTracker.CanScore(), x=>{
+            var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0, x => x == ball && gameStateTracker.CanScore(), x =>
+            {
                 if (gameStateTracker.CanScore())
                 {
                     gameStateTracker.Scored();
@@ -150,7 +167,7 @@ namespace Server
                leftGoal.Y,
                goalZ,
                leftGoalId,
-               footLen*2,
+               footLen * 2,
                0xee,
                0xee,
                0xee,
@@ -158,7 +175,8 @@ namespace Server
                "left-goal"));
 
             var rightGoalId = Guid.NewGuid();
-            var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x =>x==ball&& gameStateTracker.CanScore(), x=> {
+            var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x => x == ball && gameStateTracker.CanScore(), x =>
+            {
                 if (gameStateTracker.CanScore())
                 {
                     gameStateTracker.Scored();
@@ -179,15 +197,22 @@ namespace Server
                "right-goal"));
 
 
+            //var points = new[] {
+            //    (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
+            //    (new Vector(0,footLen) ,new Vector(footLen,0)),
+            //    (new Vector(0,yMax - footLen) ,new Vector(0,footLen)),
+            //    (new Vector(footLen,yMax),new Vector(0,yMax - footLen)),
+            //    (new Vector(xMax - footLen,yMax),new Vector(footLen,yMax)),
+            //    (new Vector(xMax,yMax - footLen),new Vector(xMax - footLen,yMax)),
+            //    (new Vector(xMax,footLen),new Vector(xMax,yMax - footLen)),
+            //    (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
+            //};
+
             var points = new[] {
-                (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
-                (new Vector(0,footLen) ,new Vector(footLen,0)),
-                (new Vector(0,yMax - footLen) ,new Vector(0,footLen)),
-                (new Vector(footLen,yMax),new Vector(0,yMax - footLen)),
-                (new Vector(xMax - footLen,yMax),new Vector(footLen,yMax)),
-                (new Vector(xMax,yMax - footLen),new Vector(xMax - footLen,yMax)),
-                (new Vector(xMax,footLen),new Vector(xMax,yMax - footLen)),
-                (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
+                (new Vector(0,0) ,new Vector(xMax,0)),
+                (new Vector(0,yMax ) ,new Vector(0,0)),
+                (new Vector(xMax,yMax),new Vector(0,yMax)),
+                (new Vector(xMax,0),new Vector(xMax,yMax)),
             };
 
             gameStateTracker = new GameStateTracker(() =>
@@ -214,16 +239,16 @@ namespace Server
                 }
                 return x;
             });
-            
+
         }
 
         public IReadOnlyList<ObjectCreated> GetObjectsCreated() => objectsCreated.ToArray();
 
-        internal List<ObjectCreated> CreatePlayer(string connectionId,CreatePlayer createPlayer)
+        internal List<ObjectCreated> CreatePlayer(string connectionId, CreatePlayer createPlayer)
         {
             double startX = 400;
             double startY = 400;
-            var foot = PhysicsObjectBuilder.Ball(1, createPlayer.FootDiameter/2.0, startX, startY);
+            var foot = PhysicsObjectBuilder.Ball(1, createPlayer.FootDiameter / 2.0, startX, startY);
 
             physicsEngine.Run(x => { x.AddObject(foot); return x; });
             feet[createPlayer.Foot] = foot;
@@ -278,8 +303,9 @@ namespace Server
 
         internal bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
         {
-            if (connectionObjects.TryRemove(connectionId, out var toRemoves)) {
-                objectRemoveds=  toRemoves.Select(x => new ObjectRemoved(x.Id)).ToList();
+            if (connectionObjects.TryRemove(connectionId, out var toRemoves))
+            {
+                objectRemoveds = toRemoves.Select(x => new ObjectRemoved(x.Id)).ToList();
                 foreach (var item in toRemoves)
                 {
                     objectsCreated.RemoveOrThrow(item);
@@ -290,14 +316,16 @@ namespace Server
             return false;
         }
 
-        
-        public async void Start(Func<Positions,Task> onPositionsUpdate) {
+
+        public async void Start(Func<Positions, Task> onPositionsUpdate)
+        {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             var frame = 0;
             while (true)
             {
-                if (Apply(out var positions)){
+                if (Apply(out var positions))
+                {
                     await onPositionsUpdate(positions);
                 };
                 frame++;
@@ -306,7 +334,8 @@ namespace Server
         }
 
         private int simulationTime = 0;
-        internal bool Apply(out Positions positions) {
+        internal bool Apply(out Positions positions)
+        {
 
             const double maxSpeed = 40.0;
             const double MaxForce = 1;
@@ -314,11 +343,12 @@ namespace Server
 
             var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
 
-            if (!myPlayersInputs.Any()) {
+            if (!myPlayersInputs.Any())
+            {
                 return false;
             }
 
-            var frames = new List<Dictionary<Guid,PlayerInputs>>();
+            var frames = new List<Dictionary<Guid, PlayerInputs>>();
 
             foreach (var input in myPlayersInputs)
             {
@@ -374,17 +404,17 @@ namespace Server
                         f = Bound(f, new Vector(body.vx, body.vy));
 
                         body.ApplyForce(f.x, f.y);
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup),tup);
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
 
                         var foot = body.Foot;
 
                         // apply whatever force was applied to that body
                         foot.ApplyForce(
-                            (body.vx - lastVx)* foot.Mass,
+                            (body.vx - lastVx) * foot.Mass,
                             (body.vy - lastVy) * foot.Mass);
 
 
-                        var max = footLen- Radius;
+                        var max = footLen - Radius;
 
                         var target = new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
 
@@ -398,7 +428,7 @@ namespace Server
 
                         foot.ApplyForce(
                             (targetX - (foot.X + foot.Vx)) * foot.Mass / 1.0,
-                            (targetY - (foot.Y + foot.Vy)) * foot.Mass / 1.0); 
+                            (targetY - (foot.Y + foot.Vy)) * foot.Mass / 1.0);
                     }
                     else
                     {
@@ -411,7 +441,7 @@ namespace Server
                             (body.vx - lastVx) * foot.Mass,
                             (body.vy - lastVy) * foot.Mass);
 
-                        var max = 200.0;
+                        var max = footLen;
 
                         var target = new Vector(foot.X - lastX, foot.Y - lastY);
 
@@ -451,7 +481,7 @@ namespace Server
                 var with = velocity.NewUnitized().NewScaled(Math.Max(0, force.Dot(velocity.NewUnitized())));
                 var notWith = force.NewAdded(with.NewMinus());
 
-                with = with.NewScaled(Math.Pow( Math.Max(0,(maxSpeed - velocity.Length)) / maxSpeed,2));
+                with = with.NewScaled(Math.Pow(Math.Max(0, (maxSpeed - velocity.Length)) / maxSpeed, 2));
 
 
                 return with.NewAdded(notWith);
@@ -464,7 +494,8 @@ namespace Server
             playersInputs.Add(playerInputs);
         }
 
-        private IEnumerable<Position> GetPosition() {
+        private IEnumerable<Position> GetPosition()
+        {
             yield return new Position(ball.X, ball.Y, ballId, ball.Vx, ball.Vy);
             foreach (var foot in feet)
             {

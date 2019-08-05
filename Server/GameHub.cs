@@ -27,15 +27,20 @@ namespace Server
 
         private readonly GameHubState state;
 
+
         public GameHub(GameHubState state)
         {
             this.state = state ?? throw new ArgumentNullException(nameof(state));
         }
 
+        private Action<UpdateScore> getOnUpdateScore(string id) => x =>
+        {
+            state.connectionManager.Clients.Group(id).SendAsync(nameof(UpdateScore), x);
+        };
+
         public async Task CreateGame(CreateGame createGame) {
-            var myGame = new Game(x =>{
-                state.connectionManager.Clients.Group(createGame.Id).SendAsync(nameof(UpdateScore), x);
-            });
+
+            var myGame = new Game(getOnUpdateScore(createGame.Id));
             if (state.games.TryAdd(createGame.Id, myGame) && state.connectionIdToGameName.TryAdd(Context.ConnectionId, createGame.Id)) {
                 await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createGame.Id));
                 myGame.Start(async positions =>
@@ -48,6 +53,14 @@ namespace Server
             }
         }
 
+        public void ResetGame(ResetGame resetGame)
+        {
+            if (state.games.TryGetValue(resetGame.Id , out var value))
+            {
+                value.Reset(getOnUpdateScore(resetGame.Id));
+            }
+        }
+
         public async Task JoinGame(JoinGame joinGame)
         {
             if (state.games.ContainsKey(joinGame.Id) && state.connectionIdToGameName.TryAdd(Context.ConnectionId,joinGame.Id))
@@ -57,6 +70,30 @@ namespace Server
             else
             {
                 await Clients.Caller.SendAsync(nameof(GameDoesNotExist), new GameDoesNotExist(joinGame.Id));
+            }
+        }
+
+        public async Task CreateOrJoinGame(CreateOrJoinGame createOrJoinGame)
+        {
+            var myGame = new Game(getOnUpdateScore(createOrJoinGame.Id));
+            var game = state.games.GetOrAdd(createOrJoinGame.Id, myGame);
+
+            if (!state.connectionIdToGameName.TryAdd(Context.ConnectionId, createOrJoinGame.Id)) {
+                // error!
+                // I mean you are already in so who cares?
+            }
+
+            if(myGame == game)
+            {
+                await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createOrJoinGame.Id));
+                myGame.Start(async positions =>
+                {
+                    await state.connectionManager.Clients.Group(createOrJoinGame.Id).SendAsync(nameof(Positions), positions);
+                });
+            }
+            else
+            {
+                await Clients.Caller.SendAsync(nameof(GameJoined), new GameJoined(createOrJoinGame.Id));
             }
         }
 

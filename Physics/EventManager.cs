@@ -190,7 +190,7 @@ namespace Physics
             }
         }
 
-        internal struct MoveEvent : IEvent
+        internal readonly struct MoveEvent : IEvent
         {
             public double Time { get; }
 
@@ -228,8 +228,6 @@ namespace Physics
 
         }
 
-
-
         private readonly LinkedList<IEvent> Events = new LinkedList<IEvent>();
 
         public void AddMoveEvent(double time, PhysicsObject physicsObject)
@@ -262,7 +260,6 @@ namespace Physics
                 Events.AddBefore(at, toAdd);
             }
         }
-
 
         public void RunAll(double time, GridManager gridManager)
         {

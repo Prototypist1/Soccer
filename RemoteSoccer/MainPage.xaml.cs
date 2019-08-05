@@ -26,6 +26,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
 
@@ -40,6 +41,7 @@ namespace RemoteSoccer
     {
         private class ElementEntry
         {
+            private const int V = 1;
             public readonly Ellipse element;
             private readonly Brush[] brushes;
 
@@ -50,7 +52,7 @@ namespace RemoteSoccer
             }
 
             public Brush GetBrush(double width, double velocity) {
-                return brushes[Math.Min(99, (int)(100 * velocity / width))];
+                return brushes[Math.Min(V-1, (int)(V * velocity / width))];
             }
 
             private Brush[] GenerateBrushes(Color color)
@@ -58,7 +60,7 @@ namespace RemoteSoccer
                 var darkColor = Color.FromArgb(color.A, (byte)(((int)color.R) / 2), (byte)(((int)color.G) / 2), (byte)(((int)color.B) / 2));
                 var deadColor = Color.FromArgb(0x00, darkColor.R, darkColor.G, darkColor.B);
 
-                var brushes = new Brush[100];
+                var brushes = new Brush[V];
                 {
                     var stops = new GradientStopCollection();
                     stops.Add(new GradientStop()
@@ -73,7 +75,7 @@ namespace RemoteSoccer
                     });
                     brushes[0] = new RadialGradientBrush(stops);
                 }
-                for (int i = 1; i < 100; i++)
+                for (int i = 1; i < V; i++)
                 {
                     var stops = new GradientStopCollection();
                     stops.Add(new GradientStop()
@@ -119,9 +121,9 @@ namespace RemoteSoccer
 
         private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
         private readonly Ellipse ballWall;
-        private const double footLen = 200;
-        private const double xMax = 6400;
-        private const double yMax = 3200;
+        private const double footLen = 300;
+        private const double xMax = 12800;
+        private const double yMax = 6400;
 
         private Guid body, foot;
 
@@ -147,7 +149,7 @@ namespace RemoteSoccer
             ballWall = new Ellipse
             {
                 Visibility = Visibility.Collapsed,
-                Stroke = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00)),
+                Stroke = new SolidColorBrush(Color.FromArgb(0xff, 0xbb, 0xbb, 0xbb)),
                 StrokeThickness = 20
             };
 
@@ -155,50 +157,52 @@ namespace RemoteSoccer
 
             GameArea.Children.Add(ballWall);
 
-            var pointsCollection = new PointCollection();
-            pointsCollection.Add(new Point(footLen, 0));
-            pointsCollection.Add(new Point(0, footLen));
-            pointsCollection.Add(new Point(0, yMax - footLen));
-            pointsCollection.Add(new Point(footLen, yMax));
-            pointsCollection.Add(new Point(xMax - footLen, yMax));
-            pointsCollection.Add(new Point(xMax, yMax - footLen));
-            pointsCollection.Add(new Point(xMax, footLen));
-            pointsCollection.Add(new Point(xMax - footLen, 0));
+                
+            var field = new Rectangle()
             {
-                var stops = new GradientStopCollection();
-                stops.Add(new GradientStop()
-                {
-                    Offset = 0,
-                    Color = Color.FromArgb(0xff, 0xcc, 0xcc, 0xcc)
-                });
-                stops.Add(new GradientStop()
-                {
-                    Offset = .5,
-                    Color = Color.FromArgb(0xff, 0xdd, 0xdd, 0xdd)
-                });
-                stops.Add(new GradientStop()
-                {
-                    Offset = 1,
-                    Color = Color.FromArgb(0xff, 0xcc, 0xcc, 0xcc)
-                });
+                Width = xMax,
+                Height = yMax,
+                Fill =
+                //new ImageBrush() {
+                //    ImageSource = new BitmapImage(new Uri(@"ms-appx:///Assets/nice.jpg")),
+                //    Stretch = Stretch.UniformToFill,
+                //},  
+                new SolidColorBrush(Color.FromArgb(0xff, 0xdd, 0xdd, 0xdd)),
+                //Opacity = .08,
+            };
+            Canvas.SetZIndex(field, -2);
+            GameArea.Children.Add(field);
 
-                var poly = new Polygon()
+            var lineBrush =
+                new SolidColorBrush(Color.FromArgb(0xff, 0xcc, 0xcc, 0xcc));
+            for (double i = 0; i <= yMax; i += yMax / 4) {
+                var line = new Line()
                 {
-                    Points = pointsCollection,
-                    Fill = new LinearGradientBrush()
-                    {
-                        GradientStops = stops,
-                        StartPoint = new Point(0, 0),
-                        EndPoint = new Point(1, 0)
-                    },
+                    X1=0,
+                    X2=xMax,
+                    Y1 =i,
+                    Y2=i,
+                    Stroke = lineBrush,
+                    StrokeThickness= 5,
                 };
-                Canvas.SetZIndex(poly, -1);
-                GameArea.Children.Add(poly);
+                Canvas.SetZIndex(line, -1);
+                GameArea.Children.Add(line);
             }
-
+            for (double i = 0; i <= xMax; i += yMax / 4)
+            {
+                var line = new Line()
+                {
+                    X1 = i,
+                    X2 = i,
+                    Y1 = 0,
+                    Y2 = yMax,
+                    Stroke = lineBrush,
+                    StrokeThickness = 5,
+                };
+                Canvas.SetZIndex(line, -1);
+                GameArea.Children.Add(line);
+            }
         }
-
-        
 
         private async Task OnDisconnect(Exception ex)
         {
@@ -303,7 +307,6 @@ namespace RemoteSoccer
                     {
                         if (position.Id == body)
                         {
-                            times = .5;
                             xPlus = (viewFrameWidth / 2.0) - (position.X * times);
                             yPlus = (viewFrameHeight / 2.0) - (position.Y * times);
                         }
@@ -313,7 +316,7 @@ namespace RemoteSoccer
 
                         var Stretch = (v/ element.element.Width);
 
-                        element.element.Fill = element.GetBrush( element.element.Width,v);
+                        //element.element.Fill = element.GetBrush( element.element.Width,v);
 
                         if (v != 0)
                         {
@@ -399,7 +402,8 @@ namespace RemoteSoccer
                 {
                     Fps.Text = $"time to draw: {stopWatch.ElapsedMilliseconds - ms}{Environment.NewLine}" +
                         $"frame recieved: {framesRecieved / stopWatch.Elapsed.TotalSeconds}{Environment.NewLine}" +
-                        $"frame lag: {frame - positions.Frame}";
+                        $"frame lag: {frame - positions.Frame}{Environment.NewLine}" +
+                        $"hold shift to use mouse" ;
                 }
             });
         }
@@ -422,8 +426,10 @@ namespace RemoteSoccer
                 while (true)
                 {
 
-                    var point = CoreWindow.GetForCurrentThread().PointerPosition;
-                    //CoreWindow.GetForCurrentThread().PointerPosition = new Point(500, 500);
+                    if (Window.Current.CoreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down)) {
+                        handler.Send(new ResetGame(game));
+                    }
+
                     var bodyX =
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
@@ -431,11 +437,27 @@ namespace RemoteSoccer
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                         (Window.Current.CoreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
 
+                    var point = CoreWindow.GetForCurrentThread().PointerPosition;
                     var footX = point.X - lastX;
                     var footY = point.Y - lastY;
 
+                    if (!Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down))
+                    {
+                        point = new Point(500, 500);
+                        Window.Current.CoreWindow.PointerPosition = point;
+                        Window.Current.CoreWindow.PointerCursor = null;
+                    }
+                    else {
+                        if (Window.Current.CoreWindow.PointerCursor == null) {
+                            Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+                        }
+                    }
                     lastX = point.X;
                     lastY = point.Y;
+
+                    if (Window.Current.CoreWindow.GetKeyState(VirtualKey.Escape).HasFlag(CoreVirtualKeyStates.Down)) {
+                        Application.Current.Exit();
+                    }
 
                     handler.Send(game,
                         new PlayerInputs(footX, footY, bodyX, bodyY, foot, body));
@@ -490,7 +512,7 @@ namespace RemoteSoccer
                         new CreatePlayer(
                             foot,
                             body,
-                            400,
+                            footLen*2,
                             80,
                             color[0],
                             color[1],
@@ -519,6 +541,13 @@ namespace RemoteSoccer
                 }
             });
 
+        }
+
+        private void GameHolder_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            var delta = e.GetCurrentPoint(GameHolder).Properties.MouseWheelDelta;
+
+            times = times * Math.Pow(1.1, delta/100.0);
         }
 
         private async void HandleUpdateScore(UpdateScore obj)

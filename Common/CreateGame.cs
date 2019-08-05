@@ -12,6 +12,26 @@ namespace Common
         }
     }
 
+    public struct CreateOrJoinGame
+    {
+        public string Id { get; set; }
+
+        public CreateOrJoinGame(string id)
+        {
+            this.Id = id;
+        }
+    }
+
+    public struct ResetGame
+    {
+        public string Id { get; set; }
+
+        public ResetGame(string id)
+        {
+            this.Id = id;
+        }
+    }
+
     public struct GameCreated {
         public string Id { get; set; }
 

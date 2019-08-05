@@ -79,15 +79,13 @@ namespace RemoteSoccer
         {
 
             var connection = new HubConnectionBuilder()
-                .WithUrl(@"http://localhost:50737/GameHub", x=> {
-                    x.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
-                    x.SkipNegotiation = true;
+                .WithUrl(@"https://soccerserver.azurewebsites.net/GameHub", x=> {
+                //.WithUrl(@"http://localhost:50737/GameHub", x=> {
+                    // for some reason this seems to break azure signal r service
+                    //x.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+                    //x.SkipNegotiation = true;
                 })
                 .AddMessagePackProtocol()
-                .ConfigureLogging(x=> {
-                    x.Services.AddLogging();
-                })
-                //.WithUrl(@"https://soccerserver.azurewebsites.net/GameHub")
                 .Build();
 
             var res = new SignalRHandler(connection, myGetter);
@@ -278,6 +276,53 @@ namespace RemoteSoccer
                 return await taskCompletionSource.Task;
             }
 
+            public async Task<OrType<GameCreated, GameJoined, Exception>> Send(CreateOrJoinGame createOrJoinGame)
+            {
+                var taskCompletionSource = new TaskCompletionSource<OrType<GameCreated, GameJoined, Exception>>();
+
+                (Action<GameCreated>, Action<GameJoined>) actions = (null, null);
+                actions = (
+                   (GameCreated x) =>
+                   {
+                       if (x.Id == createOrJoinGame.Id)
+                       {
+                           taskCompletionSource.SetResult(new OrType<GameCreated, GameJoined, Exception>(x));
+                       }
+                   },
+                    (GameJoined x) =>
+                    {
+                        if (x.Id == createOrJoinGame.Id)
+                        {
+                            taskCompletionSource.SetResult(new OrType<GameCreated, GameJoined, Exception>(x));
+                        }
+                    }
+                );
+
+                gameCreatedHandlers.Add(actions.Item1);
+                gameJoinedHandlers.Add(actions.Item2);
+
+                try
+                {
+                    await connection.InvokeAsync(nameof(CreateOrJoinGame), createOrJoinGame);
+                }
+                catch (TimeoutException e)
+                {
+                    taskCompletionSource.SetResult(new OrType<GameCreated, GameJoined, Exception>(e));
+                }
+                catch (InvalidOperationException e)
+                {
+                    taskCompletionSource.SetResult(new OrType<GameCreated, GameJoined, Exception>(e));
+                }
+                finally
+                {
+                    gameCreatedHandlers.Remove(actions.Item1);
+                    gameJoinedHandlers.Remove(actions.Item2);
+                }
+
+                return await taskCompletionSource.Task;
+            }
+
+
             public async void Send(string game, 
                 CreatePlayer createPlayer, 
                 Action<Positions> handlePossitions, 
@@ -307,6 +352,20 @@ namespace RemoteSoccer
                 try
                 {
                     await connection.InvokeAsync(nameof(PlayerInputs), game, inputs);
+                }
+                catch (TimeoutException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+
+            public async void Send(ResetGame inputs)
+            {
+                try
+                {
+                    await connection.InvokeAsync(nameof(ResetGame), inputs);
                 }
                 catch (TimeoutException)
                 {

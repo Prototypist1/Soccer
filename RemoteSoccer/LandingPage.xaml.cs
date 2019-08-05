@@ -32,6 +32,8 @@ namespace RemoteSoccer
         public LandingPage()
         {
             this.InitializeComponent();
+            UpdateEnabled();
+
             connecting = Task.Run(async () =>
             {
                 try
@@ -57,19 +59,17 @@ namespace RemoteSoccer
             CoreDispatcherPriority.Normal,
             () =>
             {
-                JoinButton.IsEnabled = false;
+                StartOrJoinButton.IsEnabled = false;
                 GameName.IsEnabled = false;
-                StartButton.IsEnabled = false;
                 LoadingText.Text = ex.Message;
                 LoadingSpinner.IsActive = false;
             });
         }
 
-        private void Start(object sender, RoutedEventArgs e)
+        private void StartOrJoin(object sender, RoutedEventArgs e)
         {
-            JoinButton.IsEnabled = false;
+            StartOrJoinButton.IsEnabled = false;
             GameName.IsEnabled = false;
-            StartButton.IsEnabled = false;
             var name = GameName.Text;
             Task.Run(async () =>
             {
@@ -85,7 +85,7 @@ namespace RemoteSoccer
                             LoadingSpinner.IsActive = true;
                         });
                     var handler = await SingleSignalRHandler.GetOrThrow();
-                    var res = await handler.Send(new CreateGame(name));
+                    var res = await handler.Send(new CreateOrJoinGame(name));
                     if (res.Is1(out var gameCreated))
                     {
                         await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
@@ -96,100 +96,14 @@ namespace RemoteSoccer
                             this.Frame.Navigate(typeof(MainPage), gameCreated.Id);
                         });
                     }
-                    else if (res.Is2(out var gameAlreadyExists))
-                    {
-                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () =>
-                        {
-                            // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = true;
-                            GameName.IsEnabled = true;
-                            StartButton.IsEnabled = true;
-                            LoadingText.Text = "Game already exists";
-                            LoadingText.Visibility = Visibility.Visible;
-                            LoadingSpinner.IsActive = false;
-                        });
-                    }
-                    else if (res.Is3(out var exception)) {
-                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () =>
-                        {
-                            // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = true;
-                            GameName.IsEnabled = true;
-                            StartButton.IsEnabled = true;
-                            LoadingText.Text = exception.Message;
-                            LoadingText.Visibility = Visibility.Visible;
-                            LoadingSpinner.IsActive = false;
-                        });
-                    }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () =>
-                        {
-                            JoinButton.IsEnabled = true;
-                            GameName.IsEnabled = true;
-                            StartButton.IsEnabled = true;
-                            LoadingText.Text = ex.Message;
-                            LoadingSpinner.IsActive = false;
-                        });
-                }
-            });
-        }
-
-        private void Join(object sender, RoutedEventArgs e)
-        {
-            JoinButton.IsEnabled = false;
-            GameName.IsEnabled = false;
-            StartButton.IsEnabled = false;
-            var name = GameName.Text;
-            Task.Run(async () =>
-            {
-                try
-                {
-
-                    await connecting;
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () =>
-                        {
-                            LoadingText.Visibility = Visibility.Visible;
-                            LoadingText.Text = "Joining Game";
-                            LoadingSpinner.IsActive = true;
-                        });
-                    var res = await (await SingleSignalRHandler.GetOrThrow()).Send(new JoinGame(name));
-                    if (res.Is1(out var gameJoined))
+                    else if (res.Is2(out var joined))
                     {
                         await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
                         async () =>
                         {
                             (await SingleSignalRHandler.GetOrThrow()).SetOnClosed(null);
-                            this.Frame.Navigate(typeof(MainPage), gameJoined.Id);
-                        });
-                    }
-                    else if (res.Is2(out var gameDoesNotExist))
-                    {
-                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () =>
-                        {
-                            // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = true;
-                            GameName.IsEnabled = true;
-                            StartButton.IsEnabled = true;
-                            LoadingText.Text = "Game does not exist";
-                            LoadingText.Visibility = Visibility.Visible;
-                            LoadingSpinner.IsActive = false;
+                            this.Frame.Navigate(typeof(MainPage), joined.Id);
                         });
                     }
                     else if (res.Is3(out var exception))
@@ -198,10 +112,8 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         () =>
                         {
-                            // TODO tell the player the game already exists
-                            JoinButton.IsEnabled = true;
+                            StartOrJoinButton.IsEnabled = true;
                             GameName.IsEnabled = true;
-                            StartButton.IsEnabled = true;
                             LoadingText.Text = exception.Message;
                             LoadingText.Visibility = Visibility.Visible;
                             LoadingSpinner.IsActive = false;
@@ -218,14 +130,23 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         () =>
                         {
-                            JoinButton.IsEnabled = true;
+                            StartOrJoinButton.IsEnabled = true;
                             GameName.IsEnabled = true;
-                            StartButton.IsEnabled = true;
                             LoadingText.Text = ex.Message;
                             LoadingSpinner.IsActive = false;
                         });
                 }
             });
+        }
+
+        private void GameName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateEnabled();
+        }
+
+        private void UpdateEnabled()
+        {
+            StartOrJoinButton.IsEnabled = !string.IsNullOrEmpty(GameName.Text);
         }
     }
 }
