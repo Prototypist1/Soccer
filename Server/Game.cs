@@ -14,10 +14,10 @@ namespace Server
     public class Game
     {
         private const double footLen =400;
-        private const double xMax = 12800;
-        private const double yMax = 6400;
+        private const double xMax = 12799;
+        private const double yMax = 6399;
         private const int Radius = 40;
-        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(1280, xMax + 100, yMax + 100));
+        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(1280, xMax+1, yMax+1));
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
@@ -213,7 +213,7 @@ namespace Server
                 (new Vector(0,0) ,new Vector(xMax,0)),
                 (new Vector(0,yMax ) ,new Vector(0,0)),
                 (new Vector(xMax,yMax),new Vector(0,yMax)),
-                (new Vector(xMax,0),new Vector(xMax,yMax)),
+                (new Vector(xMax,yMax),new Vector(xMax,0)),
             };
 
             gameStateTracker = new GameStateTracker(() =>
@@ -323,8 +323,6 @@ namespace Server
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             var frame = 0;
-            var hit = 0;
-            var nothit = 0;
             while (true)
             {
                 if (Apply(out var positions))
@@ -334,7 +332,7 @@ namespace Server
                 frame++;
 
                 await Task.Delay((int)Math.Max(0, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
-                //await Task.Yield();
+                await Task.Yield();
                 //var whatIsIt = ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds;
                 //if (whatIsIt > 0)
                 //{

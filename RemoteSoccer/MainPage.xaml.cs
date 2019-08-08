@@ -454,34 +454,34 @@ namespace RemoteSoccer
 
                 while (true)
                 {
-
-                    if (Window.Current.CoreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
+                    var coreWindow = Window.Current.CoreWindow;
+                    if (coreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
                     {
                         handler.Send(new ResetGame(game));
                     }
 
                     var bodyX =
-                        (Window.Current.CoreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
-                        (Window.Current.CoreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
+                        (coreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
+                        (coreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
                     var bodyY =
-                        (Window.Current.CoreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
-                        (Window.Current.CoreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
+                        (coreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
+                        (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
 
                     var point = CoreWindow.GetForCurrentThread().PointerPosition;
                     var footX = (point.X - lastX) * .75;
                     var footY = (point.Y - lastY) * .75;
 
-                    if (!Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down))
+                    if (!coreWindow.GetKeyState(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down))
                     {
                         point = new Point(500, 500);
-                        Window.Current.CoreWindow.PointerPosition = point;
-                        Window.Current.CoreWindow.PointerCursor = null;
+                        coreWindow.PointerPosition = point;
+                        coreWindow.PointerCursor = null;
                     }
                     else
                     {
-                        if (Window.Current.CoreWindow.PointerCursor == null)
+                        if (coreWindow.PointerCursor == null)
                         {
-                            Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+                            coreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
                         }
                     }
                     lastX = point.X;
