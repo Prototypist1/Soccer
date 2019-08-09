@@ -234,6 +234,7 @@ namespace RemoteSoccer
                                     objectCreated.R,
                                     objectCreated.G,
                                     objectCreated.B);
+                            
                             var ellipse = new Ellipse()
                             {
                                 Width = objectCreated.Diameter,

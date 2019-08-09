@@ -139,14 +139,14 @@ namespace Server
             }
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(8, Radius * 2, xMax/2, yMax/2);
+            ball = PhysicsObjectBuilder.Ball(8, Radius * 2.5, xMax/2, yMax/2);
 
             objectsCreated.AddOrThrow(new ObjectCreated(
                ball.X,
                ball.Y,
                ballZ,
                ballId,
-               Radius * 2 * 2,
+               Radius * 2.5 * 2,
                0,
                0,
                0,
