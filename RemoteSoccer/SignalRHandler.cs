@@ -327,12 +327,14 @@ namespace RemoteSoccer
                 Action<Positions> handlePossitions, 
                 Action<ObjectsCreated> handleObjectsCreated, 
                 Action<ObjectsRemoved> handleObjectsRemoved,
-                Action<UpdateScore> handleUpdateScore)
+                Action<UpdateScore> handleUpdateScore,
+                Action<ColorChanged> handleColorChanged)
             {
                 connection.On(nameof(Positions), handlePossitions);
                 connection.On(nameof(ObjectsCreated), handleObjectsCreated);
                 connection.On(nameof(ObjectsRemoved), handleObjectsRemoved);
                 connection.On(nameof(UpdateScore), handleUpdateScore);
+                connection.On(nameof(ColorChanged), handleColorChanged);
 
                 try
                 {
@@ -365,6 +367,20 @@ namespace RemoteSoccer
                 try
                 {
                     await connection.InvokeAsync(nameof(ResetGame), inputs);
+                }
+                catch (TimeoutException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+
+            internal async void Send(string game, ColorChanged colorChanged)
+            {
+                try
+                {
+                    await connection.InvokeAsync(nameof(ColorChanged),game, colorChanged);
                 }
                 catch (TimeoutException)
                 {

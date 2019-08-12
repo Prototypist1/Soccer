@@ -128,7 +128,8 @@ namespace RemoteSoccer
         private const double xMax = 12800;
         private const double yMax = 6400;
 
-        private Guid body, foot;
+        private readonly Guid body = Guid.NewGuid();
+        private readonly Guid foot = Guid.NewGuid();
 
         public MainPage()
         {
@@ -299,6 +300,8 @@ namespace RemoteSoccer
         private long longestGap = 0;
         private long lastHandlePositions = 0;
         private int currentFrame = 0;
+        private string gameName;
+
         private void HandlePositions(Positions positions)
         {
 
@@ -528,15 +531,13 @@ namespace RemoteSoccer
         {
             base.OnNavigatedTo(e);
 
-            var gameName = (string)e.Parameter;
+            gameName = (string)e.Parameter;
 
 
             Task.Run(async () =>
             {
                 try
                 {
-                    foot = Guid.NewGuid();
-                    body = Guid.NewGuid();
                     var handler = await SingleSignalRHandler.GetOrThrow();
                     var random = new Random();
 
@@ -565,7 +566,8 @@ namespace RemoteSoccer
                         HandlePositions,
                         HandleObjectsCreated,
                         HandleObjectsRemoved,
-                        HandleUpdateScore);
+                        HandleUpdateScore,
+                        HandleColorChanged);
 
                     await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
@@ -583,11 +585,38 @@ namespace RemoteSoccer
 
         }
 
+        private async void HandleColorChanged(ColorChanged obj)
+        {
+
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            var element = elements[obj.Id];
+                            element.element.Fill = new SolidColorBrush(Color.FromArgb(obj.A, obj.R, obj.G, obj.B));
+                        });
+        }
+
         private void GameHolder_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {
             var delta = e.GetCurrentPoint(GameHolder).Properties.MouseWheelDelta;
 
             times = times * Math.Pow(1.1, delta / 100.0);
+        }
+
+        private void ColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+        {
+            var color = ColorPicker.Color;
+            SingleSignalRHandler.GetOrThrow().ContinueWith(x =>
+            {
+                x.Result.Send(gameName, new ColorChanged(foot, color.R, color.G, color.B, 0xff));
+                x.Result.Send(gameName, new ColorChanged(body, color.R, color.G, color.B, 0x20));
+            });
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            Menu.Visibility = Visibility.Collapsed;
         }
 
         private async void HandleUpdateScore(UpdateScore obj)

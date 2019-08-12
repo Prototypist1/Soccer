@@ -1,4 +1,6 @@
-﻿namespace Common
+﻿using System;
+
+namespace Common
 {
     public struct CountDownState
     {
@@ -18,5 +20,22 @@
         public double Radius { get; set; }
         public double StrokeThickness { get; set; }
         public double BallOpacity { get; set; }
+    }
+
+    public struct ColorChanged {
+        public ColorChanged(Guid id, byte r, byte g, byte b, byte a)
+        {
+            Id = id;
+            R = r;
+            G = g;
+            B = b;
+            A = a;
+        }
+
+        public Guid Id { get; set; }
+        public byte R { get; set;}
+        public byte G { get; set;}
+        public byte B { get; set;}
+        public byte A { get; set; }
     }
 }

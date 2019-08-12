@@ -110,6 +110,15 @@ namespace Server
             await Groups.AddToGroupAsync(Context.ConnectionId, game);
         }
 
+
+        public async Task ColorChanged(string game, ColorChanged colorChanged)
+        {
+            // update the players color
+            state.games[game].ColorChanged(colorChanged);
+            // tell the other players
+            await Clients.Group(game).SendAsync(nameof(ColorChanged), colorChanged);
+        }
+
         public void PlayerInputs(string game, PlayerInputs playerInputs)
         {
             state.games[game].PlayerInputs(playerInputs);

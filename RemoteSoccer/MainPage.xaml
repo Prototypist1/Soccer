@@ -5,6 +5,7 @@
     xmlns:local="using:RemoteSoccer"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
@@ -16,13 +17,34 @@
             <TextBlock x:Name="Fps" Text="" />
         </Border>
 
-        <Border BorderThickness="10">
-            <TextBlock x:Name="LeftScore" Text="0"  FontSize="100"/>
+            <Border BorderThickness="10" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+
+                    <TextBlock x:Name="LeftScore" Text="0"  FontSize="100"/>
+                    <TextBlock x:Name="RightScore" Text="0" FontSize="100" />
+                </StackPanel>
+            </Border>
+
+
+        <Border BorderThickness="10" 
+            x:Name="Menu"
+            HorizontalAlignment="Left" 
+            VerticalAlignment="Stretch">
+            <controls:DropShadowPanel
+            BlurRadius="10" >
+                <StackPanel  Background="{ThemeResource SystemControlAcrylicElementBrush}">
+                    <Border BorderThickness="10" >
+                        <TextBlock FontSize="35">Player Color</TextBlock>
+                    </Border>
+                    <Border BorderThickness="10" >
+                        <ColorPicker x:Name="ColorPicker" ColorChanged="ColorPicker_ColorChanged" IsAlphaEnabled="False" IsAlphaTextInputVisible="False" IsAccessKeyScope="False" IsAlphaSliderVisible="False"/>
+                    </Border>
+                    <Border BorderThickness="10" >
+                        <Button Click="Button_Click" Content="Done" HorizontalAlignment="Right"/>
+                    </Border>
+                </StackPanel>
+            </controls:DropShadowPanel>
         </Border>
 
-        <Border BorderThickness="10" HorizontalAlignment="Right">
-            <TextBlock x:Name="RightScore" Text="0" FontSize="100" />
-        </Border>
-        
     </Grid>
 </Page>

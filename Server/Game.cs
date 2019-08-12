@@ -118,6 +118,19 @@ namespace Server
             }
         }
 
+        internal void ColorChanged(ColorChanged colorChanged)
+        {
+            foreach (var element in objectsCreated)
+            {
+                if (element.Id == colorChanged.Id) {
+                    element.G = colorChanged.G;
+                    element.R = colorChanged.R;
+                    element.B = colorChanged.B;
+                    element.A = colorChanged.A;
+                }
+            }
+        }
+
         internal void Reset(Action<UpdateScore> onUpdateScore)
         {
             if (onUpdateScore == null)

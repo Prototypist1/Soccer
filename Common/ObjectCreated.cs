@@ -24,7 +24,7 @@ namespace Common
 
     }
 
-    public struct ObjectCreated
+    public class ObjectCreated
     {
         public ObjectCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a, string name)
         {
