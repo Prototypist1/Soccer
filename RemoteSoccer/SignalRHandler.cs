@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace RemoteSoccer
@@ -324,13 +325,11 @@ namespace RemoteSoccer
 
             public async void Send(string game, 
                 CreatePlayer createPlayer, 
-                Action<Positions> handlePossitions, 
                 Action<ObjectsCreated> handleObjectsCreated, 
                 Action<ObjectsRemoved> handleObjectsRemoved,
                 Action<UpdateScore> handleUpdateScore,
                 Action<ColorChanged> handleColorChanged)
             {
-                connection.On(nameof(Positions), handlePossitions);
                 connection.On(nameof(ObjectsCreated), handleObjectsCreated);
                 connection.On(nameof(ObjectsRemoved), handleObjectsRemoved);
                 connection.On(nameof(UpdateScore), handleUpdateScore);
@@ -348,7 +347,7 @@ namespace RemoteSoccer
                 }
             }
 
-            public async void Send(string game, PlayerInputs inputs)
+            public async void Send(string game, IAsyncEnumerable<PlayerInputs> inputs)
             {
                 try
                 {
@@ -388,6 +387,11 @@ namespace RemoteSoccer
                 catch (InvalidOperationException)
                 {
                 }
+            }
+
+            internal IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
+            {
+                return connection.StreamAsync<Positions>(nameof(JoinChannel), joinChannel);
             }
         }
 

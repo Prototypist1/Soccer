@@ -14,10 +14,10 @@
                 <TextBlock FontSize="70" TextAlignment="Center">Enter Game Name</TextBlock>
             </Border>
             <Border BorderThickness="5">
-                <TextBox Width="600" FontSize="35" x:Name="GameName" TextChanged="GameName_TextChanged" />
+                <TextBox Width="600" FontSize="35" x:Name="GameName" TextChanged="GameName_TextChanged" KeyDown="GameName_KeyDown" />
             </Border>
             <Border BorderThickness="5">
-                <Button FontSize="35" Width="600" Click="StartOrJoin" x:Name="StartOrJoinButton">Go</Button>
+                <Button FontSize="35" Width="600" Click="StartOrJoin" x:Name="StartOrJoinButton" >Go</Button>
             </Border>
         </StackPanel>
         <Border BorderThickness="10" VerticalAlignment="Bottom">

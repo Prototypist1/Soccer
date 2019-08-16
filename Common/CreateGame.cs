@@ -73,6 +73,16 @@ namespace Common
         }
     }
 
+    public struct JoinChannel
+    {
+        public string Id { get; set; }
+
+        public JoinChannel(string id)
+        {
+            this.Id = id;
+        }
+    }
+
     public struct GameJoined
     {
         public string Id { get; set; }

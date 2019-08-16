@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -67,6 +68,11 @@ namespace RemoteSoccer
         }
 
         private void StartOrJoin(object sender, RoutedEventArgs e)
+        {
+            StartOrJoinInner();
+        }
+
+        private void StartOrJoinInner()
         {
             StartOrJoinButton.IsEnabled = false;
             GameName.IsEnabled = false;
@@ -147,6 +153,14 @@ namespace RemoteSoccer
         private void UpdateEnabled()
         {
             StartOrJoinButton.IsEnabled = !string.IsNullOrEmpty(GameName.Text);
+        }
+
+        private void GameName_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter && StartOrJoinButton.IsEnabled)
+            {
+                StartOrJoinInner();
+            }
         }
     }
 }

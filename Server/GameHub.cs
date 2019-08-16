@@ -5,6 +5,7 @@ using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Server
@@ -27,7 +28,6 @@ namespace Server
 
         private readonly GameHubState state;
 
-
         public GameHub(GameHubState state)
         {
             this.state = state ?? throw new ArgumentNullException(nameof(state));
@@ -38,20 +38,19 @@ namespace Server
             state.connectionManager.Clients.Group(id).SendAsync(nameof(UpdateScore), x);
         };
 
-        public async Task CreateGame(CreateGame createGame) {
+        //public async Task CreateGame(CreateGame createGame) {
 
-            var myGame = new Game(getOnUpdateScore(createGame.Id));
-            if (state.games.TryAdd(createGame.Id, myGame) && state.connectionIdToGameName.TryAdd(Context.ConnectionId, createGame.Id)) {
-                await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createGame.Id));
-                myGame.Start(async positions =>
-                {
-                    await state.connectionManager.Clients.Group(createGame.Id).SendAsync(nameof(Positions), positions);
-                });
-            }
-            else {
-                await Clients.Caller.SendAsync(nameof(GameAlreadyExists), new GameAlreadyExists(createGame.Id));
-            }
-        }
+        //    var positionsChannel = Channel.CreateUnbounded<Positions>();
+
+        //    var myGame = new Game(getOnUpdateScore(createGame.Id), positionsChannel.Writer);
+        //    if (state.games.TryAdd(createGame.Id, myGame) && state.connectionIdToGameName.TryAdd(Context.ConnectionId, createGame.Id)) {
+        //        await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createGame.Id));
+        //        myGame.Start();
+        //    }
+        //    else {
+        //        await Clients.Caller.SendAsync(nameof(GameAlreadyExists), new GameAlreadyExists(createGame.Id));
+        //    }
+        //}
 
         public void ResetGame(ResetGame resetGame)
         {
@@ -61,21 +60,28 @@ namespace Server
             }
         }
 
-        public async Task JoinGame(JoinGame joinGame)
-        {
-            if (state.games.ContainsKey(joinGame.Id) && state.connectionIdToGameName.TryAdd(Context.ConnectionId,joinGame.Id))
-            {
-                await Clients.Caller.SendAsync(nameof(GameJoined), new GameJoined(joinGame.Id));
-            }
-            else
-            {
-                await Clients.Caller.SendAsync(nameof(GameDoesNotExist), new GameDoesNotExist(joinGame.Id));
-            }
+        //public async Task JoinGame(JoinGame joinGame)
+        //{
+        //    if (state.games.ContainsKey(joinGame.Id) && state.connectionIdToGameName.TryAdd(Context.ConnectionId,joinGame.Id))
+        //    {
+        //        await Clients.Caller.SendAsync(nameof(GameJoined), new GameJoined(joinGame.Id));
+        //    }
+        //    else
+        //    {
+        //        await Clients.Caller.SendAsync(nameof(GameDoesNotExist), new GameDoesNotExist(joinGame.Id));
+        //    }
+        //}
+
+
+        public ChannelReader<Positions> JoinChannel(JoinChannel joinChannel) {
+            return state.games.GetOrThrow(joinChannel.Id).GetReader();
         }
 
         public async Task CreateOrJoinGame(CreateOrJoinGame createOrJoinGame)
         {
-            var myGame = new Game(getOnUpdateScore(createOrJoinGame.Id));
+            var positionsChannel = Channel.CreateUnbounded<Positions>();
+
+            var myGame = new Game(getOnUpdateScore(createOrJoinGame.Id), positionsChannel);
             var game = state.games.GetOrAdd(createOrJoinGame.Id, myGame);
 
             if (!state.connectionIdToGameName.TryAdd(Context.ConnectionId, createOrJoinGame.Id)) {
@@ -86,10 +92,6 @@ namespace Server
             if(myGame == game)
             {
                 await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createOrJoinGame.Id));
-                myGame.Start(async positions =>
-                {
-                    await state.connectionManager.Clients.Group(createOrJoinGame.Id).SendAsync(nameof(Positions), positions);
-                });
             }
             else
             {
@@ -119,9 +121,14 @@ namespace Server
             await Clients.Group(game).SendAsync(nameof(ColorChanged), colorChanged);
         }
 
-        public void PlayerInputs(string game, PlayerInputs playerInputs)
+        public async Task PlayerInputs(string game, IAsyncEnumerable<PlayerInputs> playerInputs)
         {
-            state.games[game].PlayerInputs(playerInputs);
+            var game1 = state.games[game];
+
+            await foreach (var item in playerInputs)
+            {
+                game1.PlayerInputs(item);
+            }
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
@@ -140,7 +147,7 @@ namespace Server
                             var dontwait = Task.Run(async () =>
                             {
                                 await Task.Delay(5000);
-                                if (game.LastInput.AddMinutes(5) < DateTime.Now)
+                                if (game.LastInputUTC.AddMinutes(5) < DateTime.Now)
                                 {
                                     state.games.TryRemove(gameName, out var _);
                                 }

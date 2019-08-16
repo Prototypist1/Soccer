@@ -7,7 +7,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    >
 
     <Grid x:Name="GameHolder" SizeChanged="GameHolder_SizeChanged" Background="#ffeeeeee"  PointerWheelChanged="GameHolder_PointerWheelChanged">
 
@@ -17,16 +18,16 @@
             <TextBlock x:Name="Fps" Text="" />
         </Border>
 
-            <Border BorderThickness="10" HorizontalAlignment="Center">
-                <StackPanel Orientation="Horizontal">
-
-                    <TextBlock x:Name="LeftScore" Text="0"  FontSize="100"/>
-                    <TextBlock x:Name="RightScore" Text="0" FontSize="100" />
-                </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Border BorderThickness="10" >
+                <TextBlock x:Name="LeftScore" Text="0"  FontSize="100"/>
             </Border>
+            <Border BorderThickness="10" >
+                <TextBlock x:Name="RightScore" Text="0" FontSize="100" />
+            </Border>
+        </StackPanel>
 
-
-        <Border BorderThickness="10" 
+        <Border BorderThickness="20" 
             x:Name="Menu"
             HorizontalAlignment="Left" 
             VerticalAlignment="Stretch">
@@ -40,7 +41,9 @@
                         <ColorPicker x:Name="ColorPicker" ColorChanged="ColorPicker_ColorChanged" IsAlphaEnabled="False" IsAlphaTextInputVisible="False" IsAccessKeyScope="False" IsAlphaSliderVisible="False"/>
                     </Border>
                     <Border BorderThickness="10" >
-                        <Button Click="Button_Click" Content="Done" HorizontalAlignment="Right"/>
+                        <Button Click="Button_Click" 
+                                Content="Done" 
+                                HorizontalAlignment="Right"/>
                     </Border>
                 </StackPanel>
             </controls:DropShadowPanel>

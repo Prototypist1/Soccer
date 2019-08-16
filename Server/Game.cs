@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Common;
 using Microsoft.AspNetCore.SignalR;
@@ -26,7 +27,7 @@ namespace Server
         private readonly ConcurrentIndexed<string, List<ObjectCreated>> connectionObjects = new ConcurrentIndexed<string, List<ObjectCreated>>();
 
         private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
-        public DateTime LastInput { get; private set; } = DateTime.Now;
+        public DateTime LastInputUTC { get; private set; } = DateTime.Now;
         private int leftScore = 0, rightScore = 0;
 
         private const int fieldZ = -2;
@@ -37,6 +38,7 @@ namespace Server
         private const int footZ = 2;
         private const int Diameter = 80;
         private readonly GameStateTracker gameStateTracker;
+        private readonly System.Threading.Channels.Channel<Positions> channel;
 
         private class GameStateTracker
         {
@@ -118,6 +120,11 @@ namespace Server
             }
         }
 
+        internal ChannelReader<Positions> GetReader()
+        {
+            return channel.Reader;
+        }
+
         internal void ColorChanged(ColorChanged colorChanged)
         {
             foreach (var element in objectsCreated)
@@ -144,12 +151,15 @@ namespace Server
             onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
         }
 
-        public Game(Action<UpdateScore> onUpdateScore)
+        public Game(Action<UpdateScore> onUpdateScore, Channel<Positions> writer)
         {
+
             if (onUpdateScore == null)
             {
                 throw new ArgumentNullException(nameof(onUpdateScore));
             }
+            this.channel = writer ?? throw new ArgumentNullException(nameof(writer));
+
 
             ballId = Guid.NewGuid();
             ball = PhysicsObjectBuilder.Ball(8, Radius * 2.5, xMax/2, yMax/2);
@@ -253,7 +263,6 @@ namespace Server
                 }
                 return x;
             });
-
         }
 
         public IReadOnlyList<ObjectCreated> GetObjectsCreated() => objectsCreated.ToArray();
@@ -331,46 +340,46 @@ namespace Server
         }
 
 
-        public async void Start(Func<Positions, Task> onPositionsUpdate)
-        {
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
-            var frame = 0;
-            while (true)
-            {
-                if (Apply(out var positions))
-                {
-                    var dontWait = onPositionsUpdate(positions);
-                };
-                frame++;
+        //public async void Start()
+        //{
+        //    var stopWatch = new Stopwatch();
+        //    stopWatch.Start();
+        //    var frame = 0;
+        //    while (true)
+        //    {
+        //        if ((out var positions))
+        //        {
+                    
+        //        };
+        //        frame++;
 
-                await Task.Delay((int)Math.Max(0, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
-                await Task.Yield();
-                //var whatIsIt = ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds;
-                //if (whatIsIt > 0)
-                //{
-                //    hit++;
-                //}
-                //else {
-                //    nothit++;
-                //}
-            }
-        }
+        //        await Task.Delay((int)Math.Max(0, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
+        //        await Task.Yield();
+        //        //var whatIsIt = ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds;
+        //        //if (whatIsIt > 0)
+        //        //{
+        //        //    hit++;
+        //        //}
+        //        //else {
+        //        //    nothit++;
+        //        //}
+        //    }
+        //}
 
         private int simulationTime = 0;
-        internal bool Apply(out Positions positions)
+        internal Positions Apply()
         {
 
             const double maxSpeed = 40.0;
             const double MaxForce = 1;
-            positions = default;
+            Positions positions = default;
 
             var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
 
-            if (!myPlayersInputs.Any())
-            {
-                return false;
-            }
+            // shocking
+            //if (!myPlayersInputs.Any())
+            //{
+            //}
 
             var frames = new List<Dictionary<Guid, PlayerInputs>>();
 
@@ -493,7 +502,7 @@ namespace Server
                 positions = new Positions(GetPosition().ToArray(), simulationTime, countDownSate);
             }
 
-            return true;
+            return positions;
 
             Vector Bound(Vector force, Vector velocity)
             {
@@ -512,10 +521,22 @@ namespace Server
             }
         }
 
+        private int running = 0;
+
         internal void PlayerInputs(PlayerInputs playerInputs)
         {
-            LastInput = DateTime.Now;
+            var lastLast = LastInputUTC;
             playersInputs.Add(playerInputs);
+            if (Interlocked.CompareExchange(ref running, 1, 0) == 0) {
+                var nextLast = DateTime.UtcNow;
+                if (playersInputs.Count >0 && (nextLast- lastLast).TotalMilliseconds > 8)
+                {
+                    var dontWait = channel.Writer.WriteAsync(Apply());
+                    LastInputUTC = nextLast;
+                }
+                running = 0;
+            }
+
         }
 
         private IEnumerable<Position> GetPosition()

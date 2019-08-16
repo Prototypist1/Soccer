@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
@@ -134,6 +135,8 @@ namespace RemoteSoccer
         public MainPage()
         {
             this.InitializeComponent();
+
+            Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
 
             viewFrameWidth = GameHolder.ActualWidth;
             viewFrameHeight = GameHolder.ActualHeight;
@@ -301,6 +304,7 @@ namespace RemoteSoccer
         private long lastHandlePositions = 0;
         private int currentFrame = 0;
         private string gameName;
+        private bool lockCurser= false;
 
         private void HandlePositions(Positions positions)
         {
@@ -442,12 +446,19 @@ namespace RemoteSoccer
         }
 
         // assumed to be run on the main thread
-        private async void MainLoop(SingleSignalRHandler.SignalRHandler handler, Guid foot, Guid body, string game)
+        private async IAsyncEnumerable<PlayerInputs> MainLoop(SingleSignalRHandler.SignalRHandler handler, Guid foot, Guid body, string game)
         {
-            try
-            {
-                var pointer = CoreWindow.GetForCurrentThread().PointerPosition;
-                double lastX = pointer.X, lastY = pointer.Y;
+            double lastX=0, lastY=0, bodyX=0, bodyY =0, footX=0, footY =0;
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            var pointer = CoreWindow.GetForCurrentThread().PointerPosition;
+
+                            lastX = pointer.X;
+                            lastY = pointer.Y;
+                        });
+
 
                 var sw = new Stopwatch();
                 sw.Start();
@@ -456,66 +467,48 @@ namespace RemoteSoccer
 
                 var distrib = new int[100];
 
-                while (true)
-                {
-                    var coreWindow = Window.Current.CoreWindow;
-                    if (coreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
-                    {
-                        handler.Send(new ResetGame(game));
-                    }
-
-                    var bodyX =
-                        (coreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
-                        (coreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
-                    var bodyY =
-                        (coreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
-                        (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
-
-                    var point = CoreWindow.GetForCurrentThread().PointerPosition;
-                    var footX = (point.X - lastX) * .75;
-                    var footY = (point.Y - lastY) * .75;
-
-                    if (!coreWindow.GetKeyState(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down))
-                    {
-                        point = new Point(500, 500);
-                        coreWindow.PointerPosition = point;
-                        coreWindow.PointerCursor = null;
-                    }
-                    else
-                    {
-                        if (coreWindow.PointerCursor == null)
+            while (true)
+            {
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
                         {
-                            coreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+                        var coreWindow = Window.Current.CoreWindow;
+                        if (coreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
+                        {
+                            handler.Send(new ResetGame(game));
                         }
-                    }
-                    lastX = point.X;
-                    lastY = point.Y;
 
-                    if (Window.Current.CoreWindow.GetKeyState(VirtualKey.Escape).HasFlag(CoreVirtualKeyStates.Down))
-                    {
-                        Application.Current.Exit();
-                    }
+                        bodyX =
+                            (coreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
+                            (coreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
+                        bodyY =
+                            (coreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
+                            (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
 
-                    handler.Send(game,
-                        new PlayerInputs(footX, footY, bodyX, bodyY, foot, body));
+                        var point = CoreWindow.GetForCurrentThread().PointerPosition;
+                        footX = (point.X - lastX) * .75;
+                        footY = (point.Y - lastY) * .75;
 
-                    frame++;
+                        if (lockCurser)
+                        {
+                            point = new Point(lastX, lastY);
+                            coreWindow.PointerPosition = point;
+                        }
+
+                        lastX = point.X;
+                        lastY = point.Y;
+
+                });
+
+                yield return new PlayerInputs(footX, footY, bodyX, bodyY, foot, body);
+                frame++;
 
                     
-                    // let someone else have a go
-                    await Task.Delay((int)Math.Max(0, (1000 * frame / 60) - stopWatch.ElapsedMilliseconds));
+                // let someone else have a go
+                await Task.Delay((int)Math.Max(0, (1000 * frame / 60) - stopWatch.ElapsedMilliseconds));
                  
-                }
             }
-#pragma warning disable CS0168 // Variable is declared but never used
-            catch (Exception e)
-#pragma warning restore CS0168 // Variable is declared but never used
-            {
-#pragma warning disable CS0219 // Variable is assigned but its value is never used
-                var db = 0;
-#pragma warning restore CS0219 // Variable is assigned but its value is never used
-            }
-
         }
 
 
@@ -548,6 +541,7 @@ namespace RemoteSoccer
                         random.NextBytes(color);
                     }
 
+
                     handler.Send(
                         gameName,
                         new CreatePlayer(
@@ -563,15 +557,16 @@ namespace RemoteSoccer
                             color[1],
                             color[2],
                             0xff),
-                        HandlePositions,
+                        
                         HandleObjectsCreated,
                         HandleObjectsRemoved,
                         HandleUpdateScore,
                         HandleColorChanged);
 
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () => MainLoop(handler, foot, body, gameName));
+
+                    var dontWait = SpoolPositions(handler.JoinChannel(new JoinChannel(gameName)));
+
+                     handler.Send(gameName, MainLoop(handler, foot, body, gameName));
                 }
 #pragma warning disable CS0168 // Variable is declared but never used
                 catch (Exception ex)
@@ -583,6 +578,14 @@ namespace RemoteSoccer
                 }
             });
 
+        }
+
+        private async Task SpoolPositions(IAsyncEnumerable<Positions> positionss)
+        {
+            await foreach (var item in positionss)
+            {
+                HandlePositions(item);
+            }
         }
 
         private async void HandleColorChanged(ColorChanged obj)
@@ -616,7 +619,21 @@ namespace RemoteSoccer
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Menu.Visibility = Visibility.Collapsed;
+            ToggleMenu();
+        }
+
+        private void ToggleMenu()
+        {
+            Menu.Visibility = (Windows.UI.Xaml.Visibility)(((int)Menu.Visibility + 1) % 2);
+            lockCurser = !lockCurser;
+            if (lockCurser)
+            {
+                Window.Current.CoreWindow.PointerCursor = null;
+            }
+            else
+            {
+                Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+            }
         }
 
         private async void HandleUpdateScore(UpdateScore obj)
@@ -628,6 +645,13 @@ namespace RemoteSoccer
                             LeftScore.Text = obj.Left.ToString();
                             RightScore.Text = obj.Right.ToString();
                         });
+        }
+
+        private void Menu_KeyUp(CoreWindow sender, KeyEventArgs e)
+        {
+            if (e.VirtualKey == VirtualKey.Escape) {
+                ToggleMenu();
+            }
         }
     }
 }
