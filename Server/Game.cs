@@ -14,6 +14,8 @@ namespace Server
 {
     public class Game
     {
+        private int players = 0;
+
         private const double footLen =400;
         private const double xMax = 12799;
         private const double yMax = 6399;
@@ -335,13 +337,16 @@ namespace Server
                     createPlayer.FootG,
                     createPlayer.FootB,
                     createPlayer.FootA,
-                    "Player!");
+                    "");
             feetCreaated.AddOrThrow(footCreated);
 
 
             connectionObjects.AddOrThrow(connectionId, new List<ObjectCreated>(){
                 bodyCreated,
                 footCreated });
+
+
+            Interlocked.Add(ref players, 1);
 
             return new ObjectsCreated(new[] { footCreated}, new[] { bodyCreated}, null ,new GoalCreated[] { });
         }
@@ -350,6 +355,7 @@ namespace Server
         {
             if (connectionObjects.TryRemove(connectionId, out var toRemoves))
             {
+                Interlocked.Add(ref players, -1);
                 objectRemoveds = new List<ObjectRemoved>();
                 foreach (var item in toRemoves)
                 {
@@ -563,7 +569,7 @@ namespace Server
             playersInputs.Add(playerInputs);
             if (Interlocked.CompareExchange(ref running, 1, 0) == 0) {
                 var nextLast = DateTime.UtcNow;
-                if (playersInputs.Count >0 && (nextLast- lastLast).TotalMilliseconds > 8)
+                if (playersInputs.Count > (players /2.0))
                 {
                     var dontWait = channel.Writer.WriteAsync(Apply());
                     LastInputUTC = nextLast;

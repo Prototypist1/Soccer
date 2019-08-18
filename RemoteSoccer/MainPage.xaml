@@ -31,27 +31,34 @@
             x:Name="Menu"
             HorizontalAlignment="Left" 
             VerticalAlignment="Top">
-            <controls:DropShadowPanel
-            BlurRadius="10" >
-                <StackPanel  Background="{ThemeResource SystemControlAcrylicElementBrush}">
-                    <Border BorderThickness="10" >
-                        <TextBlock FontSize="35">Color</TextBlock>
-                    </Border>
-                    <Border BorderThickness="10" >
-                        <ColorPicker x:Name="ColorPicker" ColorChanged="ColorPicker_ColorChanged" IsAlphaEnabled="False" IsAlphaTextInputVisible="False" IsAccessKeyScope="False" IsAlphaSliderVisible="False"/>
-                    </Border>
-                    
-                    <Border BorderThickness="10" >
-                        <TextBlock FontSize="35">Name</TextBlock>
-                    </Border>
-                    <Border BorderThickness="10" >
-                        <TextBox x:Name="Namer" TextChanged="TextBox_TextChanged" HorizontalAlignment="Stretch"/>
-                    </Border>
-                    <Border BorderThickness="10" >
-                        <Button Click="Button_Click" Content="Done" HorizontalAlignment="Stretch"/>
-                    </Border>
-                </StackPanel>
-            </controls:DropShadowPanel>
+            <!--<controls:DropShadowPanel
+            BlurRadius="10" >-->
+            <StackPanel >
+                <StackPanel.Background>
+                    <AcrylicBrush
+                        BackgroundSource="Backdrop"
+                        TintColor="#ffcccccc"
+                        TintOpacity="0.4"
+                        FallbackColor="#ffcccccc"/>
+                </StackPanel.Background>
+                <Border BorderThickness="10" >
+                    <TextBlock FontSize="35">Color</TextBlock>
+                </Border>
+                <Border BorderThickness="10" >
+                    <ColorPicker x:Name="ColorPicker" ColorChanged="ColorPicker_ColorChanged" IsAlphaEnabled="False" IsAlphaTextInputVisible="False" IsAccessKeyScope="False" IsAlphaSliderVisible="False"/>
+                </Border>
+
+                <Border BorderThickness="10" >
+                    <TextBlock FontSize="35">Name</TextBlock>
+                </Border>
+                <Border BorderThickness="10" >
+                    <TextBox x:Name="Namer" TextChanged="TextBox_TextChanged" HorizontalAlignment="Stretch"/>
+                </Border>
+                <Border BorderThickness="10" >
+                    <Button Click="Button_Click" Content="Done" HorizontalAlignment="Stretch"/>
+                </Border>
+            </StackPanel>
+            <!--</controls:DropShadowPanel>-->
         </Border>
 
     </Grid>

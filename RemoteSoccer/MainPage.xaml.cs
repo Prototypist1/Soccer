@@ -292,9 +292,14 @@ namespace RemoteSoccer
 
                 if (objectCreated is FootCreated foot)
                 {
+
+                    var sum = foot.R + foot.G + foot.B;
+
                     var text = new TextBlock()
                     {
                         Text = foot.Name,
+                        FontSize = 24,
+                        Foreground = new SolidColorBrush( sum > 0x88 *3 ? Colors.Black : Colors.White)
                     };
 
                     Canvas.SetZIndex(text, 3);
@@ -507,7 +512,7 @@ namespace RemoteSoccer
                     Fps.Text = $"time to draw: {(stopWatch.ElapsedTicks - ticks) / (double)TimeSpan.TicksPerMillisecond:f2}{Environment.NewLine}" +
                         $"longest gap: {longestGap}{Environment.NewLine}" +
                         $"frame lag: {frame - positions.Frame}{Environment.NewLine}" +
-                        $"hold shift to use mouse";
+                        $"Escape: Show options";
                     longestGap = 0;
                 }
             });
@@ -538,16 +543,17 @@ namespace RemoteSoccer
 
             while (true)
             {
-                if (lockCurser)
-                {
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () =>
+
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                    CoreDispatcherPriority.Normal,
+                    () =>
+                    {
+
+
+                        var coreWindow = Window.Current.CoreWindow;
+
+                        if (lockCurser)
                         {
-
-
-                            var coreWindow = Window.Current.CoreWindow;
-
                             if (coreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
                             {
                                 handler.Send(new ResetGame(game));
@@ -570,13 +576,20 @@ namespace RemoteSoccer
                             lastX = point.X;
                             lastY = point.Y;
 
+                        }
+                        else
+                        {
+                            var point = CoreWindow.GetForCurrentThread().PointerPosition;
 
+                            lastX = point.X;
+                            lastY = point.Y;
 
-                        });
-                }
-                else {
-                    footX = 0; footY = 0; bodyX = 0; bodyY = 0;
-                }
+                            footX = 0; footY = 0; bodyX = 0; bodyY = 0;
+                        }
+
+                    });
+            
+                
 
                 yield return new PlayerInputs(footX, footY, bodyX, bodyY, foot, body);
                 frame++;
@@ -674,6 +687,10 @@ namespace RemoteSoccer
                         {
                             var element = elements[obj.Id];
                             element.element.Fill = new SolidColorBrush(Color.FromArgb(obj.A, obj.R, obj.G, obj.B));
+                            if (texts.TryGetValue(obj.Id, out var text)) {
+                                var sum = obj.R + obj.G + obj.B;
+                                text.Foreground = new SolidColorBrush(sum > 0x88 * 3 ? Colors.Black : Colors.White);
+                            }
                         });
         }
 

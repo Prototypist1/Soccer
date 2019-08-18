@@ -6,8 +6,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls">
+    <Page.Background>
+        <AcrylicBrush
+                        BackgroundSource="HostBackdrop"
+                        TintColor="#ffffffff"
+                        TintOpacity="0.4"
+                        FallbackColor="#ffffffff"/>
+    </Page.Background>
     <Grid>
         <StackPanel VerticalAlignment="Center" Width="610">
             <Border BorderThickness="5">
@@ -20,12 +26,15 @@
                 <Button FontSize="35" Width="600" Click="StartOrJoin" x:Name="StartOrJoinButton" >Go</Button>
             </Border>
         </StackPanel>
-        <Border BorderThickness="10" VerticalAlignment="Bottom">
-            <StackPanel>
+        <StackPanel VerticalAlignment="Bottom">
+
+            <Border BorderThickness="10">
                 <TextBlock x:Name="LoadingText" Text="Connecting..." TextAlignment="Center" />
-                <ProgressRing x:Name="LoadingSpinner"  IsActive="True" />
-            </StackPanel>
-        </Border>
+            </Border>
+            <Border BorderThickness="10">
+                <ProgressRing x:Name="LoadingSpinner"  IsActive="True" Foreground="Black" />
+            </Border>
+        </StackPanel>
     </Grid>
 
 </Page>
