@@ -30,20 +30,25 @@
         <Border BorderThickness="20" 
             x:Name="Menu"
             HorizontalAlignment="Left" 
-            VerticalAlignment="Stretch">
+            VerticalAlignment="Top">
             <controls:DropShadowPanel
             BlurRadius="10" >
                 <StackPanel  Background="{ThemeResource SystemControlAcrylicElementBrush}">
                     <Border BorderThickness="10" >
-                        <TextBlock FontSize="35">Player Color</TextBlock>
+                        <TextBlock FontSize="35">Color</TextBlock>
                     </Border>
                     <Border BorderThickness="10" >
                         <ColorPicker x:Name="ColorPicker" ColorChanged="ColorPicker_ColorChanged" IsAlphaEnabled="False" IsAlphaTextInputVisible="False" IsAccessKeyScope="False" IsAlphaSliderVisible="False"/>
                     </Border>
+                    
                     <Border BorderThickness="10" >
-                        <Button Click="Button_Click" 
-                                Content="Done" 
-                                HorizontalAlignment="Right"/>
+                        <TextBlock FontSize="35">Name</TextBlock>
+                    </Border>
+                    <Border BorderThickness="10" >
+                        <TextBox x:Name="Namer" TextChanged="TextBox_TextChanged" HorizontalAlignment="Stretch"/>
+                    </Border>
+                    <Border BorderThickness="10" >
+                        <Button Click="Button_Click" Content="Done" HorizontalAlignment="Stretch"/>
                     </Border>
                 </StackPanel>
             </controls:DropShadowPanel>

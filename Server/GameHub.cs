@@ -103,11 +103,10 @@ namespace Server
         public async Task CreatePlayer(string game, CreatePlayer createPlayer)
         {
             // create the player
-            var playerCreated = state.games[game].CreatePlayer(Context.ConnectionId,createPlayer);
             // tell the other players
-            await Clients.Group(game).SendAsync(nameof(ObjectsCreated),new ObjectsCreated(playerCreated.ToArray()));
+            await Clients.Group(game).SendAsync(nameof(ObjectsCreated), state.games[game].CreatePlayer(Context.ConnectionId, createPlayer));
             // tell the new player about everyone
-            await Clients.Caller.SendAsync(nameof(ObjectsCreated), new ObjectsCreated(state.games[game].GetObjectsCreated().ToArray()));
+            await Clients.Caller.SendAsync(nameof(ObjectsCreated), state.games[game].GetObjectsCreated());
             // add the player to the group
             await Groups.AddToGroupAsync(Context.ConnectionId, game);
         }
@@ -119,6 +118,14 @@ namespace Server
             state.games[game].ColorChanged(colorChanged);
             // tell the other players
             await Clients.Group(game).SendAsync(nameof(ColorChanged), colorChanged);
+        }
+
+        public async Task NameChanged(string game, NameChanged nameChanged)
+        {
+            // update the players color
+            state.games[game].NameChanged(nameChanged);
+            // tell the other players
+            await Clients.Group(game).SendAsync(nameof(NameChanged), nameChanged);
         }
 
         public async Task PlayerInputs(string game, IAsyncEnumerable<PlayerInputs> playerInputs)

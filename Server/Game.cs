@@ -23,7 +23,12 @@ namespace Server
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
         private readonly PhysicsObject ball;
-        private readonly ConcurrentSet<ObjectCreated> objectsCreated = new ConcurrentSet<ObjectCreated>();
+
+        private readonly ConcurrentSet<FootCreated> feetCreaated = new ConcurrentSet<FootCreated>();
+        private readonly ConcurrentSet<BodyCreated> bodiesCreated = new ConcurrentSet<BodyCreated>();
+        private readonly BallCreated ballCreated;
+        private readonly ConcurrentSet<GoalCreated> goalsCreated = new ConcurrentSet<GoalCreated>();
+
         private readonly ConcurrentIndexed<string, List<ObjectCreated>> connectionObjects = new ConcurrentIndexed<string, List<ObjectCreated>>();
 
         private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
@@ -36,6 +41,7 @@ namespace Server
         private const int bodyZ = 1;
         private const int ballZ = 2;
         private const int footZ = 2;
+        private const int textZ = 3;
         private const int Diameter = 80;
         private readonly GameStateTracker gameStateTracker;
         private readonly System.Threading.Channels.Channel<Positions> channel;
@@ -120,6 +126,17 @@ namespace Server
             }
         }
 
+        internal void NameChanged(NameChanged nameChanged)
+        {
+            foreach (var element in feetCreaated)
+            {
+                if (element.Id == nameChanged.Id)
+                {
+                    element.Name = nameChanged.Name;
+                }
+            }
+        }
+
         internal ChannelReader<Positions> GetReader()
         {
             return channel.Reader;
@@ -127,9 +144,19 @@ namespace Server
 
         internal void ColorChanged(ColorChanged colorChanged)
         {
-            foreach (var element in objectsCreated)
+            foreach (var element in feetCreaated)
             {
                 if (element.Id == colorChanged.Id) {
+                    element.G = colorChanged.G;
+                    element.R = colorChanged.R;
+                    element.B = colorChanged.B;
+                    element.A = colorChanged.A;
+                }
+            }
+            foreach (var element in bodiesCreated)
+            {
+                if (element.Id == colorChanged.Id)
+                {
                     element.G = colorChanged.G;
                     element.R = colorChanged.R;
                     element.B = colorChanged.B;
@@ -164,7 +191,7 @@ namespace Server
             ballId = Guid.NewGuid();
             ball = PhysicsObjectBuilder.Ball(8, Radius * 2.5, xMax/2, yMax/2);
 
-            objectsCreated.AddOrThrow(new ObjectCreated(
+            ballCreated = new BallCreated(
                ball.X,
                ball.Y,
                ballZ,
@@ -173,8 +200,7 @@ namespace Server
                0,
                0,
                0,
-               255,
-               "ball"));
+               255);
 
             var leftGoalId = Guid.NewGuid();
             var leftGoal = PhysicsObjectBuilder.Goal(footLen, (footLen * 3), yMax / 2.0, x => x == ball && gameStateTracker.CanScore(), x =>
@@ -186,7 +212,7 @@ namespace Server
                     onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
                 }
             });
-            objectsCreated.AddOrThrow(new ObjectCreated(
+            goalsCreated.AddOrThrow(new GoalCreated(
                leftGoal.X,
                leftGoal.Y,
                goalZ,
@@ -195,8 +221,7 @@ namespace Server
                0xee,
                0xee,
                0xee,
-               0xff,
-               "left-goal"));
+               0xff));
 
             var rightGoalId = Guid.NewGuid();
             var rightGoal = PhysicsObjectBuilder.Goal(footLen, xMax - (footLen * 3), yMax / 2.0, x => x == ball && gameStateTracker.CanScore(), x =>
@@ -208,7 +233,7 @@ namespace Server
                     onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
                 }
             });
-            objectsCreated.AddOrThrow(new ObjectCreated(
+            goalsCreated.AddOrThrow(new GoalCreated(
                rightGoal.X,
                rightGoal.Y,
                goalZ,
@@ -217,8 +242,7 @@ namespace Server
                0xee,
                0xee,
                0xee,
-               0xff,
-               "right-goal"));
+               0xff));
 
 
             //var points = new[] {
@@ -265,9 +289,11 @@ namespace Server
             });
         }
 
-        public IReadOnlyList<ObjectCreated> GetObjectsCreated() => objectsCreated.ToArray();
+        public ObjectsCreated GetObjectsCreated() {
+            return new ObjectsCreated(feetCreaated.ToArray(), bodiesCreated.ToArray(), ballCreated, goalsCreated.ToArray());
+        }
 
-        internal List<ObjectCreated> CreatePlayer(string connectionId, CreatePlayer createPlayer)
+        internal ObjectsCreated CreatePlayer(string connectionId, CreatePlayer createPlayer)
         {
             double startX = 400;
             double startY = 400;
@@ -288,7 +314,7 @@ namespace Server
                 );
             bodies[createPlayer.Body] = body;
 
-            var bodyCreated = new ObjectCreated(
+            var bodyCreated = new BodyCreated(
                     body.X,
                     body.Y,
                     bodyZ,
@@ -297,9 +323,9 @@ namespace Server
                     createPlayer.BodyR,
                     createPlayer.BodyG,
                     createPlayer.BodyB,
-                    createPlayer.BodyA,
-                    "body");
-            var footCreated = new ObjectCreated(
+                    createPlayer.BodyA);
+            bodiesCreated.AddOrThrow(bodyCreated);
+            var footCreated = new FootCreated(
                     foot.X,
                     foot.Y,
                     footZ,
@@ -309,29 +335,37 @@ namespace Server
                     createPlayer.FootG,
                     createPlayer.FootB,
                     createPlayer.FootA,
-                    "foot");
-            var res = new List<ObjectCreated>(){
+                    "Player!");
+            feetCreaated.AddOrThrow(footCreated);
+
+
+            connectionObjects.AddOrThrow(connectionId, new List<ObjectCreated>(){
                 bodyCreated,
-                footCreated };
+                footCreated });
 
-            foreach (var item in res)
-            {
-                objectsCreated.AddOrThrow(item);
-            }
-
-            connectionObjects.AddOrThrow(connectionId, res);
-
-            return res;
+            return new ObjectsCreated(new[] { footCreated}, new[] { bodyCreated}, null ,new GoalCreated[] { });
         }
 
         internal bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
         {
             if (connectionObjects.TryRemove(connectionId, out var toRemoves))
             {
-                objectRemoveds = toRemoves.Select(x => new ObjectRemoved(x.Id)).ToList();
+                objectRemoveds = new List<ObjectRemoved>();
                 foreach (var item in toRemoves)
                 {
-                    objectsCreated.RemoveOrThrow(item);
+                    var foot = feetCreaated.SingleOrDefault(x => x.Id == item.Id);
+                    if (foot != null)
+                    {
+                        feetCreaated.RemoveOrThrow(foot);
+                        objectRemoveds.Add(new ObjectRemoved(item.Id));
+                    }
+
+                    var body = bodiesCreated.SingleOrDefault(x => x.Id == item.Id);
+                    if (body != null)
+                    {
+                        bodiesCreated.RemoveOrThrow(body);
+                        objectRemoveds.Add(new ObjectRemoved(item.Id));
+                    }
                 }
                 return true;
             }

@@ -26,7 +26,7 @@ namespace Common
 
     public class ObjectCreated
     {
-        public ObjectCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a, string name)
+        public ObjectCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a)
         {
             X = x;
             Y = y;
@@ -37,9 +37,7 @@ namespace Common
             G = g;
             B = b;
             A = a;
-            Name = name;
         }
-        public string Name { get; set; }
         public double X { get; set; }
         public double Y { get; set; }
         public int Z { get; set; }
@@ -51,13 +49,53 @@ namespace Common
         public byte A { get; set; }
     }
 
-    public struct ObjectsCreated {
-        public ObjectCreated[] Objects { get; set; }
 
-        public ObjectsCreated(ObjectCreated[] objects)
+    public class FootCreated : ObjectCreated
+    {
+        public FootCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a, string name) : base(x, y, z, id, diameter, r, g, b, a)
         {
-            this.Objects = objects ?? throw new ArgumentNullException(nameof(objects));
+            this.Name = name;
         }
+        public string Name { get; set; }
+
+    }
+
+    public class BodyCreated: ObjectCreated
+    {
+        public BodyCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
+        {
+        }
+
+    }
+
+    public class GoalCreated : ObjectCreated
+    {
+        public GoalCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
+        {
+        }
+    }
+
+    public class BallCreated : ObjectCreated
+    {
+        public BallCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
+        {
+        }
+    }
+
+    public struct ObjectsCreated {
+        public ObjectsCreated(FootCreated[] feet, BodyCreated[] bodies, BallCreated ball, GoalCreated[] goals)
+        {
+            Feet = feet ?? throw new ArgumentNullException(nameof(feet));
+            Bodies = bodies ?? throw new ArgumentNullException(nameof(bodies));
+            Ball = ball;
+            Goals = goals ?? throw new ArgumentNullException(nameof(goals));
+        }
+
+        public FootCreated[] Feet { get; set; }
+        public BodyCreated[] Bodies { get; set; }
+        public BallCreated Ball { get; set; }
+        public GoalCreated[] Goals { get; set; }
+
     }
 
 }

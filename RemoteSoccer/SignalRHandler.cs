@@ -328,12 +328,14 @@ namespace RemoteSoccer
                 Action<ObjectsCreated> handleObjectsCreated, 
                 Action<ObjectsRemoved> handleObjectsRemoved,
                 Action<UpdateScore> handleUpdateScore,
-                Action<ColorChanged> handleColorChanged)
+                Action<ColorChanged> handleColorChanged,
+                Action<NameChanged> handleNameChanged)
             {
                 connection.On(nameof(ObjectsCreated), handleObjectsCreated);
                 connection.On(nameof(ObjectsRemoved), handleObjectsRemoved);
                 connection.On(nameof(UpdateScore), handleUpdateScore);
                 connection.On(nameof(ColorChanged), handleColorChanged);
+                connection.On(nameof(NameChanged), handleNameChanged);
 
                 try
                 {
@@ -389,6 +391,19 @@ namespace RemoteSoccer
                 }
             }
 
+            internal async void Send(string game, NameChanged nameChanged)
+            {
+                try
+                {
+                    await connection.InvokeAsync(nameof(NameChanged), game, nameChanged);
+                }
+                catch (TimeoutException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
             internal IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
             {
                 return connection.StreamAsync<Positions>(nameof(JoinChannel), joinChannel);

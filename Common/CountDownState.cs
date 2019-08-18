@@ -38,4 +38,17 @@ namespace Common
         public byte B { get; set;}
         public byte A { get; set; }
     }
+
+
+    public struct NameChanged
+    {
+        public NameChanged(Guid id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
+        public Guid Id { get; set; }
+
+        public string Name { get; set; }
+    }
 }
