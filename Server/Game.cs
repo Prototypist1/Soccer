@@ -16,10 +16,10 @@ namespace Server
     {
         private int players = 0;
 
-        private const double footLen =400;
-        private const double xMax = 12799;
-        private const double yMax = 6399;
-        private const int Radius = 40;
+        private const double footLen =800;
+        private const double xMax = 25599;
+        private const double yMax = 12799;
+        private const int Radius = 20;
         private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(1280, xMax+1, yMax+1));
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
@@ -191,14 +191,14 @@ namespace Server
 
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(8, Radius * 2.5, xMax/2, yMax/2);
+            ball = PhysicsObjectBuilder.Ball(.1, Radius * 10, xMax/2, yMax/2);
 
             ballCreated = new BallCreated(
                ball.X,
                ball.Y,
                ballZ,
                ballId,
-               Radius * 2.5 * 2,
+               Radius * 10 * 2,
                0,
                0,
                0,
@@ -411,7 +411,7 @@ namespace Server
         {
 
             const double maxSpeed = 40.0;
-            const double MaxForce = 1;
+            const double MaxForce = 5;
             Positions positions = default;
 
             var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
@@ -446,8 +446,8 @@ namespace Server
                 var countDownSate = gameStateTracker.UpdateGameState();
 
                 ball.ApplyForce(
-                    -(ball.Vx * ball.Mass) / 100.0,
-                    -(ball.Vy * ball.Mass) / 100.0);
+                    -(ball.Vx * ball.Mass) / 40.0,
+                    -(ball.Vy * ball.Mass) / 40.0);
 
 
                 foreach (var center in bodies)

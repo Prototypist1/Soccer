@@ -127,9 +127,9 @@ namespace RemoteSoccer
         private readonly Dictionary<Guid, TextBlock> texts = new Dictionary<Guid, TextBlock>();
 
         private readonly Ellipse ballWall;
-        private const double footLen = 400;
-        private const double xMax = 12800;
-        private const double yMax = 6400;
+        private const double footLen = 800;
+        private const double xMax = 25600;
+        private const double yMax = 12800;
 
         private readonly Guid body = Guid.NewGuid();
         private readonly Guid foot = Guid.NewGuid();
