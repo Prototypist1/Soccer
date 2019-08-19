@@ -98,7 +98,9 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         async () =>
                         {
-                            (await SingleSignalRHandler.GetOrThrow()).SetOnClosed(null);
+                            var handler = (await SingleSignalRHandler.GetOrThrow());
+                            handler.SetOnClosed(null);
+                            handler.ClearCallBacks();
                             this.Frame.Navigate(typeof(MainPage), gameCreated.Id);
                         });
                     }
@@ -108,7 +110,9 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         async () =>
                         {
-                            (await SingleSignalRHandler.GetOrThrow()).SetOnClosed(null);
+                            var handler = (await SingleSignalRHandler.GetOrThrow());
+                            handler.SetOnClosed(null);
+                            handler.ClearCallBacks();
                             this.Frame.Navigate(typeof(MainPage), joined.Id);
                         });
                     }

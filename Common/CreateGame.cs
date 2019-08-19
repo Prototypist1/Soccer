@@ -73,6 +73,11 @@ namespace Common
         }
     }
 
+    public struct LeaveGame
+    {
+    }
+
+
     public struct JoinChannel
     {
         public string Id { get; set; }

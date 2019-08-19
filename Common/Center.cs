@@ -30,14 +30,23 @@ namespace Common
             this.fy += fy;
         }
 
-        public void Update(bool useBallWall,(double x, double y, double radius) ballWall)
+        public void Update(bool useBallWall,(double x, double y, double radius) ballWall, double maxSpeed)
         {
+
+            var lastX = X;
+            var lastY = Y;
 
             vx += fx;
             vy += fy;
 
-            var lastX = X;
-            var lastY = Y;
+            var v = new Vector(vx, vy);
+
+            if (v.Length > maxSpeed) {
+                v = v.NewScaled(maxSpeed / v.Length);
+            }
+
+            vx = v.x;
+            vy = v.y;
 
             X += vx;
             Y += vy;

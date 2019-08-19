@@ -16,11 +16,11 @@ namespace Server
     {
         private int players = 0;
 
-        private const double footLen =800;
+        private const double footLen = 800;
         private const double xMax = 25599;
         private const double yMax = 12799;
         private const int Radius = 20;
-        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(1280, xMax+1, yMax+1));
+        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(1280, xMax + 1, yMax + 1));
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
@@ -148,7 +148,8 @@ namespace Server
         {
             foreach (var element in feetCreaated)
             {
-                if (element.Id == colorChanged.Id) {
+                if (element.Id == colorChanged.Id)
+                {
                     element.G = colorChanged.G;
                     element.R = colorChanged.R;
                     element.B = colorChanged.B;
@@ -191,14 +192,14 @@ namespace Server
 
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(.1, Radius * 10, xMax/2, yMax/2);
+            ball = PhysicsObjectBuilder.Ball(.05, Radius * 12, xMax / 2, yMax / 2);
 
             ballCreated = new BallCreated(
                ball.X,
                ball.Y,
                ballZ,
                ballId,
-               Radius * 10 * 2,
+               Radius * 12 * 2,
                0,
                0,
                0,
@@ -291,7 +292,8 @@ namespace Server
             });
         }
 
-        public ObjectsCreated GetObjectsCreated() {
+        public ObjectsCreated GetObjectsCreated()
+        {
             return new ObjectsCreated(feetCreaated.ToArray(), bodiesCreated.ToArray(), ballCreated, goalsCreated.ToArray());
         }
 
@@ -348,7 +350,7 @@ namespace Server
 
             Interlocked.Add(ref players, 1);
 
-            return new ObjectsCreated(new[] { footCreated}, new[] { bodyCreated}, null ,new GoalCreated[] { });
+            return new ObjectsCreated(new[] { footCreated }, new[] { bodyCreated }, null, new GoalCreated[] { });
         }
 
         internal bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
@@ -379,7 +381,6 @@ namespace Server
             return false;
         }
 
-
         //public async void Start()
         //{
         //    var stopWatch = new Stopwatch();
@@ -389,7 +390,7 @@ namespace Server
         //    {
         //        if ((out var positions))
         //        {
-                    
+
         //        };
         //        frame++;
 
@@ -411,7 +412,7 @@ namespace Server
         {
 
             const double maxSpeed = 40.0;
-            const double MaxForce = 5;
+            const double MaxForce = 6;
             Positions positions = default;
 
             var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
@@ -437,7 +438,7 @@ namespace Server
                     { input.BodyId,input}
                 });
 
-                done:;
+            done:;
             }
 
 
@@ -461,23 +462,19 @@ namespace Server
 
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
-                        var f = new Vector(input.BodyX, input.BodyY);
-                        if (f.Length > 0)
-                        {
-                            f = f.NewUnitized().NewScaled(MaxForce);
+                        var f = new Vector(input.BodyX* MaxForce, input.BodyY* MaxForce);
+                        if (f.Length > MaxForce) {
+                            f = f.NewScaled(MaxForce / f.Length);
                         }
-                        else
-                        {
-                            f = new Vector(-body.vx, -body.vy);
-                            if (f.Length > MaxForce)
-                            {
-                                f = f.NewUnitized().NewScaled(MaxForce);
-                            }
-                        }
+
+                        f = new Vector(f.x == 0 ?  -body.vx : f.x, f.y == 0 ?  -body.vy : f.y);
+
                         f = Bound(f, new Vector(body.vx, body.vy));
 
                         body.ApplyForce(f.x, f.y);
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
+
+
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, maxSpeed);
 
                         var foot = body.Foot;
 
@@ -505,7 +502,7 @@ namespace Server
                     }
                     else
                     {
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, maxSpeed);
 
                         var foot = body.Foot;
 
@@ -554,8 +551,7 @@ namespace Server
                 var with = velocity.NewUnitized().NewScaled(Math.Max(0, force.Dot(velocity.NewUnitized())));
                 var notWith = force.NewAdded(with.NewMinus());
 
-                with = with.NewScaled(Math.Pow(Math.Max(0, (maxSpeed - velocity.Length)) / maxSpeed, 2));
-
+                with = with.NewScaled(Math.Pow(Math.Max(0, (maxSpeed - with.Length)) / maxSpeed, 25));
 
                 return with.NewAdded(notWith);
             }
@@ -567,9 +563,10 @@ namespace Server
         {
             var lastLast = LastInputUTC;
             playersInputs.Add(playerInputs);
-            if (Interlocked.CompareExchange(ref running, 1, 0) == 0) {
+            if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
+            {
                 var nextLast = DateTime.UtcNow;
-                if (playersInputs.Count > (players /2.0))
+                if (playersInputs.Count > (players / 2.0))
                 {
                     var dontWait = channel.Writer.WriteAsync(Apply());
                     LastInputUTC = nextLast;

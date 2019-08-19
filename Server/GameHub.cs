@@ -62,7 +62,7 @@ namespace Server
 
         //public async Task JoinGame(JoinGame joinGame)
         //{
-        //    if (state.games.ContainsKey(joinGame.Id) && state.connectionIdToGameName.TryAdd(Context.ConnectionId,joinGame.Id))
+        //    if (state.games.ContainsKey(joinGame.Id) && state.connectionIdToGameName.TryAdd(Context.ConnectionId, joinGame.Id))
         //    {
         //        await Clients.Caller.SendAsync(nameof(GameJoined), new GameJoined(joinGame.Id));
         //    }
@@ -138,15 +138,25 @@ namespace Server
             }
         }
 
+        public async Task LeaveGame(LeaveGame leaveGame) {
+            await LeaveGame(Context.ConnectionId);
+        }
+
         public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            await LeaveGame(Context.ConnectionId);
+            await base.OnDisconnectedAsync(exception);
+        }
+
+        private async Task LeaveGame(string connection)
         {
             try
             {
-                if (state.connectionIdToGameName.TryRemove(Context.ConnectionId, out var gameName))
+                if (state.connectionIdToGameName.TryRemove(connection, out var gameName))
                 {
                     if (state.games.TryGetValue(gameName, out var game))
                     {
-                        if (game.TryDisconnect(Context.ConnectionId, out var objectRemoveds))
+                        if (game.TryDisconnect(connection, out var objectRemoveds))
                         {
 
                             // tell the other players
@@ -171,7 +181,6 @@ namespace Server
                 var db = 0;
 #pragma warning restore CS0219 // Variable is assigned but its value is never used
             }
-            await base.OnDisconnectedAsync(exception);
         }
     }
 }

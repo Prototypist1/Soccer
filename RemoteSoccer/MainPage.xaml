@@ -55,6 +55,9 @@
                     <TextBox x:Name="Namer" TextChanged="TextBox_TextChanged" HorizontalAlignment="Stretch"/>
                 </Border>
                 <Border BorderThickness="10" >
+                    <Button Click="Button_Click_1" Content="Exit To Main Menu" HorizontalAlignment="Stretch"/>
+                </Border>
+                <Border BorderThickness="10" >
                     <Button Click="Button_Click" Content="Done" HorizontalAlignment="Stretch"/>
                 </Border>
             </StackPanel>

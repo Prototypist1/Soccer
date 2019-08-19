@@ -519,6 +519,8 @@ namespace RemoteSoccer
 
         }
 
+        private bool sending = true;
+        private TaskCompletionSource<bool> StoppedSending = new TaskCompletionSource<bool>();
         // assumed to be run on the main thread
         private async IAsyncEnumerable<PlayerInputs> MainLoop(SingleSignalRHandler.SignalRHandler handler, Guid foot, Guid body, string game)
         {
@@ -541,7 +543,7 @@ namespace RemoteSoccer
 
             var distrib = new int[100];
 
-            while (true)
+            while (sending)
             {
 
                 await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
@@ -599,6 +601,7 @@ namespace RemoteSoccer
                 await Task.Delay((int)Math.Max(0, (1000 * frame / 60) - stopWatch.ElapsedMilliseconds));
 
             }
+            StoppedSending.SetResult(true);
         }
 
 
@@ -768,6 +771,27 @@ namespace RemoteSoccer
             {
                 x.Result.Send(gameName, new NameChanged(foot, name));
             });
+        }
+
+        public async Task StopSendingInputs() {
+            sending = false;
+            await StoppedSending.Task;
+        }
+
+        private async void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            await StopSendingInputs();
+            var handler = (await SingleSignalRHandler.GetOrThrow());
+            handler.Send(new LeaveGame());
+            handler.SetOnClosed(null);
+            handler.ClearCallBacks();
+
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                CoreDispatcherPriority.Normal,
+                () =>
+                {
+                    this.Frame.Navigate(typeof(LandingPage));
+                });
         }
     }
 }

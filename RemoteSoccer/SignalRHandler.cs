@@ -27,7 +27,8 @@ namespace RemoteSoccer
         public static async Task<SignalRHandler> GetOrThrow()
         {
             var res = instance;
-            if (instance == null) {
+            if (instance == null)
+            {
                 throw new Exception("oh no! we don't have a signal r handler!");
             }
             return await res;
@@ -80,7 +81,8 @@ namespace RemoteSoccer
 
             var connection = new HubConnectionBuilder()
                 //.WithUrl(@"https://soccerserver.azurewebsites.net/GameHub", x=> {
-                .WithUrl(@"http://localhost:50737/GameHub", x=> {
+                .WithUrl(@"http://localhost:50737/GameHub", x =>
+                {
                     // for some reason this seems to break azure signal r service
                     //x.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
                     //x.SkipNegotiation = true;
@@ -123,6 +125,15 @@ namespace RemoteSoccer
                 {
                     onClosed(alreadyClosed);
                 }
+            }
+
+            public void ClearCallBacks()
+            {
+                connection.Remove(nameof(ObjectsCreated));
+                connection.Remove(nameof(ObjectsRemoved));
+                connection.Remove(nameof(UpdateScore));
+                connection.Remove(nameof(ColorChanged));
+                connection.Remove(nameof(NameChanged));
             }
 
             public SignalRHandler(HubConnection connection, Getter getter)
@@ -182,99 +193,105 @@ namespace RemoteSoccer
                 }
             }
 
-            public async Task<OrType<GameCreated, GameAlreadyExists, Exception>> Send(CreateGame createGame)
-            {
-                var taskCompletionSource = new TaskCompletionSource<OrType<GameCreated, GameAlreadyExists, Exception>>();
+            //public async Task<OrType<GameCreated, GameAlreadyExists, Exception>> Send(CreateGame createGame)
+            //{
+            //    var taskCompletionSource = new TaskCompletionSource<OrType<GameCreated, GameAlreadyExists, Exception>>();
 
-                (Action<GameCreated>, Action<GameAlreadyExists>) actions = (null, null);
-                actions = (
-                   (GameCreated x) =>
-                   {
-                       if (x.Id == createGame.Id)
-                       {
-                           taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(x));
-                       }
-                   },
-                    (GameAlreadyExists x) =>
-                    {
-                        if (x.Id == createGame.Id)
-                        {
-                            taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(x));
-                        }
-                    }
-                );
+            //    (Action<GameCreated>, Action<GameAlreadyExists>) actions = (null, null);
+            //    actions = (
+            //       (GameCreated x) =>
+            //       {
+            //           if (x.Id == createGame.Id)
+            //           {
+            //               taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(x));
+            //           }
+            //       },
+            //        (GameAlreadyExists x) =>
+            //        {
+            //            if (x.Id == createGame.Id)
+            //            {
+            //                taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(x));
+            //            }
+            //        }
+            //    );
 
-                gameCreatedHandlers.Add(actions.Item1);
-                gameAlreadyExistsHandlers.Add(actions.Item2);
+            //    gameCreatedHandlers.Add(actions.Item1);
+            //    gameAlreadyExistsHandlers.Add(actions.Item2);
 
-                try
-                {
-                    await connection.InvokeAsync(nameof(CreateGame), createGame);
-                }
-                catch (TimeoutException e)
-                {
-                    taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(e));
-                }
-                catch (InvalidOperationException e)
-                {
-                    taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(e));
-                }
-                finally {
-                    gameCreatedHandlers.Remove(actions.Item1);
-                    gameAlreadyExistsHandlers.Remove(actions.Item2);
-                }
+            //    try
+            //    {
+            //        await connection.InvokeAsync(nameof(CreateGame), createGame);
+            //        return await taskCompletionSource.Task;
+            //    }
+            //    catch (TimeoutException e)
+            //    {
+            //        taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(e));
+            //        return await taskCompletionSource.Task;
+            //    }
+            //    catch (InvalidOperationException e)
+            //    {
+            //        taskCompletionSource.SetResult(new OrType<GameCreated, GameAlreadyExists, Exception>(e));
+            //        return await taskCompletionSource.Task;
+            //    }
+            //    finally
+            //    {
+            //        gameCreatedHandlers.Remove(actions.Item1);
+            //        gameAlreadyExistsHandlers.Remove(actions.Item2);
+            //    }
 
-                return await taskCompletionSource.Task;
-            }
+            //}
 
-            public async Task<OrType<GameJoined, GameDoesNotExist, Exception>> Send(JoinGame joinGame)
-            {
-                var taskCompletionSource = new TaskCompletionSource<OrType<GameJoined, GameDoesNotExist, Exception>>();
+            //public async Task<OrType<GameJoined, GameDoesNotExist, Exception>> Send(JoinGame joinGame)
+            //{
+            //    var taskCompletionSource = new TaskCompletionSource<OrType<GameJoined, GameDoesNotExist, Exception>>();
 
-                (Action<GameJoined>, Action<GameDoesNotExist>) actions = (null, null);
-                actions = (
-                   (GameJoined x) =>
-                   {
-                       if (x.Id == joinGame.Id)
-                       {
-                           taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist, Exception>(x));
-                           gameJoinedHandlers.Remove(actions.Item1);
-                           gameDoesNotExistHandlers.Remove(actions.Item2);
-                       }
-                   },
-                    (GameDoesNotExist x) =>
-                    {
-                        if (x.Id == joinGame.Id)
-                        {
-                            taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist, Exception>(x));
-                            gameJoinedHandlers.Remove(actions.Item1);
-                            gameDoesNotExistHandlers.Remove(actions.Item2);
-                        }
-                    }
-                );
+            //    (Action<GameJoined>, Action<GameDoesNotExist>) actions = (null, null);
+            //    actions = (
+            //       (GameJoined x) =>
+            //       {
+            //           if (x.Id == joinGame.Id)
+            //           {
+            //               taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist, Exception>(x));
+            //               gameJoinedHandlers.Remove(actions.Item1);
+            //               gameDoesNotExistHandlers.Remove(actions.Item2);
+            //           }
+            //       },
+            //        (GameDoesNotExist x) =>
+            //        {
+            //            if (x.Id == joinGame.Id)
+            //            {
+            //                taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist, Exception>(x));
+            //                gameJoinedHandlers.Remove(actions.Item1);
+            //                gameDoesNotExistHandlers.Remove(actions.Item2);
+            //            }
+            //        }
+            //    );
 
-                gameJoinedHandlers.Add(actions.Item1);
-                gameDoesNotExistHandlers.Add(actions.Item2);
+            //    gameJoinedHandlers.Add(actions.Item1);
+            //    gameDoesNotExistHandlers.Add(actions.Item2);
 
-                try
-                {
-                    await connection.InvokeAsync(nameof(JoinGame), joinGame);
-                }
-                catch(TimeoutException e)
-                {
-                    taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist, Exception>(e));
-                    gameJoinedHandlers.Remove(actions.Item1);
-                    gameDoesNotExistHandlers.Remove(actions.Item2);
-                }
-                catch (InvalidOperationException e)
-                {
-                    taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist, Exception>(e));
-                    gameJoinedHandlers.Remove(actions.Item1);
-                    gameDoesNotExistHandlers.Remove(actions.Item2);
-                }
+            //    try
+            //    {
+            //        await connection.InvokeAsync(nameof(JoinGame), joinGame);
+            //        return await taskCompletionSource.Task;
+            //    }
+            //    catch (TimeoutException e)
+            //    {
+            //        taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist, Exception>(e));
+            //        return await taskCompletionSource.Task;
+            //    }
+            //    catch (InvalidOperationException e)
+            //    {
+            //        taskCompletionSource.SetResult(new OrType<GameJoined, GameDoesNotExist, Exception>(e));
+            //        return await taskCompletionSource.Task;
+            //    }
+            //    finally
+            //    {
+            //        gameJoinedHandlers.Remove(actions.Item1);
+            //        gameDoesNotExistHandlers.Remove(actions.Item2);
+            //    }
 
-                return await taskCompletionSource.Task;
-            }
+            //}
 
             public async Task<OrType<GameCreated, GameJoined, Exception>> Send(CreateOrJoinGame createOrJoinGame)
             {
@@ -304,14 +321,17 @@ namespace RemoteSoccer
                 try
                 {
                     await connection.InvokeAsync(nameof(CreateOrJoinGame), createOrJoinGame);
+                    return await taskCompletionSource.Task;
                 }
                 catch (TimeoutException e)
                 {
                     taskCompletionSource.SetResult(new OrType<GameCreated, GameJoined, Exception>(e));
+                    return await taskCompletionSource.Task;
                 }
                 catch (InvalidOperationException e)
                 {
                     taskCompletionSource.SetResult(new OrType<GameCreated, GameJoined, Exception>(e));
+                    return await taskCompletionSource.Task;
                 }
                 finally
                 {
@@ -319,13 +339,12 @@ namespace RemoteSoccer
                     gameJoinedHandlers.Remove(actions.Item2);
                 }
 
-                return await taskCompletionSource.Task;
             }
 
 
-            public async void Send(string game, 
-                CreatePlayer createPlayer, 
-                Action<ObjectsCreated> handleObjectsCreated, 
+            public async void Send(string game,
+                CreatePlayer createPlayer,
+                Action<ObjectsCreated> handleObjectsCreated,
                 Action<ObjectsRemoved> handleObjectsRemoved,
                 Action<UpdateScore> handleUpdateScore,
                 Action<ColorChanged> handleColorChanged,
@@ -348,6 +367,21 @@ namespace RemoteSoccer
                 {
                 }
             }
+
+            public async void Send(LeaveGame leave)
+            {
+                try
+                {
+                    await connection.InvokeAsync(nameof(LeaveGame), leave);
+                }
+                catch (TimeoutException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+
 
             public async void Send(string game, IAsyncEnumerable<PlayerInputs> inputs)
             {
@@ -381,7 +415,7 @@ namespace RemoteSoccer
             {
                 try
                 {
-                    await connection.InvokeAsync(nameof(ColorChanged),game, colorChanged);
+                    await connection.InvokeAsync(nameof(ColorChanged), game, colorChanged);
                 }
                 catch (TimeoutException)
                 {
