@@ -273,7 +273,7 @@ namespace Physics
     internal class Ball : Shape
     {
 
-        private readonly double Radius;
+        public readonly double Radius;
 
         public override bool Mobile { get; }
 
@@ -377,7 +377,8 @@ namespace Physics
                     collision = new TriggerEvent(
                         res,
                         that,
-                        trigger);
+                        trigger,
+                        self);
                 }
                 else if (trigger == null && that.shape.trigger != null)
                 {
@@ -390,7 +391,8 @@ namespace Physics
                     collision = new TriggerEvent(
                         res,
                         self,
-                        that.shape.trigger);
+                        that.shape.trigger,
+                        that);
                 }
                 else
                 {

@@ -127,9 +127,6 @@ namespace RemoteSoccer
         private readonly Dictionary<Guid, TextBlock> texts = new Dictionary<Guid, TextBlock>();
 
         private readonly Ellipse ballWall;
-        private const double footLen = 800;
-        private const double xMax = 25600;
-        private const double yMax = 12800;
 
         private readonly Guid body = Guid.NewGuid();
         private readonly Guid foot = Guid.NewGuid();
@@ -169,8 +166,8 @@ namespace RemoteSoccer
 
             var field = new Rectangle()
             {
-                Width = xMax,
-                Height = yMax,
+                Width = Constants.xMax,
+                Height = Constants.yMax,
                 Fill =
                 //new ImageBrush() {
                 //    ImageSource = new BitmapImage(new Uri(@"ms-appx:///Assets/nice.jpg")),
@@ -184,12 +181,12 @@ namespace RemoteSoccer
 
             var lineBrush =
                 new SolidColorBrush(Color.FromArgb(0xff, 0xcc, 0xcc, 0xcc));
-            for (double i = 0; i <= yMax; i += yMax / 4)
+            for (double i = 0; i <= Constants.yMax; i += Constants.yMax / 4)
             {
                 var line = new Line()
                 {
                     X1 = 0,
-                    X2 = xMax,
+                    X2 = Constants.xMax,
                     Y1 = i,
                     Y2 = i,
                     Stroke = lineBrush,
@@ -198,14 +195,14 @@ namespace RemoteSoccer
                 Canvas.SetZIndex(line, -1);
                 GameArea.Children.Add(line);
             }
-            for (double i = 0; i <= xMax; i += yMax / 4)
+            for (double i = 0; i <= Constants.xMax; i += Constants.yMax / 4)
             {
                 var line = new Line()
                 {
                     X1 = i,
                     X2 = i,
                     Y1 = 0,
-                    Y2 = yMax,
+                    Y2 = Constants.yMax,
                     Stroke = lineBrush,
                     StrokeThickness = 5,
                 };
@@ -290,7 +287,7 @@ namespace RemoteSoccer
                 elements.Add(objectCreated.Id, new ElementEntry(ellipse, color));// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
                 GameArea.Children.Add(ellipse);
 
-                if (objectCreated is FootCreated foot)
+                if (objectCreated is BodyCreated foot)
                 {
 
                     var sum = foot.R + foot.G + foot.B;
@@ -298,11 +295,11 @@ namespace RemoteSoccer
                     var text = new TextBlock()
                     {
                         Text = foot.Name,
-                        FontSize = 24,
-                        Foreground = new SolidColorBrush( sum > 0x88 *3 ? Colors.Black : Colors.White)
+                        FontSize = 200,
+                        Foreground = new SolidColorBrush( Color.FromArgb(0x88,0xff,0xff,0xff))
                     };
 
-                    Canvas.SetZIndex(text, 3);
+                    Canvas.SetZIndex(text, Constants.textZ);
 
                     text.TransformMatrix =
                     // first we center
@@ -389,6 +386,21 @@ namespace RemoteSoccer
             CoreDispatcherPriority.High,
             () =>
             {
+
+                foreach (var collision in positions.Collisions)
+                {
+                    var line =  new Line
+                    {
+                        X1 = collision.X + (collision.Fy * (collision.IsGoal ? 100000 : 10)),
+                        Y1 = collision.Y - (collision.Fx * (collision.IsGoal ? 100000 : 10)),
+                        X2 = collision.X - (collision.Fy * (collision.IsGoal ? 100000 : 10)),
+                        Y2 = collision.Y + (collision.Fx * (collision.IsGoal ? 100000 : 10)),
+                        StrokeThickness = 5,
+                        Stroke = new SolidColorBrush(Colors.Red)
+                    };
+                    GameArea.Children.Add(line);
+                    Canvas.SetZIndex(line, Constants.footZ);
+                }
 
                 foreach (var position in positions.PositionsList)
                 {
@@ -640,7 +652,7 @@ namespace RemoteSoccer
                         new CreatePlayer(
                             foot,
                             body,
-                            footLen * 2,
+                            Constants.footLen * 2,
                             80,
                             color[0],
                             color[1],
@@ -690,10 +702,6 @@ namespace RemoteSoccer
                         {
                             var element = elements[obj.Id];
                             element.element.Fill = new SolidColorBrush(Color.FromArgb(obj.A, obj.R, obj.G, obj.B));
-                            if (texts.TryGetValue(obj.Id, out var text)) {
-                                var sum = obj.R + obj.G + obj.B;
-                                text.Foreground = new SolidColorBrush(sum > 0x88 * 3 ? Colors.Black : Colors.White);
-                            }
                         });
         }
 
@@ -769,7 +777,7 @@ namespace RemoteSoccer
             var name = Namer.Text;
             SingleSignalRHandler.GetOrThrow().ContinueWith(x =>
             {
-                x.Result.Send(gameName, new NameChanged(foot, name));
+                x.Result.Send(gameName, new NameChanged(body, name));
             });
         }
 

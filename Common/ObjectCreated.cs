@@ -52,19 +52,19 @@ namespace Common
 
     public class FootCreated : ObjectCreated
     {
-        public FootCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a, string name) : base(x, y, z, id, diameter, r, g, b, a)
+        public FootCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
         {
-            this.Name = name;
         }
-        public string Name { get; set; }
 
     }
 
     public class BodyCreated: ObjectCreated
     {
-        public BodyCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
+        public BodyCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a, string name) : base(x, y, z, id, diameter, r, g, b, a)
         {
+            this.Name = name;
         }
+        public string Name { get; set; }
 
     }
 

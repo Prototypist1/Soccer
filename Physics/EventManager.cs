@@ -62,7 +62,7 @@ namespace Physics
                 return vf != v;
             }
 
-            public void Enact(GridManager gridManager, EventManager eventManager, double endTime)
+            public MightBeCollision Enact(GridManager gridManager, EventManager eventManager, double endTime)
             {
                 if (physicsObject1.X != start_x1 ||
                 physicsObject1.Y != start_y1 ||
@@ -73,7 +73,7 @@ namespace Physics
                 physicsObject2.Vx != start_vx2 ||
                 physicsObject2.Vy != start_vy2)
                 {
-                    return;
+                    return new MightBeCollision();
                 }
 
 
@@ -103,14 +103,30 @@ namespace Physics
                 var v2 = normal.Dot(physicsObject2.Velocity);
                 var m2 = physicsObject2.Mass;
 
+                MightBeCollision res;
+
 
                 if (physicsObject1.Mobile == false)
                 {
                     physicsObject2.Velocity = normal.NewScaled(-2 * v2).NewAdded(physicsObject2.Velocity);
+                    res = new MightBeCollision(new Collision(
+                        physicsObject2.X + normal.NewScaled((physicsObject2 as PhysicsObject<Ball>).shape.Radius).x,
+                        physicsObject2.Y + normal.NewScaled((physicsObject2 as PhysicsObject<Ball>).shape.Radius).y,
+                        normal.NewScaled(-2 * v2 * m2).x,
+                        normal.NewScaled(-2 * v2 * m2).y,
+                        false
+                    ));
                 }
                 else if (physicsObject2.Mobile == false)
                 {
                     physicsObject1.Velocity = normal.NewScaled(-2 * v1).NewAdded(physicsObject1.Velocity);
+                    res = new MightBeCollision(new Collision(
+                        physicsObject2.X + normal.NewScaled((physicsObject2 as PhysicsObject<Ball>).shape.Radius).x,
+                        physicsObject2.Y + normal.NewScaled((physicsObject2 as PhysicsObject<Ball>).shape.Radius).y,
+                        normal.NewScaled(-2 * v1 * m1).x,
+                        normal.NewScaled(-2 * v1 * m1).y,
+                        false
+                    ));
                 }
                 else
                 {
@@ -182,11 +198,20 @@ namespace Physics
                     var f = (vf2 - v2) * m2;
                     var vf1 = v1 - (f / m1);
                     physicsObject1.Velocity = normal.NewScaled(vf1).NewAdded(normal.NewScaled(-v1)).NewAdded(physicsObject1.Velocity);
+                    res =new MightBeCollision(new Collision(
+                        physicsObject2.X + normal.NewScaled((physicsObject2 as PhysicsObject<Ball>).shape.Radius).x,
+                        physicsObject2.Y + normal.NewScaled((physicsObject2 as PhysicsObject<Ball>).shape.Radius).y,
+                        normal.NewScaled(vf1).x,
+                        normal.NewScaled(vf1).y,
+                        false
+                    ));
                 }
 
 
                 WhatHappensNext(physicsObject1, gridManager, eventManager, endTime);
                 WhatHappensNext(physicsObject2, gridManager, eventManager, endTime);
+
+                return res;
             }
         }
 
@@ -209,14 +234,14 @@ namespace Physics
                 this.start_vy = physicsObject.Vy;
             }
 
-            public void Enact(GridManager gridManager, EventManager eventManager, double endtime)
+            public MightBeCollision Enact(GridManager gridManager, EventManager eventManager, double endtime)
             {
                 if (physicsObject.X != start_x ||
                 physicsObject.Y != start_y ||
                 physicsObject.Vx != start_vx ||
                 physicsObject.Vy != start_vy)
                 {
-                    return;
+                    return new MightBeCollision();
                 }
 
                 physicsObject.RemoveFromGrid(gridManager);
@@ -224,6 +249,8 @@ namespace Physics
                 physicsObject.Y = y;
                 physicsObject.Time = Time;
                 WhatHappensNext(physicsObject, gridManager, eventManager, endtime);
+
+                return new MightBeCollision();
             }
 
         }
@@ -261,14 +288,19 @@ namespace Physics
             }
         }
 
-        public void RunAll(double time, GridManager gridManager)
+        public Collision[] RunAll(double time, GridManager gridManager)
         {
+            var list = new List<Collision>();
             while (Events.Any())
             {
                 var first = Events.First.Value;
                 Events.RemoveFirst();
-                first.Enact(gridManager, this, time);
+                var res = first.Enact(gridManager, this, time);
+                if (res.IsIt(out var collision)) {
+                    list.Add(collision);
+                }
             }
+            return list.ToArray();
         }
     }
 }

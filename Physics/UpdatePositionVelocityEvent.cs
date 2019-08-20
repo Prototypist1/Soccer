@@ -29,14 +29,14 @@
 
         public double Time { get; }
 
-        public void Enact(GridManager gridManager, EventManager eventManager, double endtime)
+        public MightBeCollision Enact(GridManager gridManager, EventManager eventManager, double endtime)
         {
             if (myPhysicsObject.X != start_x ||
                    myPhysicsObject.Y != start_y ||
                    myPhysicsObject.Vx != start_vx ||
                    myPhysicsObject.Vy != start_vy)
             {
-                return;
+                return new MightBeCollision();
             }
 
             myPhysicsObject.RemoveFromGrid(gridManager);
@@ -48,6 +48,8 @@
             myPhysicsObject.Time = Time;
 
             EventManager.WhatHappensNext(myPhysicsObject, gridManager, eventManager, endtime);
+
+            return new MightBeCollision();
         }
     }
 }

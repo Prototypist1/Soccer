@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Physics;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -24,14 +25,16 @@ namespace Common
     public struct Positions
     {
         public Position[] PositionsList { get; set; }
+        public Collision[] Collisions { get; set; }
         public int Frame { get; set; }
         public CountDownState CountDownState { get;set;}
 
-        public Positions(Position[] positionsList, int frame, CountDownState countDownState)
+        public Positions(Position[] positionsList, int frame, CountDownState countDownState, Collision[] collisions)
         {
             this.PositionsList = positionsList ?? throw new ArgumentNullException(nameof(positionsList));
             Frame = frame;
             this.CountDownState = countDownState;
+            Collisions = collisions ?? throw new ArgumentNullException(nameof(collisions));
         }
     }
 }

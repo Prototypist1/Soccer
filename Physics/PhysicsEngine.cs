@@ -29,7 +29,29 @@ namespace Physics
         double Time { get; }
 
 
-        void Enact(GridManager gridManager, EventManager eventManager, double endtime);
+        MightBeCollision Enact(GridManager gridManager, EventManager eventManager, double endtime);
+    }
+
+    public class MightBeCollision
+    {
+        Collision collision;
+        bool isIt;
+
+        public MightBeCollision(Collision collision)
+        {
+            this.collision = collision;
+            this.isIt = true;
+        }
+
+        public MightBeCollision()
+        {
+            this.isIt = false;
+        }
+
+        public bool IsIt(out Collision collision) {
+            collision = this.collision;
+            return isIt;
+        }
     }
 
     public class PhysicsEngine
@@ -51,13 +73,34 @@ namespace Physics
             physicsObject.AddToGrid(gridManager);
         }
 
-        public void Simulate(double time)
+        public Collision[] Simulate(double time)
         {
             foreach (var item in items)
             {
                 EventManager.WhatHappensNext(item, gridManager, eventManager, time);
             }
-            eventManager.RunAll(time, gridManager);
+            return eventManager.RunAll(time, gridManager);
         }
     }
+
+
+    public struct Collision
+    {
+        public Collision(double x, double y, double fx, double fy, bool isGoal)
+        {
+            X = x;
+            Y = y;
+            Fx = fx;
+            Fy = fy;
+            IsGoal = isGoal;
+        }
+
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Fx { get; set; }
+        public double Fy { get; set; }
+        public bool IsGoal { get; set; }
+    }
+
+
 }
