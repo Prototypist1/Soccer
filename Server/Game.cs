@@ -438,7 +438,7 @@ namespace Server
 
                 ball.ApplyForce(
                     -(ball.Vx * ball.Mass) / 50.0,
-                    -(ball.Vy * ball.Mass) / 50.0);
+                    -(ball.Vy * ball.Mass) / 0.0);
 
 
                 foreach (var center in bodies)
@@ -452,14 +452,20 @@ namespace Server
 
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
+
+                        //if (input.BodyX != 0) {
+                        //    input.BodyY = 0;
+                        //}
                         var f = new Vector(input.BodyX* MaxForce, input.BodyY* MaxForce);
                         if (f.Length > MaxForce) {
                             f = f.NewScaled(MaxForce / f.Length);
                         }
 
-                        f = new Vector(f.x == 0 ?  -body.vx : f.x, f.y == 0 ?  -body.vy : f.y);
+                        
 
                         f = Bound(f, new Vector(body.vx, body.vy));
+
+                        f = new Vector(input.BodyX == 0 ? -body.vx : f.x, input.BodyY == 0 ? -body.vy : f.y);
 
                         body.ApplyForce(f.x, f.y);
 
@@ -534,17 +540,25 @@ namespace Server
 
             Vector Bound(Vector force, Vector velocity)
             {
+                var startLen = force.Length;
+                var startX = force.x;
+                var startY = force.y;
+
                 if (force.Length == 0 || velocity.Length == 0)
                 {
                     return force;
                 }
 
-                var with = velocity.NewUnitized().NewScaled(Math.Max(0, force.Dot(velocity.NewUnitized())));
+                var with = velocity.NewUnitized().NewScaled(force.Length *Math.Max(0, force.NewUnitized().Dot(velocity.NewUnitized())));
                 var notWith = force.NewAdded(with.NewMinus());
 
-                with = with.NewScaled(Math.Pow(Math.Max(0, (maxSpeed - with.Length)) / maxSpeed, 25));
+                var scaleBy = Math.Pow(Math.Max(0, (maxSpeed - with.Length)) / maxSpeed, 25);
 
-                return with.NewAdded(notWith);
+                with = with.NewScaled(scaleBy);
+
+                var res = with.NewAdded(notWith);
+
+                return res;
             }
         }
 
