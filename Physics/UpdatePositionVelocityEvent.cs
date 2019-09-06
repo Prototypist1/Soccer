@@ -12,8 +12,9 @@
         private readonly double y;
         private readonly double vx;
         private readonly double vy;
+        private readonly MightBeCollision res;
 
-        public UpdatePositionVelocityEvent(double time, PhysicsObject myPhysicsObject, double x, double y, double vx, double vy)
+        public UpdatePositionVelocityEvent(double time, PhysicsObject myPhysicsObject, double x, double y, double vx, double vy, MightBeCollision res)
         {
             this.Time = time;
             this.myPhysicsObject = myPhysicsObject;
@@ -25,6 +26,7 @@
             this.y = y;
             this.vx = vx;
             this.vy = vy;
+            this.res = res;
         }
 
         public double Time { get; }
@@ -49,7 +51,7 @@
 
             EventManager.WhatHappensNext(myPhysicsObject, gridManager, eventManager, endtime);
 
-            return new MightBeCollision();
+            return res;
         }
     }
 }

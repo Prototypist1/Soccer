@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Channels;
@@ -28,6 +29,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
@@ -139,6 +141,7 @@ namespace RemoteSoccer
 
             viewFrameWidth = GameHolder.ActualWidth;
             viewFrameHeight = GameHolder.ActualHeight;
+
 
             Task.Run(async () =>
             {
@@ -359,6 +362,9 @@ namespace RemoteSoccer
         private string gameName;
         private bool lockCurser = false;
 
+
+        Dictionary<Line, DateTime> lineTimes = new Dictionary<Line, DateTime>();
+
         private void HandlePositions(Positions positions)
         {
 
@@ -381,25 +387,64 @@ namespace RemoteSoccer
 
             var ticks = stopWatch.ElapsedTicks;
 
-
             var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
             CoreDispatcherPriority.High,
             () =>
             {
 
+                var now = DateTime.Now;
+                foreach (var child in GameArea.Children.ToList())
+                {
+                    if (child is Line line && lineTimes.TryGetValue(line, out var time) && now - time > TimeSpan.FromMilliseconds(400)) {
+                        GameArea.Children.Remove(line);
+                        lineTimes.Remove(line);
+                    }
+                }
+
                 foreach (var collision in positions.Collisions)
                 {
-                    var line =  new Line
+                    var line1 = new Line
                     {
-                        X1 = collision.X + (collision.Fy * (collision.IsGoal ? 100000 : 10)),
-                        Y1 = collision.Y - (collision.Fx * (collision.IsGoal ? 100000 : 10)),
-                        X2 = collision.X - (collision.Fy * (collision.IsGoal ? 100000 : 10)),
-                        Y2 = collision.Y + (collision.Fx * (collision.IsGoal ? 100000 : 10)),
+                        
+                        X1 =  - (collision.Fy * (collision.IsGoal ? 4000 : 20)),
+                        Y1 = (collision.Fx * (collision.IsGoal ? 4000 : 20)),
+                        X2 = - ((collision.Fy / 4.0) * (collision.IsGoal ? 4000 : 20)),
+                        Y2 =  ((collision.Fx / 4.0) * (collision.IsGoal ? 4000 : 20)),
                         StrokeThickness = 5,
-                        Stroke = new SolidColorBrush(Colors.Red)
+                        Stroke = new SolidColorBrush(Colors.Black),
+                        Opacity = 1,
+                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400),  },
+                        Scale = new Vector3(.4f,.4f,1f),
+                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(200)},
+                        Translation = new Vector3((float)collision.X,(float)collision.Y,0)
+                        
                     };
-                    GameArea.Children.Add(line);
-                    Canvas.SetZIndex(line, Constants.footZ);
+                    lineTimes.Add(line1, now);
+                    GameArea.Children.Add(line1);
+                    line1.Opacity = 0f;
+                    line1.Scale = new Vector3(2,2, 1);
+                    Canvas.SetZIndex(line1, Constants.footZ);
+
+                    var line2 = new Line
+                    {
+
+                        X1 = (collision.Fy * (collision.IsGoal ? 4000 : 20)),
+                        Y1 = -(collision.Fx * (collision.IsGoal ? 4000 : 20)),
+                        X2 = ((collision.Fy/4.0) * (collision.IsGoal ? 4000 : 20)),
+                        Y2 = -((collision.Fx / 4.0) * (collision.IsGoal ? 4000 : 20)),
+                        StrokeThickness = 5,
+                        Stroke = new SolidColorBrush(Colors.Black),
+                        Opacity = 1,
+                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
+                        Scale = new Vector3(.4f, .4f, 1f),
+                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
+                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+                    };
+                    lineTimes.Add(line2, now);
+                    GameArea.Children.Add(line2);
+                    line2.Opacity = 0f;
+                    line2.Scale = new Vector3(2, 2, 1);
+                    Canvas.SetZIndex(line2, Constants.footZ);
                 }
 
                 foreach (var position in positions.PositionsList)

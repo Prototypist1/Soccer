@@ -431,7 +431,13 @@ namespace Physics
                             self.X + (time * self.Vx),
                             self.Y + (time * self.Vy),
                             self.Vx + force.x,
-                            self.Vy + force.y);
+                            self.Vy + force.y,
+                            new MightBeCollision(new Collision(
+                                self.X + (time * self.Vx) + (line.shape.NormalUnit.NewUnitized().x* self.shape.Radius), 
+                                self.Y + (time * self.Vy) + (line.shape.NormalUnit.NewUnitized().y * self.shape.Radius),
+                                force.x,
+                                force.y,
+                                false)));
                         return true;
                     }
                     else
@@ -461,7 +467,13 @@ namespace Physics
                             self.X + (time * self.Vx),
                             self.Y + (time * self.Vy),
                             self.Vx + force.x,
-                            self.Vy + force.y);
+                            self.Vy + force.y,
+                            new MightBeCollision(new Collision(
+                                self.X + (time * self.Vx) + (-line.shape.NormalUnit.NewUnitized().x * self.shape.Radius), 
+                                self.Y + (time * self.Vy) + (-line.shape.NormalUnit.NewUnitized().y * self.shape.Radius), 
+                                force.x, 
+                                force.y, 
+                                false)));
                         return true;
                     }
                     else
@@ -489,7 +501,13 @@ namespace Physics
                             self.X + (time * self.Vx),
                             self.Y + (time * self.Vy),
                             -self.Vx,
-                            self.Vy);
+                            self.Vy,
+                            new MightBeCollision(new Collision(
+                                self.X + (time * self.Vx) + (-line.shape.NormalUnit.NewUnitized().x * self.shape.Radius), 
+                                self.Y + (time * self.Vy) + (-line.shape.NormalUnit.NewUnitized().y * self.shape.Radius), 
+                                -self.Vx*2*self.Mass, 
+                                0, 
+                                false)));
                         return true;
                     }
                     else
@@ -509,7 +527,13 @@ namespace Physics
                             self.X + (time * self.Vx),
                             self.Y + (time * self.Vy),
                             -self.Vx,
-                            self.Vy);
+                            self.Vy,
+                            new MightBeCollision(new Collision(
+                                self.X + (time * self.Vx) + (line.shape.NormalUnit.NewUnitized().x * self.shape.Radius), 
+                                self.Y + (time * self.Vy) + (line.shape.NormalUnit.NewUnitized().y * self.shape.Radius),
+                                0, 
+                                -2*self.Vy*self.Mass, 
+                                false)));
                         return true;
                     }
                     else

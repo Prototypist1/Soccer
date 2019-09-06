@@ -438,7 +438,7 @@ namespace Server
 
                 ball.ApplyForce(
                     -(ball.Vx * ball.Mass) / 50.0,
-                    -(ball.Vy * ball.Mass) / 0.0);
+                    -(ball.Vy * ball.Mass) / 50.0);
 
 
                 foreach (var center in bodies)
@@ -457,13 +457,13 @@ namespace Server
                         //    input.BodyY = 0;
                         //}
                         var f = new Vector(input.BodyX* MaxForce, input.BodyY* MaxForce);
-                        if (f.Length > MaxForce) {
-                            f = f.NewScaled(MaxForce / f.Length);
-                        }
-
-                        
 
                         f = Bound(f, new Vector(body.vx, body.vy));
+
+                        if (f.Length > MaxForce)
+                        {
+                            f = f.NewScaled(MaxForce / f.Length);
+                        }
 
                         f = new Vector(input.BodyX == 0 ? -body.vx : f.x, input.BodyY == 0 ? -body.vy : f.y);
 
