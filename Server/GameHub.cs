@@ -38,20 +38,6 @@ namespace Server
             state.connectionManager.Clients.Group(id).SendAsync(nameof(UpdateScore), x);
         };
 
-        //public async Task CreateGame(CreateGame createGame) {
-
-        //    var positionsChannel = Channel.CreateUnbounded<Positions>();
-
-        //    var myGame = new Game(getOnUpdateScore(createGame.Id), positionsChannel.Writer);
-        //    if (state.games.TryAdd(createGame.Id, myGame) && state.connectionIdToGameName.TryAdd(Context.ConnectionId, createGame.Id)) {
-        //        await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createGame.Id));
-        //        myGame.Start();
-        //    }
-        //    else {
-        //        await Clients.Caller.SendAsync(nameof(GameAlreadyExists), new GameAlreadyExists(createGame.Id));
-        //    }
-        //}
-
         public void ResetGame(ResetGame resetGame)
         {
             if (state.games.TryGetValue(resetGame.Id , out var value))
@@ -59,19 +45,6 @@ namespace Server
                 value.Reset(getOnUpdateScore(resetGame.Id));
             }
         }
-
-        //public async Task JoinGame(JoinGame joinGame)
-        //{
-        //    if (state.games.ContainsKey(joinGame.Id) && state.connectionIdToGameName.TryAdd(Context.ConnectionId, joinGame.Id))
-        //    {
-        //        await Clients.Caller.SendAsync(nameof(GameJoined), new GameJoined(joinGame.Id));
-        //    }
-        //    else
-        //    {
-        //        await Clients.Caller.SendAsync(nameof(GameDoesNotExist), new GameDoesNotExist(joinGame.Id));
-        //    }
-        //}
-
 
         public ChannelReader<Positions> JoinChannel(JoinChannel joinChannel) {
             return state.games.GetOrThrow(joinChannel.Id).GetReader();

@@ -23,6 +23,7 @@ using Windows.UI.Xaml.Navigation;
 
 namespace RemoteSoccer
 {
+
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -34,6 +35,12 @@ namespace RemoteSoccer
         {
             this.InitializeComponent();
             UpdateEnabled();
+
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            if (localSettings.Values.TryGetValue(LocalSettingsKeys.GameName,out var gameName)) {
+                GameName.Text = (string)gameName;
+                UpdateEnabled();
+            }
 
             connecting = Task.Run(async () =>
             {
@@ -74,6 +81,8 @@ namespace RemoteSoccer
 
         private void StartOrJoinInner()
         {
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            localSettings.Values[LocalSettingsKeys.GameName] = GameName.Text;
             StartOrJoinButton.IsEnabled = false;
             GameName.IsEnabled = false;
             var name = GameName.Text;

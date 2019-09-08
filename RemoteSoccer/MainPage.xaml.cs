@@ -1,36 +1,23 @@
 ﻿using Common;
-using Microsoft.Graphics.Canvas.Effects;
-using Microsoft.Toolkit.Uwp.UI.Controls;
 using Microsoft.Toolkit.Uwp.UI.Media;
-using Physics;
-using Prototypist.Fluent;
-using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
+using Windows.Media.Core;
+using Windows.Media.Playback;
 using Windows.System;
 using Windows.UI;
-using Windows.UI.Composition;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Media.Animation;
-using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
 
@@ -133,6 +120,9 @@ namespace RemoteSoccer
         private readonly Guid body = Guid.NewGuid();
         private readonly Guid foot = Guid.NewGuid();
 
+        private readonly LinkedList< MediaPlayer> players = new LinkedList<MediaPlayer>();
+        private readonly MediaPlayer bell;
+
         public MainPage()
         {
             this.InitializeComponent();
@@ -141,6 +131,20 @@ namespace RemoteSoccer
 
             viewFrameWidth = GameHolder.ActualWidth;
             viewFrameHeight = GameHolder.ActualHeight;
+
+            var random = new Random();
+
+            for (int i = 0; i < 10; i++)
+            {
+
+                var player = new MediaPlayer();
+                player.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/hit{random.Next(1,4)}.wav"));
+                players.AddLast(player);
+
+            }
+
+            bell = new MediaPlayer();
+            bell.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/bell.mp3"));
 
 
             Task.Run(async () =>
@@ -154,6 +158,15 @@ namespace RemoteSoccer
                     await OnDisconnect(ex);
                 }
             });
+
+            if (lockCurser)
+            {
+                Window.Current.CoreWindow.PointerCursor = null;
+            }
+            else
+            {
+                Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+            }
 
             ballWall = new Ellipse
             {
@@ -171,13 +184,7 @@ namespace RemoteSoccer
             {
                 Width = Constants.xMax,
                 Height = Constants.yMax,
-                Fill =
-                //new ImageBrush() {
-                //    ImageSource = new BitmapImage(new Uri(@"ms-appx:///Assets/nice.jpg")),
-                //    Stretch = Stretch.UniformToFill,
-                //},  
-                new SolidColorBrush(Color.FromArgb(0xff, 0xdd, 0xdd, 0xdd)),
-                //Opacity = .08,
+                Fill = new SolidColorBrush(Color.FromArgb(0xff, 0xdd, 0xdd, 0xdd)),
             };
             Canvas.SetZIndex(field, -2);
             GameArea.Children.Add(field);
@@ -348,7 +355,7 @@ namespace RemoteSoccer
         double framesRecieved = 0;
         private double viewFrameWidth;
         private double viewFrameHeight;
-        private double times = .5;
+        private double times = .1;
         private double xPlus = 0;
         private double yPlus = 0;
         private Ellipse ball;
@@ -360,7 +367,7 @@ namespace RemoteSoccer
         private long lastHandlePositions = 0;
         private int currentFrame = 0;
         private string gameName;
-        private bool lockCurser = false;
+        private bool lockCurser = true;
 
 
         Dictionary<Line, DateTime> lineTimes = new Dictionary<Line, DateTime>();
@@ -369,6 +376,9 @@ namespace RemoteSoccer
         {
 
             framesRecieved++;
+
+
+
 
         Top:
             var myCurrentFrame = currentFrame;
@@ -387,65 +397,14 @@ namespace RemoteSoccer
 
             var ticks = stopWatch.ElapsedTicks;
 
+
             var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
             CoreDispatcherPriority.High,
             () =>
             {
 
-                var now = DateTime.Now;
-                foreach (var child in GameArea.Children.ToList())
-                {
-                    if (child is Line line && lineTimes.TryGetValue(line, out var time) && now - time > TimeSpan.FromMilliseconds(400)) {
-                        GameArea.Children.Remove(line);
-                        lineTimes.Remove(line);
-                    }
-                }
-
-                foreach (var collision in positions.Collisions)
-                {
-                    var line1 = new Line
-                    {
-                        
-                        X1 =  - (collision.Fy * (collision.IsGoal ? 4000 : 20)),
-                        Y1 = (collision.Fx * (collision.IsGoal ? 4000 : 20)),
-                        X2 = - ((collision.Fy / 4.0) * (collision.IsGoal ? 4000 : 20)),
-                        Y2 =  ((collision.Fx / 4.0) * (collision.IsGoal ? 4000 : 20)),
-                        StrokeThickness = 5,
-                        Stroke = new SolidColorBrush(Colors.Black),
-                        Opacity = 1,
-                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400),  },
-                        Scale = new Vector3(.4f,.4f,1f),
-                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(200)},
-                        Translation = new Vector3((float)collision.X,(float)collision.Y,0)
-                        
-                    };
-                    lineTimes.Add(line1, now);
-                    GameArea.Children.Add(line1);
-                    line1.Opacity = 0f;
-                    line1.Scale = new Vector3(2,2, 1);
-                    Canvas.SetZIndex(line1, Constants.footZ);
-
-                    var line2 = new Line
-                    {
-
-                        X1 = (collision.Fy * (collision.IsGoal ? 4000 : 20)),
-                        Y1 = -(collision.Fx * (collision.IsGoal ? 4000 : 20)),
-                        X2 = ((collision.Fy/4.0) * (collision.IsGoal ? 4000 : 20)),
-                        Y2 = -((collision.Fx / 4.0) * (collision.IsGoal ? 4000 : 20)),
-                        StrokeThickness = 5,
-                        Stroke = new SolidColorBrush(Colors.Black),
-                        Opacity = 1,
-                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
-                        Scale = new Vector3(.4f, .4f, 1f),
-                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
-                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
-                    };
-                    lineTimes.Add(line2, now);
-                    GameArea.Children.Add(line2);
-                    line2.Opacity = 0f;
-                    line2.Scale = new Vector3(2, 2, 1);
-                    Canvas.SetZIndex(line2, Constants.footZ);
-                }
+                var playerX = 0.0;
+                var playerY = 0.0;
 
                 foreach (var position in positions.PositionsList)
                 {
@@ -454,6 +413,8 @@ namespace RemoteSoccer
                     {
                         if (position.Id == body)
                         {
+                            playerX = position.X;
+                            playerY = position.Y;
                             xPlus = (viewFrameWidth / 2.0) - (position.X * times);
                             yPlus = (viewFrameHeight / 2.0) - (position.Y * times);
                         }
@@ -540,6 +501,89 @@ namespace RemoteSoccer
                                 (float)(position.X), (float)(position.Y), 0, 1);
                     }
                 }
+
+
+                var now = DateTime.Now;
+                foreach (var child in GameArea.Children.ToList())
+                {
+                    if (child is Line line && lineTimes.TryGetValue(line, out var time) && now - time > TimeSpan.FromMilliseconds(400))
+                    {
+                        GameArea.Children.Remove(line);
+                        lineTimes.Remove(line);
+                    }
+                }
+
+                foreach (var collision in positions.Collisions)
+                {
+                    if (!collision.IsGoal)
+                    {
+                        var item = players.First.Value;
+                        players.RemoveFirst();
+                        players.AddLast(item);
+
+                        var dx = collision.X - playerX;
+                        var dy = collision.Y - playerY;
+                        var d = Math.Sqrt((dx * dx) + (dy * dy));
+
+                        item.Volume = Math.Min(1, .2 + (new Physics.Vector(collision.Fx, collision.Fy).Length / (15* Math.Max(1, Math.Log(d)))));
+                        item.AudioBalance = dx / d;
+                        item.Play();
+                    }
+                    else {
+
+                        var dx = collision.X - playerX;
+                        var dy = collision.Y - playerY;
+                        var d = Math.Sqrt((dx * dx) + (dy * dy));
+
+                        bell.Volume = Math.Min(1, .2 + (5.0 / (Math.Max(1, Math.Log(d)))));
+                        bell.AudioBalance = dx / d;
+                        bell.Play();
+                    }
+
+                    var line1 = new Line
+                    {
+
+                        X1 = -(collision.Fy * (collision.IsGoal ? 4000 : 20)),
+                        Y1 = (collision.Fx * (collision.IsGoal ? 4000 : 20)),
+                        X2 = -((collision.Fy / 4.0) * (collision.IsGoal ? 4000 : 20)),
+                        Y2 = ((collision.Fx / 4.0) * (collision.IsGoal ? 4000 : 20)),
+                        StrokeThickness = 5,
+                        Stroke = new SolidColorBrush(Colors.Black),
+                        Opacity = 1,
+                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
+                        Scale = new Vector3(.4f, .4f, 1f),
+                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(200) },
+                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+
+                    };
+                    lineTimes.Add(line1, now);
+                    GameArea.Children.Add(line1);
+                    line1.Opacity = 0f;
+                    line1.Scale = new Vector3(2, 2, 1);
+                    Canvas.SetZIndex(line1, Constants.footZ);
+
+                    var line2 = new Line
+                    {
+
+                        X1 = (collision.Fy * (collision.IsGoal ? 4000 : 20)),
+                        Y1 = -(collision.Fx * (collision.IsGoal ? 4000 : 20)),
+                        X2 = ((collision.Fy / 4.0) * (collision.IsGoal ? 4000 : 20)),
+                        Y2 = -((collision.Fx / 4.0) * (collision.IsGoal ? 4000 : 20)),
+                        StrokeThickness = 5,
+                        Stroke = new SolidColorBrush(Colors.Black),
+                        Opacity = 1,
+                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
+                        Scale = new Vector3(.4f, .4f, 1f),
+                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
+                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+                    };
+                    lineTimes.Add(line2, now);
+                    GameArea.Children.Add(line2);
+                    line2.Opacity = 0f;
+                    line2.Scale = new Vector3(2, 2, 1);
+                    Canvas.SetZIndex(line2, Constants.footZ);
+                }
+
 
                 Canvas.SetLeft(ballWall, positions.CountDownState.X - positions.CountDownState.Radius);
                 Canvas.SetTop(ballWall, positions.CountDownState.Y - positions.CountDownState.Radius);
@@ -682,15 +726,36 @@ namespace RemoteSoccer
                 try
                 {
                     var handler = await SingleSignalRHandler.GetOrThrow();
-                    var random = new Random();
+
+                    var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+
 
                     var color = new byte[3];
 
-                    while (color[0] + color[1] + color[2] < (0xCC) || color[0] + color[1] + color[2] > (0x143))
+                    if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerColorR, out var r) &&
+                        localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerColorG, out var g) &&
+                        localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerColorB, out var b))
                     {
-                        random.NextBytes(color);
+                        color[0] = (byte)r;
+                        color[1] = (byte)g;
+                        color[2] = (byte)b;
+                    }
+                    else
+                    {
+                        var random = new Random();
+
+                        while (color[0] + color[1] + color[2] < (0xCC) || color[0] + color[1] + color[2] > (0x143))
+                        {
+                            random.NextBytes(color);
+                        }
                     }
 
+                    var name = "";
+
+                    
+                    if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerName, out var savedName)) {
+                        name = (string)savedName;
+                    }
 
                     handler.Send(
                         gameName,
@@ -706,7 +771,8 @@ namespace RemoteSoccer
                             color[0],
                             color[1],
                             color[2],
-                            0xff),
+                            0xff, 
+                            name),
                         HandleObjectsCreated,
                         HandleObjectsRemoved,
                         HandleUpdateScore,
@@ -772,6 +838,13 @@ namespace RemoteSoccer
         private void ColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
         {
             var color = ColorPicker.Color;
+
+
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            localSettings.Values[LocalSettingsKeys.PlayerColorR] = color.R;
+            localSettings.Values[LocalSettingsKeys.PlayerColorG] = color.G;
+            localSettings.Values[LocalSettingsKeys.PlayerColorB] = color.B;
+
             SingleSignalRHandler.GetOrThrow().ContinueWith(x =>
             {
                 x.Result.Send(gameName, new ColorChanged(foot, color.R, color.G, color.B, 0xff));
@@ -820,6 +893,10 @@ namespace RemoteSoccer
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             var name = Namer.Text;
+
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            localSettings.Values[LocalSettingsKeys.PlayerName] = name;
+
             SingleSignalRHandler.GetOrThrow().ContinueWith(x =>
             {
                 x.Result.Send(gameName, new NameChanged(body, name));

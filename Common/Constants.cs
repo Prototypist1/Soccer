@@ -11,8 +11,8 @@
         public const int effectZ = 4;
 
         public const double footLen = 800;
-        public const double xMax = 24000;
-        public const double yMax = 16000;
+        public const double xMax = 21000;
+        public const double yMax = 14000;
         public const int Radius = 20;
     }
 }

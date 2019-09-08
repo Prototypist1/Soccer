@@ -61,7 +61,7 @@ namespace Server
                     res.Countdown = true;
                     if (TryGetBallWall(out var tuple))
                     {
-                        res.StrokeThickness = tuple.radius - (circleSize * (gameState - startCountDown) / ((double)(endCountDown - startCountDown)));
+                        res.StrokeThickness = tuple.radius - (Constants.footLen * (gameState - startCountDown) / ((double)(endCountDown - startCountDown)));
                         res.Radius = tuple.radius;
                         res.BallOpacity = Math.Min(1.0, Math.Abs(((endCountDown - startCountDown) - 2 * (gameState - startCountDown)) / ((double)(endCountDown - startCountDown))));
                         res.X = tuple.x;
@@ -79,7 +79,6 @@ namespace Server
                 return res;
             }
 
-            private const double circleSize = 300;
 
             private const int play = -1;
             private const int startGrowingCircle = 0;
@@ -110,7 +109,7 @@ namespace Server
                 {
                     ballWall = (ballStartX,
                         ballStartY,
-                        circleSize * ((Math.Min(gameState, stopGrowingCircle) - startGrowingCircle) / (double)(stopGrowingCircle - startGrowingCircle)));
+                        Constants.footLen * ((Math.Min(gameState, stopGrowingCircle) - startGrowingCircle) / (double)(stopGrowingCircle - startGrowingCircle)));
                     return true;
                 }
                 ballWall = default;
@@ -237,18 +236,6 @@ namespace Server
                0xee,
                0xff));
 
-
-            //var points = new[] {
-            //    (new Vector(footLen,0) ,new Vector(xMax- footLen,0)),
-            //    (new Vector(0,footLen) ,new Vector(footLen,0)),
-            //    (new Vector(0,yMax - footLen) ,new Vector(0,footLen)),
-            //    (new Vector(footLen,yMax),new Vector(0,yMax - footLen)),
-            //    (new Vector(xMax - footLen,yMax),new Vector(footLen,yMax)),
-            //    (new Vector(xMax,yMax - footLen),new Vector(xMax - footLen,yMax)),
-            //    (new Vector(xMax,footLen),new Vector(xMax,yMax - footLen)),
-            //    (new Vector(xMax- footLen,0) ,new Vector(xMax,footLen))
-            //};
-
             var points = new[] {
                 (new Vector(0,0) ,new Vector(Constants.xMax-1,0)),
                 (new Vector(0,Constants.yMax-1 ) ,new Vector(0,0)),
@@ -318,7 +305,7 @@ namespace Server
                     createPlayer.BodyG,
                     createPlayer.BodyB,
                     createPlayer.BodyA,
-                    "");
+                    createPlayer.Name);
             bodiesCreated.AddOrThrow(bodyCreated);
             var footCreated = new FootCreated(
                     foot.X,
@@ -371,32 +358,6 @@ namespace Server
             return false;
         }
 
-        //public async void Start()
-        //{
-        //    var stopWatch = new Stopwatch();
-        //    stopWatch.Start();
-        //    var frame = 0;
-        //    while (true)
-        //    {
-        //        if ((out var positions))
-        //        {
-
-        //        };
-        //        frame++;
-
-        //        await Task.Delay((int)Math.Max(0, ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds));
-        //        await Task.Yield();
-        //        //var whatIsIt = ((1000 * frame) / 60) - stopWatch.ElapsedMilliseconds;
-        //        //if (whatIsIt > 0)
-        //        //{
-        //        //    hit++;
-        //        //}
-        //        //else {
-        //        //    nothit++;
-        //        //}
-        //    }
-        //}
-
         private int simulationTime = 0;
         internal Positions Apply()
         {
@@ -406,11 +367,6 @@ namespace Server
             Positions positions = default;
 
             var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
-
-            // shocking
-            //if (!myPlayersInputs.Any())
-            //{
-            //}
 
             var frames = new List<Dictionary<Guid, PlayerInputs>>();
 
@@ -552,7 +508,7 @@ namespace Server
                 var with = velocity.NewUnitized().NewScaled(force.Length *Math.Max(0, force.NewUnitized().Dot(velocity.NewUnitized())));
                 var notWith = force.NewAdded(with.NewMinus());
 
-                var scaleBy = Math.Pow(Math.Max(0, (maxSpeed - with.Length)) / maxSpeed, 25);
+                var scaleBy = Math.Pow(Math.Max(0, (maxSpeed - with.Length)) / maxSpeed, 20);
 
                 with = with.NewScaled(scaleBy);
 

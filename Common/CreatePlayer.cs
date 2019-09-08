@@ -3,7 +3,7 @@
 namespace Common
 {
     public struct CreatePlayer {
-        public CreatePlayer(Guid foot, Guid body, double bodyDiameter, double footDiameter, byte bodyR, byte bodyG, byte bodyB, byte bodyA, byte footR, byte footG, byte footB, byte footA)
+        public CreatePlayer(Guid foot, Guid body, double bodyDiameter, double footDiameter, byte bodyR, byte bodyG, byte bodyB, byte bodyA, byte footR, byte footG, byte footB, byte footA, String name)
         {
             Foot = foot;
             Body = body;
@@ -17,6 +17,7 @@ namespace Common
             FootG = footG;
             FootB = footB;
             FootA = footA;
+            Name = name;
         }
 
         public Guid Foot { get; set; }
@@ -31,6 +32,6 @@ namespace Common
         public byte FootG { get; set; }
         public byte FootB { get; set; }
         public byte FootA { get; set; }
-
+        public string Name { get; set; }
     }
 }
