@@ -10,7 +10,6 @@ namespace Common
         public PhysicsObject Foot { get; }
         public double X { get; private set; }
         public double vx, vy, maxX, minX, minY, maxY , radius;
-        private double fx, fy;
 
         public Center(double x, double y, double maxX, double minX, double minY, double maxY, PhysicsObject foot, double radius)
         {
@@ -26,8 +25,8 @@ namespace Common
 
         public void ApplyForce(double fx, double fy)
         {
-            this.fx += fx;
-            this.fy += fy;
+            vx += fx;
+            vy += fy;
         }
 
         public void Update(bool useBallWall,(double x, double y, double radius) ballWall, double maxSpeed)
@@ -36,8 +35,6 @@ namespace Common
             var lastX = X;
             var lastY = Y;
 
-            vx += fx;
-            vy += fy;
 
             var v = new Vector(vx, vy);
 
@@ -90,9 +87,6 @@ namespace Common
 
             vx = X - lastX;
             vy = Y - lastY;
-
-            fx = 0;
-            fy = 0;
 
         }
     }

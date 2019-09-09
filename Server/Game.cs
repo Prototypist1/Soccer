@@ -409,23 +409,48 @@ namespace Server
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
 
-                        //if (input.BodyX != 0) {
-                        //    input.BodyY = 0;
-                        //}
-                        var f = new Vector(input.BodyX* MaxForce, input.BodyY* MaxForce);
+                        body.ApplyForce(Math.Sign(input.BodyX) != Math.Sign(body.vx) ? -body.vx : 0, Math.Sign(input.BodyY) != Math.Sign(body.vy) ? -body.vy : 0);
 
-                        f = Bound(f, new Vector(body.vx, body.vy));
 
-                        if (f.Length > MaxForce)
+                        if (input.BodyX != 0 || input.BodyY != 0)
                         {
-                            f = f.NewScaled(MaxForce / f.Length);
+                            var points = MaxForce;
+                            {
+                                var v = new Vector(body.vx, body.vy);
+
+                                var desired = new Vector(input.BodyX, input.BodyY).NewUnitized().NewScaled(v.Length);
+
+                                var pointsToGetOnTrack = desired.NewAdded(v.NewMinus()).Length;//
+
+                                if (points > pointsToGetOnTrack)
+                                {
+                                    // get on track;
+                                    var diff = desired.NewAdded(v.NewMinus());
+                                    body.ApplyForce(diff.x, diff.y);
+                                    points -= pointsToGetOnTrack;
+                                }
+                                else
+                                {
+                                    // move as close to tack as possible
+                                    var diff = desired.NewAdded(v.NewMinus()).NewUnitized().NewScaled(points);
+                                    body.ApplyForce(diff.x, diff.y);
+                                    points = 0;
+                                }
+                            }
+
+                            if (points > 0)
+                            {
+
+                                var v = new Vector(body.vx, body.vy);
+
+                                var scaleBy = points * Math.Pow(Math.Max(0, (maxSpeed - v.Length)) / maxSpeed, 5);
+                                // move in the direciton 
+
+                                var diff = new Vector(input.BodyX, input.BodyY).NewUnitized().NewScaled(scaleBy);
+                                body.ApplyForce(diff.x, diff.y);
+
+                            }
                         }
-
-                        f = new Vector(input.BodyX == 0 ? -body.vx : f.x, input.BodyY == 0 ? -body.vy : f.y);
-
-                        body.ApplyForce(f.x, f.y);
-
-
                         body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, maxSpeed);
 
                         var foot = body.Foot;
@@ -493,29 +518,6 @@ namespace Server
             }
 
             return positions;
-
-            Vector Bound(Vector force, Vector velocity)
-            {
-                var startLen = force.Length;
-                var startX = force.x;
-                var startY = force.y;
-
-                if (force.Length == 0 || velocity.Length == 0)
-                {
-                    return force;
-                }
-
-                var with = velocity.NewUnitized().NewScaled(force.Length *Math.Max(0, force.NewUnitized().Dot(velocity.NewUnitized())));
-                var notWith = force.NewAdded(with.NewMinus());
-
-                var scaleBy = Math.Pow(Math.Max(0, (maxSpeed - with.Length)) / maxSpeed, 20);
-
-                with = with.NewScaled(scaleBy);
-
-                var res = with.NewAdded(notWith);
-
-                return res;
-            }
         }
 
         private int running = 0;
