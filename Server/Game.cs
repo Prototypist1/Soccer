@@ -181,14 +181,14 @@ namespace Server
 
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(.05, Constants.Radius * 12, Constants.xMax / 2, Constants.yMax / 2);
+            ball = PhysicsObjectBuilder.Ball(.05, Constants.BallRadius, Constants.xMax / 2, Constants.yMax / 2);
 
             ballCreated = new BallCreated(
                ball.X,
                ball.Y,
                Constants.ballZ,
                ballId,
-               Constants.Radius * 12 * 2,
+               Constants.BallRadius * 2,
                0,
                0,
                0,
@@ -461,7 +461,7 @@ namespace Server
                             (body.vy - lastVy) * foot.Mass);
 
 
-                        var max = Constants.footLen - Constants.Radius;
+                        var max = Constants.footLen - Constants.PlayerRadius;
 
                         var target = new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
 

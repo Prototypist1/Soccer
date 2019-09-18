@@ -506,7 +506,7 @@ namespace RemoteSoccer
                 var now = DateTime.Now;
                 foreach (var child in GameArea.Children.ToList())
                 {
-                    if (child is Line line && lineTimes.TryGetValue(line, out var time) && now - time > TimeSpan.FromMilliseconds(400))
+                    if (child is Line line && lineTimes.TryGetValue(line, out var time) && now - time > TimeSpan.FromMilliseconds(800))
                     {
                         GameArea.Children.Remove(line);
                         lineTimes.Remove(line);
@@ -525,7 +525,7 @@ namespace RemoteSoccer
                         var dy = collision.Y - playerY;
                         var d = Math.Sqrt((dx * dx) + (dy * dy));
 
-                        item.Volume = Math.Min(1, (new Physics.Vector(collision.Fx, collision.Fy).Length* new Physics.Vector(collision.Fx, collision.Fy).Length / (400* Math.Max(1, Math.Log(d)))));
+                        item.Volume = Math.Min(1, (new Physics.Vector(collision.Fx, collision.Fy).Length * new Physics.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
                         item.AudioBalance = dx / d;
                         item.Play();
                     }
@@ -540,48 +540,77 @@ namespace RemoteSoccer
                         bell.Play();
                     }
 
-                    var line1 = new Line
+                    if (collision.IsGoal)
                     {
 
-                        X1 = -(collision.Fy * (collision.IsGoal ? 4000 : 20)),
-                        Y1 = (collision.Fx * (collision.IsGoal ? 4000 : 20)),
-                        X2 = -((collision.Fy / 4.0) * (collision.IsGoal ? 4000 : 20)),
-                        Y2 = ((collision.Fx / 4.0) * (collision.IsGoal ? 4000 : 20)),
-                        StrokeThickness = 5,
-                        Stroke = new SolidColorBrush(Colors.Black),
-                        Opacity = 1,
-                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
-                        Scale = new Vector3(.4f, .4f, 1f),
-                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(200) },
-                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+                        var line = new Line
+                        {
 
-                    };
-                    lineTimes.Add(line1, now);
-                    GameArea.Children.Add(line1);
-                    line1.Opacity = 0f;
-                    line1.Scale = new Vector3(2, 2, 1);
-                    Canvas.SetZIndex(line1, Constants.footZ);
+                            X1 = -(collision.Fy *  4000),
+                            Y1 = (collision.Fx *  4000 ),
+                            X2 = (collision.Fy * 4000),
+                            Y2 = -(collision.Fx * 4000),
+                            StrokeThickness =  20 ,
+                            Stroke = new SolidColorBrush(Colors.Black),
+                            Opacity = 1,
+                            OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(800), },
+                            Scale = new Vector3( .1f ,  .1f , 1f),
+                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(600) },
+                            Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
 
-                    var line2 = new Line
-                    {
+                        };
+                        lineTimes.Add(line, now);
+                        GameArea.Children.Add(line);
+                        line.Opacity = 0f;
+                        line.Scale = new Vector3(2, 2, 1);
+                        Canvas.SetZIndex(line, Constants.footZ);
+                    }
+                    else {
 
-                        X1 = (collision.Fy * (collision.IsGoal ? 4000 : 20)),
-                        Y1 = -(collision.Fx * (collision.IsGoal ? 4000 : 20)),
-                        X2 = ((collision.Fy / 4.0) * (collision.IsGoal ? 4000 : 20)),
-                        Y2 = -((collision.Fx / 4.0) * (collision.IsGoal ? 4000 : 20)),
-                        StrokeThickness = 5,
-                        Stroke = new SolidColorBrush(Colors.Black),
-                        Opacity = 1,
-                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
-                        Scale = new Vector3(.4f, .4f, 1f),
-                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
-                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
-                    };
-                    lineTimes.Add(line2, now);
-                    GameArea.Children.Add(line2);
-                    line2.Opacity = 0f;
-                    line2.Scale = new Vector3(2, 2, 1);
-                    Canvas.SetZIndex(line2, Constants.footZ);
+                        var line1 = new Line
+                        {
+
+                            X1 = -(collision.Fy *  20),
+                            Y1 = (collision.Fx *  20),
+                            X2 = -( 20 * collision.Fy / 1.2),
+                            Y2 = ( 20 * collision.Fx / 1.2),
+                            StrokeThickness =  5,
+                            Stroke = new SolidColorBrush(Colors.Black),
+                            Opacity = 1,
+                            OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
+                            Scale = new Vector3( .4f,  .4f, 1f),
+                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(200) },
+                            Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+
+                        };
+                        lineTimes.Add(line1, now);
+                        GameArea.Children.Add(line1);
+                        line1.Opacity = 0f;
+                        line1.Scale = new Vector3(2, 2, 1);
+                        Canvas.SetZIndex(line1, Constants.footZ);
+
+                        var line2 = new Line
+                        {
+
+                            X1 = (collision.Fy * ( 20)),
+                            Y1 = -(collision.Fx * ( 20)),
+                            X2 = ( 20 * collision.Fy / 1.2),
+                            Y2 = -(20 * collision.Fx / 1.2),
+                            StrokeThickness = ( 5),
+                            Stroke = new SolidColorBrush(Colors.Black),
+                            Opacity = 1,
+                            OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
+                            Scale = new Vector3( .4f,  .4f, 1f),
+                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
+                            Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+                        };
+                        lineTimes.Add(line2, now);
+                        GameArea.Children.Add(line2);
+                        line2.Opacity = 0f;
+                        line2.Scale = new Vector3(2, 2, 1);
+                        Canvas.SetZIndex(line2, Constants.footZ);
+                    }
+
                 }
 
 
@@ -670,8 +699,8 @@ namespace RemoteSoccer
                                 (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
 
                             var point = CoreWindow.GetForCurrentThread().PointerPosition;
-                            footX = (point.X - lastX) * .75;
-                            footY = (point.Y - lastY) * .75;
+                            footX = (point.X - lastX);// * .75;
+                            footY = (point.Y - lastY);// * .75;
 
                             point = new Point(lastX, lastY);
                             coreWindow.PointerPosition = point;
@@ -763,7 +792,7 @@ namespace RemoteSoccer
                             foot,
                             body,
                             Constants.footLen * 2,
-                            80,
+                            Constants.PlayerRadius *2,
                             color[0],
                             color[1],
                             color[2],

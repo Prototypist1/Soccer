@@ -10,9 +10,10 @@
         public const int footZ = 3;
         public const int effectZ = 4;
 
-        public const double footLen = 800;
-        public const double xMax = 21000;
-        public const double yMax = 14000;
-        public const int Radius = 20;
+        public const double footLen = 2000;
+        public const double xMax = 16*2000;
+        public const double yMax = 9*2000;
+        public const int PlayerRadius = 250;
+        public const int BallRadius = 200;
     }
 }
