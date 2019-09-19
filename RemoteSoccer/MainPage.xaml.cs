@@ -554,7 +554,7 @@ namespace RemoteSoccer
                             Stroke = new SolidColorBrush(Colors.Black),
                             Opacity = 1,
                             OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(800), },
-                            Scale = new Vector3( .1f ,  .1f , 1f),
+                            Scale = new Vector3( .2f ,  .2f , 1f),
                             ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(600) },
                             Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
 
