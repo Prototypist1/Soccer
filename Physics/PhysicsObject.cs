@@ -601,8 +601,8 @@ namespace Physics
 
 
             var bound = new Bounds(
-                Math.Floor(gridManager.width / gridManager.stepSize) - 1,
-                Math.Floor(gridManager.height / gridManager.stepSize) - 1,
+                Math.Floor(gridManager.width / gridManager.stepSize),
+                Math.Floor(gridManager.height / gridManager.stepSize),
                 0,
                 0);
 

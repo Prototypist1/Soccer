@@ -570,10 +570,10 @@ namespace RemoteSoccer
                         var line1 = new Line
                         {
 
-                            X1 = -(collision.Fy *  20),
-                            Y1 = (collision.Fx *  20),
-                            X2 = -( 20 * collision.Fy / 1.2),
-                            Y2 = ( 20 * collision.Fx / 1.2),
+                            X1 = -(collision.Fy *  10),
+                            Y1 = (collision.Fx *  10),
+                            X2 = -( 10 * collision.Fy / 1.2),
+                            Y2 = ( 10 * collision.Fx / 1.2),
                             StrokeThickness =  5,
                             Stroke = new SolidColorBrush(Colors.Black),
                             Opacity = 1,
@@ -592,10 +592,10 @@ namespace RemoteSoccer
                         var line2 = new Line
                         {
 
-                            X1 = (collision.Fy * ( 20)),
-                            Y1 = -(collision.Fx * ( 20)),
-                            X2 = ( 20 * collision.Fy / 1.2),
-                            Y2 = -(20 * collision.Fx / 1.2),
+                            X1 = (collision.Fy * ( 10)),
+                            Y1 = -(collision.Fx * ( 10)),
+                            X2 = ( 10 * collision.Fy / 1.2),
+                            Y2 = -(10 * collision.Fx / 1.2),
                             StrokeThickness = ( 5),
                             Stroke = new SolidColorBrush(Colors.Black),
                             Opacity = 1,

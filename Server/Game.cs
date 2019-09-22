@@ -181,7 +181,7 @@ namespace Server
 
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(.05, Constants.BallRadius, Constants.xMax / 2, Constants.yMax / 2);
+            ball = PhysicsObjectBuilder.Ball(Constants.BallMass, Constants.BallRadius, Constants.xMax / 2, Constants.yMax / 2);
 
             ballCreated = new BallCreated(
                ball.X,
