@@ -19,7 +19,7 @@ namespace Server
                 x.EnableDetailedErrors = true;
 #endif
             })
-            //.AddAzureSignalR()
+            .AddAzureSignalR()
             .AddMessagePackProtocol()
             ;
             services.AddSingleton<GameHubState>();
@@ -30,7 +30,7 @@ namespace Server
         {
             //UseSignalR
             //.UseAzureSignalR
-            app.UseSignalR(routes =>
+            app.UseAzureSignalR(routes =>
             {
                 routes.MapHub<GameHub>($"/{nameof(GameHub)}");
             });
