@@ -446,8 +446,8 @@ namespace Server
 
 
                 ball.ApplyForce(
-                    (-ball.Vx * ball.Mass) / 300.0,
-                    (-ball.Vy * ball.Mass) / 300.0);
+                    (-ball.Vx * ball.Mass) / 100.0,
+                    (-ball.Vy * ball.Mass) / 100.0);
 
                 foreach (var center in bodies)
                 {
@@ -481,10 +481,10 @@ namespace Server
                                 body.ApplyForce( -Math.Sign(body.vx) * (Math.Abs(body.vx) - Math.Abs(body.vy)),0);
                             }
 
-                            var damp = .8;
+                            var damp =.9;
 
                             var R0 = EInverse(E(Math.Sqrt(Math.Pow(body.vx, 2) + Math.Pow(body.vy, 2))) + EnergyAdd);
-                            var a = Math.Sqrt(Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2));
+                            var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
                             var b = 2 * ((Math.Sign(input.BodyX) * body.vx* damp) + (Math.Sign(input.BodyY) * body.vy* damp));
                             var c = Math.Pow(body.vx* damp, 2) + Math.Pow(body.vy* damp, 2) - Math.Pow(R0, 2);
 
