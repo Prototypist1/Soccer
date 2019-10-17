@@ -14,7 +14,7 @@ namespace Server
 {
     public class Game
     {
-        private const int EnergyAdd = 2000;
+        private const int EnergyAdd = 800;
         private int players = 0;
 
 
@@ -441,8 +441,8 @@ namespace Server
                 var countDownSate = gameStateTracker.UpdateGameState();
 
                 ball.ApplyForce(
-                    -Math.Sign(ball.Vx) * (ball.Vx * ball.Vx * ball.Mass) / 3000.0,
-                    -Math.Sign(ball.Vy) * (ball.Vy * ball.Vy * ball.Mass) / 3000.0);
+                    -Math.Sign(ball.Vx) * (ball.Vx * ball.Vx * ball.Mass) / 4000.0,
+                    -Math.Sign(ball.Vy) * (ball.Vy * ball.Vy * ball.Mass) / 4000.0);
 
 
                 ball.ApplyForce(
@@ -465,23 +465,27 @@ namespace Server
                         // crush oppozing forces
                         if (input.BodyX != 0 || input.BodyY != 0)
                         {
-                            if (Math.Sign(input.BodyX) == -Math.Sign(body.vx)) {
-                                body.ApplyForce(-body.vx, 0);
-                            }
-                            if (Math.Sign(input.BodyY) == -Math.Sign(body.vy))
+                            var v = new Vector(body.vx, body.vy);
+                            var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY));
+                            var with = v.Dot(f) / f.Length;
+                            if (with <= 0)
                             {
-                                body.ApplyForce(0,-body.vy);
+                                body.ApplyForce(-body.vx, -body.vy);
                             }
-                            if (Math.Sign(input.BodyY) == 0 && Math.Abs(body.vy) > Math.Abs(body.vx))
+                            else
                             {
-                                body.ApplyForce(0,-Math.Sign(body.vy) *(Math.Abs(body.vy) - Math.Abs(body.vx)));
-                            }
-                            if (Math.Sign(input.BodyX) == 0 && Math.Abs(body.vx) > Math.Abs(body.vy))
-                            {
-                                body.ApplyForce( -Math.Sign(body.vx) * (Math.Abs(body.vx) - Math.Abs(body.vy)),0);
+                                var withVector = f.NewUnitized().NewScaled(with);
+                                var notWith = v.NewAdded(withVector.NewScaled(-1));
+                                var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
+                                var r =new Random();
+                                //if (r.Next(0,1000)==10) {
+                                //    var bug = 0;
+                                //}
+
+                                body.ApplyForce(-body.vx + withVector.x + notWithScald.x, -body.vy + withVector.y + notWithScald.y);
                             }
 
-                            var damp =.9;
+                            var damp =.98;
 
                             var R0 = EInverse(E(Math.Sqrt(Math.Pow(body.vx, 2) + Math.Pow(body.vy, 2))) + EnergyAdd);
                             var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
@@ -573,8 +577,8 @@ namespace Server
 
         private int running = 0;
 
-        private double E(double d) => Math.Pow(d,4);
-        private double EInverse(double d) => Math.Pow(d,.25);
+        private double E(double d) => Math.Pow(d,3.0);
+        private double EInverse(double d) => Math.Pow(d,1/3.0);
 
         internal void PlayerInputs(PlayerInputs playerInputs)
         {
