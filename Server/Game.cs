@@ -477,10 +477,7 @@ namespace Server
                                 var withVector = f.NewUnitized().NewScaled(with);
                                 var notWith = v.NewAdded(withVector.NewScaled(-1));
                                 var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
-                                var r =new Random();
-                                //if (r.Next(0,1000)==10) {
-                                //    var bug = 0;
-                                //}
+                                
 
                                 body.ApplyForce(-body.vx + withVector.x + notWithScald.x, -body.vy + withVector.y + notWithScald.y);
                             }
