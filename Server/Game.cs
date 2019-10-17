@@ -14,6 +14,7 @@ namespace Server
 {
     public class Game
     {
+        private const int EnergyAdd = 2000;
         private int players = 0;
 
 
@@ -411,9 +412,6 @@ namespace Server
         private int simulationTime = 0;
         internal Positions Apply()
         {
-
-            const double maxSpeed = 40.0;
-            const double MaxForce = 8;
             Positions positions = default;
 
             var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
@@ -447,6 +445,10 @@ namespace Server
                     -Math.Sign(ball.Vy) * (ball.Vy * ball.Vy * ball.Mass) / 3000.0);
 
 
+                ball.ApplyForce(
+                    (-ball.Vx * ball.Mass) / 300.0,
+                    (-ball.Vy * ball.Mass) / 300.0);
+
                 foreach (var center in bodies)
                 {
                     var body = center.Value;
@@ -460,54 +462,43 @@ namespace Server
                     {
 
 
+                        // crush oppozing forces
                         if (input.BodyX != 0 || input.BodyY != 0)
                         {
-
-                            body.ApplyForce(
-                                input.BodyX != 0 && Math.Sign(input.BodyX) != Math.Sign(body.vx) ? -body.vx : 0,
-                                input.BodyY != 0 && Math.Sign(input.BodyY) != Math.Sign(body.vy) ? -body.vy : 0);
-
-                            var points = MaxForce;
+                            if (Math.Sign(input.BodyX) == -Math.Sign(body.vx)) {
+                                body.ApplyForce(-body.vx, 0);
+                            }
+                            if (Math.Sign(input.BodyY) == -Math.Sign(body.vy))
                             {
-                                var v = new Vector(body.vx, body.vy);
-
-                                var desired = new Vector(input.BodyX, input.BodyY).NewUnitized().NewScaled(v.Length);
-
-                                var pointsToGetOnTrack = desired.NewAdded(v.NewMinus()).Length;//
-
-                                if (points > pointsToGetOnTrack)
-                                {
-                                    // get on track;
-                                    var diff = desired.NewAdded(v.NewMinus());
-                                    body.ApplyForce(diff.x, diff.y);
-                                    points -= pointsToGetOnTrack;
-                                }
-                                else
-                                {
-                                    // move as close to tack as possible
-                                    var diff = desired.NewAdded(v.NewMinus()).NewUnitized().NewScaled(points);
-                                    body.ApplyForce(diff.x, diff.y);
-                                    points = 0;
-                                }
+                                body.ApplyForce(0,-body.vy);
+                            }
+                            if (Math.Sign(input.BodyY) == 0 && Math.Abs(body.vy) > Math.Abs(body.vx))
+                            {
+                                body.ApplyForce(0,-Math.Sign(body.vy) *(Math.Abs(body.vy) - Math.Abs(body.vx)));
+                            }
+                            if (Math.Sign(input.BodyX) == 0 && Math.Abs(body.vx) > Math.Abs(body.vy))
+                            {
+                                body.ApplyForce( -Math.Sign(body.vx) * (Math.Abs(body.vx) - Math.Abs(body.vy)),0);
                             }
 
-                            if (points > 0)
-                            {
+                            var damp = .8;
 
-                                var v = new Vector(body.vx, body.vy);
+                            var R0 = EInverse(E(Math.Sqrt(Math.Pow(body.vx, 2) + Math.Pow(body.vy, 2))) + EnergyAdd);
+                            var a = Math.Sqrt(Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2));
+                            var b = 2 * ((Math.Sign(input.BodyX) * body.vx* damp) + (Math.Sign(input.BodyY) * body.vy* damp));
+                            var c = Math.Pow(body.vx* damp, 2) + Math.Pow(body.vy* damp, 2) - Math.Pow(R0, 2);
 
-                                var scaleBy = points * Math.Pow(Math.Max(0, (maxSpeed - v.Length)) / maxSpeed, 5);
-                                // move in the direciton 
+                            var t = (-b + Math.Sqrt(Math.Pow(b,2) - (4 * a * c))) / (2 * a);
 
-                                var diff = new Vector(input.BodyX, input.BodyY).NewUnitized().NewScaled(scaleBy);
-                                body.ApplyForce(diff.x, diff.y);
-
-                            }
+                            body.ApplyForce(-(1-damp)*body.vx, -(1 - damp) * body.vy);
+                            body.ApplyForce(t* input.BodyX, t * input.BodyY);
                         }
                         else {
                             body.ApplyForce(-body.vx,-body.vy);
                         }
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, maxSpeed);
+
+
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
 
                         var foot = body.Foot;
 
@@ -535,7 +526,7 @@ namespace Server
                     }
                     else
                     {
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, maxSpeed);
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
 
                         var foot = body.Foot;
 
@@ -581,6 +572,9 @@ namespace Server
         }
 
         private int running = 0;
+
+        private double E(double d) => Math.Pow(d,4);
+        private double EInverse(double d) => Math.Pow(d,.25);
 
         internal void PlayerInputs(PlayerInputs playerInputs)
         {

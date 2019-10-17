@@ -29,7 +29,7 @@ namespace Common
             vy += fy;
         }
 
-        public void Update(bool useBallWall,(double x, double y, double radius) ballWall, double maxSpeed)
+        public void Update(bool useBallWall,(double x, double y, double radius) ballWall)
         {
 
             var lastX = X;
@@ -37,10 +37,6 @@ namespace Common
 
 
             var v = new Vector(vx, vy);
-
-            if (v.Length > maxSpeed) {
-                v = v.NewScaled(maxSpeed / v.Length);
-            }
 
             vx = v.x;
             vy = v.y;
