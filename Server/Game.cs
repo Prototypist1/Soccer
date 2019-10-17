@@ -36,6 +36,7 @@ namespace Server
 
 
         private readonly GameStateTracker gameStateTracker;
+        
         private readonly System.Threading.Channels.Channel<Positions> channel;
 
         private class GameStateTracker
@@ -128,9 +129,58 @@ namespace Server
             }
         }
 
-        internal ChannelReader<Positions> GetReader()
+        private class Node {
+            public readonly Positions positions;
+            public readonly TaskCompletionSource<Node> next = new TaskCompletionSource<Node>();
+
+            public Node(Positions positions)
+            {
+                this.positions = positions;
+            }
+        }
+        private Node lastPositions = new Node(new Positions());
+
+        private class What : IAsyncEnumerable<Positions>, IAsyncEnumerator<Positions>
         {
-            return channel.Reader;
+            private Node node;
+
+            public What(Node node)
+            {
+                this.node = node;
+            }
+
+            public Positions Current
+            {
+                get;private set;
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                return new ValueTask();
+            }
+
+            public IAsyncEnumerator<Positions> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+            {
+                return this;
+            }
+
+            public async ValueTask<bool> MoveNextAsync()
+            {
+                node = await node.next.Task;
+                Current = node.positions;
+                return true;
+            }
+        }
+
+        internal IAsyncEnumerable<Positions> GetReader()
+        {
+            // the other option is a new channel every time 
+            // and we just write positions to them all
+            // that might be better...
+
+            // by better I mean faster
+            // this saves me having to track a stack of channels
+            return new What(lastPositions);
         }
 
         internal void ColorChanged(ColorChanged colorChanged)
@@ -393,8 +443,8 @@ namespace Server
                 var countDownSate = gameStateTracker.UpdateGameState();
 
                 ball.ApplyForce(
-                    -(ball.Vx * ball.Mass) / 50.0,
-                    -(ball.Vy * ball.Mass) / 50.0);
+                    -Math.Sign(ball.Vx) * (ball.Vx * ball.Vx * ball.Mass) / 3000.0,
+                    -Math.Sign(ball.Vy) * (ball.Vy * ball.Vy * ball.Mass) / 3000.0);
 
 
                 foreach (var center in bodies)
@@ -409,11 +459,14 @@ namespace Server
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
 
-                        body.ApplyForce(Math.Sign(input.BodyX) != Math.Sign(body.vx) ? -body.vx : 0, Math.Sign(input.BodyY) != Math.Sign(body.vy) ? -body.vy : 0);
-
 
                         if (input.BodyX != 0 || input.BodyY != 0)
                         {
+
+                            body.ApplyForce(
+                                input.BodyX != 0 && Math.Sign(input.BodyX) != Math.Sign(body.vx) ? -body.vx : 0,
+                                input.BodyY != 0 && Math.Sign(input.BodyY) != Math.Sign(body.vy) ? -body.vy : 0);
+
                             var points = MaxForce;
                             {
                                 var v = new Vector(body.vx, body.vy);
@@ -450,6 +503,9 @@ namespace Server
                                 body.ApplyForce(diff.x, diff.y);
 
                             }
+                        }
+                        else {
+                            body.ApplyForce(-body.vx,-body.vy);
                         }
                         body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, maxSpeed);
 
@@ -514,8 +570,12 @@ namespace Server
                     return x;
                 });
 
+
                 positions = new Positions(GetPosition().ToArray(), simulationTime, countDownSate, collisions);
             }
+            var next = new Node(positions);
+            lastPositions.next.SetResult(next);
+            lastPositions = next;
 
             return positions;
         }
@@ -526,17 +586,11 @@ namespace Server
         {
             var lastLast = LastInputUTC;
             playersInputs.Add(playerInputs);
-            if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
+            while (playersInputs.Count > (players - 1.0) && Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
-                var nextLast = DateTime.UtcNow;
-                if (playersInputs.Count > (players / 2.0))
-                {
-                    var dontWait = channel.Writer.WriteAsync(Apply());
-                    LastInputUTC = nextLast;
-                }
+                var dontWait = channel.Writer.WriteAsync(Apply());
                 running = 0;
             }
-
         }
 
         private IEnumerable<Position> GetPosition()

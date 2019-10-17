@@ -46,7 +46,7 @@ namespace Server
             }
         }
 
-        public ChannelReader<Positions> JoinChannel(JoinChannel joinChannel) {
+        public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel) {
             return state.games.GetOrThrow(joinChannel.Id).GetReader();
         }
 

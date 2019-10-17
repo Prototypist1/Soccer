@@ -362,7 +362,8 @@ namespace RemoteSoccer
         private int frame = 0;
         private Stopwatch stopWatch;
 
-
+        private long droppedFrames = 0;
+        private long framesInGroup = 0;
         private long longestGap = 0;
         private long lastHandlePositions = 0;
         private int currentFrame = 0;
@@ -372,10 +373,12 @@ namespace RemoteSoccer
 
         Dictionary<Line, DateTime> lineTimes = new Dictionary<Line, DateTime>();
 
-        private void HandlePositions(Positions positions)
+        private async Task HandlePositions(Positions positions)
         {
 
             framesRecieved++;
+            framesInGroup++;
+
 
 
 
@@ -384,6 +387,7 @@ namespace RemoteSoccer
             var myCurrentFrame = currentFrame;
             if (myCurrentFrame > positions.Frame)
             {
+                droppedFrames++;
                 return;
             }
             if (Interlocked.CompareExchange(ref currentFrame, positions.Frame, myCurrentFrame) != myCurrentFrame)
@@ -398,7 +402,7 @@ namespace RemoteSoccer
             var ticks = stopWatch.ElapsedTicks;
 
 
-            var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
             CoreDispatcherPriority.High,
             () =>
             {
@@ -642,8 +646,12 @@ namespace RemoteSoccer
                     Fps.Text = $"time to draw: {(stopWatch.ElapsedTicks - ticks) / (double)TimeSpan.TicksPerMillisecond:f2}{Environment.NewLine}" +
                         $"longest gap: {longestGap}{Environment.NewLine}" +
                         $"frame lag: {frame - positions.Frame}{Environment.NewLine}" +
+                        $"frames: {framesInGroup*3}{Environment.NewLine}" +
+                        $"dropped: {droppedFrames * 3}{Environment.NewLine}" +
                         $"Escape: Show options";
+                    framesInGroup = 0;
                     longestGap = 0;
+                    droppedFrames =0;
                 }
             });
 
@@ -829,7 +837,7 @@ namespace RemoteSoccer
         {
             await foreach (var item in positionss)
             {
-                HandlePositions(item);
+                var dontWait = HandlePositions(item);
             }
         }
 
