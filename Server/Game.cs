@@ -445,9 +445,13 @@ namespace Server
                     -Math.Sign(ball.Vy) * (ball.Vy * ball.Vy * ball.Mass) / 4000.0);
 
 
+                //ball.ApplyForce(
+                //    (-ball.Vx *Math.Pow( 10/(10+ Math.Abs(ball.Vx)),2) * ball.Mass) ,
+                //    (-ball.Vy * Math.Pow(10 / (10 + Math.Abs(ball.Vy)),2) * ball.Mass));
+
                 ball.ApplyForce(
-                    (-ball.Vx * ball.Mass) / 100.0,
-                    (-ball.Vy * ball.Mass) / 100.0);
+                    -Math.Sign(ball.Vx) *Math.Min(.02,Math.Abs(ball.Vx)),
+                    -Math.Sign(ball.Vy) * Math.Min(.02,Math.Abs(ball.Vy)));
 
                 foreach (var center in bodies)
                 {
