@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using Common;
-using Microsoft.AspNetCore.SignalR;
 using Physics;
+using System.Threading.Channels;
 using Prototypist.TaskChain;
 
-namespace Server
+namespace Common
 {
     public class Game
     {
@@ -119,7 +118,7 @@ namespace Server
             }
         }
 
-        internal void NameChanged(NameChanged nameChanged)
+        public void NameChanged(NameChanged nameChanged)
         {
             foreach (var element in bodiesCreated)
             {
@@ -173,7 +172,7 @@ namespace Server
             }
         }
 
-        internal IAsyncEnumerable<Positions> GetReader()
+        public IAsyncEnumerable<Positions> GetReader()
         {
             // the other option is a new channel every time 
             // and we just write positions to them all
@@ -184,7 +183,7 @@ namespace Server
             return new What(lastPositions);
         }
 
-        internal void ColorChanged(ColorChanged colorChanged)
+        public void ColorChanged(ColorChanged colorChanged)
         {
             foreach (var element in feetCreaated)
             {
@@ -208,7 +207,7 @@ namespace Server
             }
         }
 
-        internal void Reset(Action<UpdateScore> onUpdateScore)
+        public void Reset(Action<UpdateScore> onUpdateScore)
         {
             if (onUpdateScore == null)
             {
@@ -325,7 +324,7 @@ namespace Server
             return new ObjectsCreated(feetCreaated.ToArray(), bodiesCreated.ToArray(), ballCreated, goalsCreated.ToArray());
         }
 
-        internal ObjectsCreated CreatePlayer(string connectionId, CreatePlayer createPlayer)
+        public ObjectsCreated CreatePlayer(string connectionId, CreatePlayer createPlayer)
         {
             double startX = 400;
             double startY = 400;
@@ -381,7 +380,7 @@ namespace Server
             return new ObjectsCreated(new[] { footCreated }, new[] { bodyCreated }, null, new GoalCreated[] { });
         }
 
-        internal bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
+        public bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
         {
             if (connectionObjects.TryRemove(connectionId, out var toRemoves))
             {
@@ -410,7 +409,7 @@ namespace Server
         }
 
         private int simulationTime = 0;
-        internal Positions Apply()
+        private Positions Apply()
         {
             Positions positions = default;
 
@@ -422,8 +421,9 @@ namespace Server
             {
                 foreach (var frame in frames)
                 {
-                    if (frame.TryAdd(input.BodyId, input))
+                    if (!frame.ContainsKey(input.BodyId))
                     {
+                        frame.Add(input.BodyId, input);
                         goto done;
                     }
                 }
@@ -581,7 +581,7 @@ namespace Server
         private double E(double d) => Math.Pow(d,3.0);
         private double EInverse(double d) => Math.Pow(d,1/3.0);
 
-        internal void PlayerInputs(PlayerInputs playerInputs)
+        public void PlayerInputs(PlayerInputs playerInputs)
         {
             var lastLast = LastInputUTC;
             playersInputs.Add(playerInputs);
