@@ -98,7 +98,7 @@ namespace RemoteSoccer
         }
 
 
-        public class SignalRHandler
+        public class SignalRHandler 
         {
 
             private readonly List<Action<GameCreated>> gameCreatedHandlers = new List<Action<GameCreated>>();
@@ -311,7 +311,7 @@ namespace RemoteSoccer
                 }
             }
 
-            internal async void Send(string game, ColorChanged colorChanged)
+            public async void Send(string game, ColorChanged colorChanged)
             {
                 try
                 {
@@ -325,7 +325,7 @@ namespace RemoteSoccer
                 }
             }
 
-            internal async void Send(string game, NameChanged nameChanged)
+            public async void Send(string game, NameChanged nameChanged)
             {
                 try
                 {
@@ -338,7 +338,7 @@ namespace RemoteSoccer
                 {
                 }
             }
-            internal IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
+            public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
             {
                 return connection.StreamAsync<Positions>(nameof(JoinChannel), joinChannel);
             }

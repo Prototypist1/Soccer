@@ -37,7 +37,7 @@ namespace Common
 
         private readonly GameStateTracker gameStateTracker;
         
-        private readonly System.Threading.Channels.Channel<Positions> channel;
+        private readonly Channel<Positions> channel;
 
         private class GameStateTracker
         {
@@ -207,17 +207,12 @@ namespace Common
             }
         }
 
-        public void Reset(Action<UpdateScore> onUpdateScore)
+        public UpdateScore Reset()
         {
-            if (onUpdateScore == null)
-            {
-                throw new ArgumentNullException(nameof(onUpdateScore));
-            }
-
             gameStateTracker.Scored();
             leftScore = 0;
             rightScore = 0;
-            onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
+            return new UpdateScore() { Left = leftScore, Right = rightScore };
         }
 
         public Game(Action<UpdateScore> onUpdateScore, Channel<Positions> writer)
@@ -443,7 +438,6 @@ namespace Common
                 ball.ApplyForce(
                     -Math.Sign(ball.Vx) * (ball.Vx * ball.Vx * ball.Mass) / 4000.0,
                     -Math.Sign(ball.Vy) * (ball.Vy * ball.Vy * ball.Mass) / 4000.0);
-
 
                 //ball.ApplyForce(
                 //    (-ball.Vx *Math.Pow( 10/(10+ Math.Abs(ball.Vx)),2) * ball.Mass) ,

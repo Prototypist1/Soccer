@@ -42,7 +42,9 @@ namespace Server
         {
             if (state.games.TryGetValue(resetGame.Id , out var value))
             {
-                value.Reset(getOnUpdateScore(resetGame.Id));
+                // this is why () should not be the method call syntax
+                // .Invoke included for readablity
+                getOnUpdateScore(resetGame.Id).Invoke(value.Reset());
             }
         }
 

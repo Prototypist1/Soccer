@@ -135,14 +135,17 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="IScaler.cs" />
+    <Compile Include="ISignalRHandler.cs" />
     <Compile Include="LandingPage.xaml.cs">
       <DependentUpon>LandingPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="LocalGame.cs" />
     <Compile Include="LocalSettingsKeys.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RenderGameEvents.cs" />
     <Compile Include="Scaler.cs" />
     <Compile Include="SignalRHandler.cs" />
   </ItemGroup>
