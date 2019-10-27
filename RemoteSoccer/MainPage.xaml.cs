@@ -25,9 +25,23 @@ using Windows.UI.Xaml.Shapes;
 
 namespace RemoteSoccer
 {
+    public interface IReadonlyRef<T>
+    {
+        public T Thing { get; }
+    }
+
     // poor mans pointer
-    public class FrameRef {
-        public int frame =0;
+    public class Ref<T> : IReadonlyRef<T>
+    {
+
+        public T thing;
+
+        public Ref(T thing)
+        {
+            this.thing = thing;
+        }
+
+        public T Thing => thing;
     }
 
     /// <summary>
@@ -40,10 +54,10 @@ namespace RemoteSoccer
         private readonly Guid body = Guid.NewGuid();
         private readonly Guid foot = Guid.NewGuid();
 
-        private bool lockCurser = true;
+        private Ref<bool> lockCurser = new Ref<bool>(true);
         private Zoomer zoomer;
-        private FrameRef frame =new FrameRef();
-
+        private Ref<int> frame = new Ref<int>(0);
+        private IInputs inputs;
         public MainPage()
         {
             this.InitializeComponent();
@@ -51,11 +65,11 @@ namespace RemoteSoccer
 
             Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
 
-            zoomer = new Zoomer(GameHolder.ActualWidth,GameHolder.ActualHeight, body);
+            zoomer = new Zoomer(GameHolder.ActualWidth, GameHolder.ActualHeight, body);
 
             rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame);
-            
-            if (lockCurser)
+
+            if (lockCurser.Thing)
             {
                 Window.Current.CoreWindow.PointerCursor = null;
             }
@@ -84,85 +98,29 @@ namespace RemoteSoccer
         // assumed to be run on the main thread
         private async IAsyncEnumerable<PlayerInputs> MainLoop(Guid foot, Guid body)
         {
-            double lastX = 0, lastY = 0, bodyX = 0, bodyY = 0, footX = 0, footY = 0;
-            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                        CoreDispatcherPriority.Normal,
-                        () =>
-                        {
-                            var pointer = CoreWindow.GetForCurrentThread().PointerPosition;
-
-                            lastX = pointer.X;
-                            lastY = pointer.Y;
-                        });
-
-
-            var sw = new Stopwatch();
-            sw.Start();
-
-            var distrib = new int[100];
-
-            while (sending)
-            {
-
-                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                    CoreDispatcherPriority.Normal,
-                    () =>
-                    {
-                        var coreWindow = Window.Current.CoreWindow;
-
-                        if (lockCurser)
-                        {
-                            if (coreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
-                            {
-                                game.ResetGame(new ResetGame(game.GameName));
-                            }
-
-                            bodyX =
-                                (coreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
-                                (coreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
-                            bodyY =
-                                (coreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
-                                (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
-
-                            var point = CoreWindow.GetForCurrentThread().PointerPosition;
-                            footX = (point.X - lastX);// * .75;
-                            footY = (point.Y - lastY);// * .75;
-
-                            point = new Point(lastX, lastY);
-                            coreWindow.PointerPosition = point;
-
-                            lastX = point.X;
-                            lastY = point.Y;
-
-                        }
-                        else
-                        {
-                            var point = CoreWindow.GetForCurrentThread().PointerPosition;
-
-                            lastX = point.X;
-                            lastY = point.Y;
-
-                            footX = 0; footY = 0; bodyX = 0; bodyY = 0;
-                        }
-
-                    });
             
-                
+                await inputs.Init();
 
-                yield return new PlayerInputs(footX, footY, bodyX, bodyY, foot, body);
-                frame.frame++;
+                var sw = new Stopwatch();
+                sw.Start();
+
+                while (sending)
+                {
+                    yield return await inputs.Next();
+                    frame.thing++;
 
 
-                while ((1000.0 * frame.frame / 75.0) > sw.ElapsedMilliseconds) { 
-                
+                    while ((1000.0 * frame.thing / 75.0) > sw.ElapsedMilliseconds)
+                    {
+                    }
+
+                    //await Task.Delay(1);
+                    // let someone else have a go
+                    //await Task.Delay((int)Math.Max(0, (1000.0 * frame.frame / 60.0) - sw.ElapsedMilliseconds));
+
                 }
-
-                //await Task.Delay(1);
-                // let someone else have a go
-                //await Task.Delay((int)Math.Max(0, (1000.0 * frame.frame / 60.0) - sw.ElapsedMilliseconds));
-
-            }
-            StoppedSending.SetResult(true);
+                StoppedSending.SetResult(true);
+            
         }
 
 
@@ -177,16 +135,17 @@ namespace RemoteSoccer
         {
             base.OnNavigatedTo(e);
 
-            var gameName =(string)e.Parameter;
+            var gameName = (string)e.Parameter;
 
             Task.Run(async () =>
             {
                 try
                 {
-                    //game = new LocalGame();
-                    game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
+                    game = new LocalGame();
+                    //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
                     game.OnDisconnect(OnDisconnect);
                     game.SetCallbacks(rge);
+                    inputs = new ControllerInputes(lockCurser, game, body, foot);
 
                     var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
 
@@ -213,8 +172,9 @@ namespace RemoteSoccer
 
                     var name = "";
 
-                    
-                    if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerName, out var savedName)) {
+
+                    if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerName, out var savedName))
+                    {
                         name = (string)savedName;
                     }
 
@@ -224,7 +184,7 @@ namespace RemoteSoccer
                             foot,
                             body,
                             Constants.footLen * 2,
-                            Constants.PlayerRadius *2,
+                            Constants.PlayerRadius * 2,
                             color[0],
                             color[1],
                             color[2],
@@ -232,7 +192,7 @@ namespace RemoteSoccer
                             color[0],
                             color[1],
                             color[2],
-                            0xff, 
+                            0xff,
                             name));
 
 
@@ -267,7 +227,7 @@ namespace RemoteSoccer
 
             game.ChangeColor(new ColorChanged(foot, color.R, color.G, color.B, 0xff));
             game.ChangeColor(new ColorChanged(body, color.R, color.G, color.B, 0x20));
-            
+
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -278,8 +238,8 @@ namespace RemoteSoccer
         private void ToggleMenu()
         {
             Menu.Visibility = (Windows.UI.Xaml.Visibility)(((int)Menu.Visibility + 1) % 2);
-            lockCurser = !lockCurser;
-            if (lockCurser)
+            lockCurser.thing = !lockCurser.thing;
+            if (lockCurser.thing)
             {
                 Window.Current.CoreWindow.PointerCursor = null;
             }
@@ -308,7 +268,8 @@ namespace RemoteSoccer
             game.NameChanged(new NameChanged(body, name));
         }
 
-        public async Task StopSendingInputs() {
+        public async Task StopSendingInputs()
+        {
             sending = false;
             await StoppedSending.Task;
         }

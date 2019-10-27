@@ -167,7 +167,7 @@ namespace RemoteSoccer
 
         private readonly TextBlock leftScore, rightScore;
         private readonly Zoomer zoomer;
-        private readonly FrameRef frame;
+        private readonly IReadonlyRef<int> frame;
 
         public RenderGameEvents(
             Canvas gameArea, 
@@ -175,7 +175,7 @@ namespace RemoteSoccer
             TextBlock leftScore, 
             TextBlock rightScore, 
             Zoomer zoomer,
-            FrameRef frame)
+            IReadonlyRef<int> frame)
         {
             this.frame = frame;
             this.fps = fps;
@@ -671,11 +671,11 @@ namespace RemoteSoccer
                     0, 0, 1, 0,
                     (float)xPlus, (float)yPlus, 0, 1);
 
-                if (frame.frame % 20 == 0 && stopWatch != null)
+                if (frame.Thing % 20 == 0 && stopWatch != null)
                 {
                     fps.Text = $"time to draw: {(stopWatch.ElapsedTicks - ticks) / (double)TimeSpan.TicksPerMillisecond:f2}{Environment.NewLine}" +
                         $"longest gap: {longestGap}{Environment.NewLine}" +
-                        $"frame lag: {frame.frame - positions.Frame}{Environment.NewLine}" +
+                        $"frame lag: {frame.Thing - positions.Frame}{Environment.NewLine}" +
                         $"frames: {framesInGroup * 3}{Environment.NewLine}" +
                         $"dropped: {droppedFrames * 3}{Environment.NewLine}" +
                         $"Escape: Show options";

@@ -134,7 +134,9 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ControllerInputes.cs" />
     <Compile Include="IGameView.cs" />
+    <Compile Include="IInputs.cs" />
     <Compile Include="IRemoteGame.cs" />
     <Compile Include="IScaler.cs" />
     <Compile Include="ISignalRHandler.cs" />
@@ -146,6 +148,7 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="MouseKeyboardInputs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RemoteGame.cs" />
     <Compile Include="RenderGameEvents.cs" />
