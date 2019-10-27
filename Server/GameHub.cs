@@ -54,9 +54,7 @@ namespace Server
 
         public async Task CreateOrJoinGame(CreateOrJoinGame createOrJoinGame)
         {
-            var positionsChannel = Channel.CreateUnbounded<Positions>();
-
-            var myGame = new Game(getOnUpdateScore(createOrJoinGame.Id), positionsChannel);
+            var myGame = new Game(getOnUpdateScore(createOrJoinGame.Id));
             var game = state.games.GetOrAdd(createOrJoinGame.Id, myGame);
 
             if (!state.connectionIdToGameName.TryAdd(Context.ConnectionId, createOrJoinGame.Id)) {

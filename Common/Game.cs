@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Common;
 using Physics;
-using System.Threading.Channels;
 using Prototypist.TaskChain;
 
 namespace Common
@@ -36,8 +35,6 @@ namespace Common
 
 
         private readonly GameStateTracker gameStateTracker;
-        
-        private readonly Channel<Positions> channel;
 
         private class GameStateTracker
         {
@@ -215,14 +212,13 @@ namespace Common
             return new UpdateScore() { Left = leftScore, Right = rightScore };
         }
 
-        public Game(Action<UpdateScore> onUpdateScore, Channel<Positions> writer)
+        public Game(Action<UpdateScore> onUpdateScore)
         {
 
             if (onUpdateScore == null)
             {
                 throw new ArgumentNullException(nameof(onUpdateScore));
             }
-            this.channel = writer ?? throw new ArgumentNullException(nameof(writer));
 
 
             ballId = Guid.NewGuid();
@@ -404,7 +400,7 @@ namespace Common
         }
 
         private int simulationTime = 0;
-        private Positions Apply()
+        private void Apply()
         {
             Positions positions = default;
 
@@ -566,8 +562,6 @@ namespace Common
             var next = new Node(positions);
             lastPositions.next.SetResult(next);
             lastPositions = next;
-
-            return positions;
         }
 
         private int running = 0;
@@ -581,7 +575,7 @@ namespace Common
             playersInputs.Add(playerInputs);
             while (playersInputs.Count > (players - 1.0) && Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
-                var dontWait = channel.Writer.WriteAsync(Apply());
+                Apply();
                 running = 0;
             }
         }

@@ -145,6 +145,7 @@ namespace RemoteSoccer
                 connection.On<GameAlreadyExists>(nameof(GameAlreadyExists), HandleGameAlreadyExists);
                 connection.On<GameJoined>(nameof(GameJoined), HandleGameJoined);
                 connection.On<GameDoesNotExist>(nameof(GameDoesNotExist), HandleGameDoesNotExist);
+
             }
 
             private async Task OnClosed(Exception arg)
@@ -241,21 +242,18 @@ namespace RemoteSoccer
 
             }
 
+            public void SetCallBacks(IGameView  gameView) {
+
+                connection.On<ObjectsCreated>(nameof(ObjectsCreated), gameView.HandleObjectsCreated);
+                connection.On< ObjectsRemoved>(nameof(ObjectsRemoved), gameView.HandleObjectsRemoved);
+                connection.On< UpdateScore>(nameof(UpdateScore), gameView.HandleUpdateScore);
+                connection.On< ColorChanged>(nameof(ColorChanged), gameView.HandleColorChanged);
+                connection.On< NameChanged>(nameof(NameChanged), gameView.HandleNameChanged);
+            }
 
             public async void Send(string game,
-                CreatePlayer createPlayer,
-                Action<ObjectsCreated> handleObjectsCreated,
-                Action<ObjectsRemoved> handleObjectsRemoved,
-                Action<UpdateScore> handleUpdateScore,
-                Action<ColorChanged> handleColorChanged,
-                Action<NameChanged> handleNameChanged)
+                CreatePlayer createPlayer)
             {
-                connection.On(nameof(ObjectsCreated), handleObjectsCreated);
-                connection.On(nameof(ObjectsRemoved), handleObjectsRemoved);
-                connection.On(nameof(UpdateScore), handleUpdateScore);
-                connection.On(nameof(ColorChanged), handleColorChanged);
-                connection.On(nameof(NameChanged), handleNameChanged);
-
                 try
                 {
                     await connection.InvokeAsync(nameof(CreatePlayer), game, createPlayer);

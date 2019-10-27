@@ -66,7 +66,7 @@ namespace RemoteSoccer
         }
     }
 
-    class RenderGameEvents
+    class RenderGameEvents: IGameView
     {
 
         private class ElementEntry

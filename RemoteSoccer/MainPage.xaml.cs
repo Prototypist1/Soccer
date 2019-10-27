@@ -35,17 +35,14 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        RenderGameEvents rge;
+        IGameView rge;
 
         private readonly Guid body = Guid.NewGuid();
         private readonly Guid foot = Guid.NewGuid();
 
         private bool lockCurser = true;
-        private string gameName;
         private Zoomer zoomer;
         private FrameRef frame =new FrameRef();
-
-
 
         public MainPage()
         {
@@ -57,27 +54,14 @@ namespace RemoteSoccer
             zoomer = new Zoomer(GameHolder.ActualWidth,GameHolder.ActualHeight, body);
 
             rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame);
-
-
-            Task.Run(async () =>
-            {
-                try
-                {
-                    (await SingleSignalRHandler.GetOrThrow()).SetOnClosed(OnDisconnect);
-                }
-                catch (Exception ex)
-                {
-                    await OnDisconnect(ex);
-                }
-            });
-
+            
             if (lockCurser)
             {
                 Window.Current.CoreWindow.PointerCursor = null;
             }
             else
             {
-                Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+                Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
             }
 
         }
@@ -93,12 +77,12 @@ namespace RemoteSoccer
 
         }
 
-
-
         private bool sending = true;
         private TaskCompletionSource<bool> StoppedSending = new TaskCompletionSource<bool>();
+        private IGame game;
+
         // assumed to be run on the main thread
-        private async IAsyncEnumerable<PlayerInputs> MainLoop(SingleSignalRHandler.SignalRHandler handler, Guid foot, Guid body, string game)
+        private async IAsyncEnumerable<PlayerInputs> MainLoop(Guid foot, Guid body)
         {
             double lastX = 0, lastY = 0, bodyX = 0, bodyY = 0, footX = 0, footY = 0;
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
@@ -124,15 +108,13 @@ namespace RemoteSoccer
                     CoreDispatcherPriority.Normal,
                     () =>
                     {
-
-
                         var coreWindow = Window.Current.CoreWindow;
 
                         if (lockCurser)
                         {
                             if (coreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
                             {
-                                handler.Send(new ResetGame(game));
+                                game.ResetGame(new ResetGame(game.GameName));
                             }
 
                             bodyX =
@@ -171,8 +153,13 @@ namespace RemoteSoccer
                 frame.frame++;
 
 
+                while ((1000.0 * frame.frame / 75.0) > sw.ElapsedMilliseconds) { 
+                
+                }
+
+                //await Task.Delay(1);
                 // let someone else have a go
-                await Task.Delay((int)Math.Max(0, (1000 * frame.frame / 60) - sw.ElapsedMilliseconds));
+                //await Task.Delay((int)Math.Max(0, (1000.0 * frame.frame / 60.0) - sw.ElapsedMilliseconds));
 
             }
             StoppedSending.SetResult(true);
@@ -190,14 +177,16 @@ namespace RemoteSoccer
         {
             base.OnNavigatedTo(e);
 
-            gameName = (string)e.Parameter;
-
+            var gameName =(string)e.Parameter;
 
             Task.Run(async () =>
             {
                 try
                 {
-                    var handler = await SingleSignalRHandler.GetOrThrow();
+                    //game = new LocalGame();
+                    game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
+                    game.OnDisconnect(OnDisconnect);
+                    game.SetCallbacks(rge);
 
                     var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
 
@@ -229,8 +218,8 @@ namespace RemoteSoccer
                         name = (string)savedName;
                     }
 
-                    handler.Send(
-                        gameName,
+
+                    game.CreatePlayer(
                         new CreatePlayer(
                             foot,
                             body,
@@ -244,25 +233,16 @@ namespace RemoteSoccer
                             color[1],
                             color[2],
                             0xff, 
-                            name),
-                        rge.HandleObjectsCreated,
-                        rge.HandleObjectsRemoved,
-                        rge.HandleUpdateScore,
-                        rge.HandleColorChanged,
-                        rge.HandleNameChanged);
+                            name));
 
 
-                    var dontWait = rge.SpoolPositions(handler.JoinChannel(new JoinChannel(gameName)));
+                    var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
 
-                    handler.Send(gameName, MainLoop(handler, foot, body, gameName));
+                    game.StreamInputs(MainLoop(foot, body));
                 }
-#pragma warning disable CS0168 // Variable is declared but never used
                 catch (Exception ex)
                 {
-#pragma warning restore CS0168 // Variable is declared but never used
-#pragma warning disable CS0219 // Variable is assigned but its value is never used
-                    var db = 0;
-#pragma warning restore CS0219 // Variable is assigned but its value is never used
+                    await OnDisconnect(ex);
                 }
             });
 
@@ -285,11 +265,9 @@ namespace RemoteSoccer
             localSettings.Values[LocalSettingsKeys.PlayerColorG] = color.G;
             localSettings.Values[LocalSettingsKeys.PlayerColorB] = color.B;
 
-            SingleSignalRHandler.GetOrThrow().ContinueWith(x =>
-            {
-                x.Result.Send(gameName, new ColorChanged(foot, color.R, color.G, color.B, 0xff));
-                x.Result.Send(gameName, new ColorChanged(body, color.R, color.G, color.B, 0x20));
-            });
+            game.ChangeColor(new ColorChanged(foot, color.R, color.G, color.B, 0xff));
+            game.ChangeColor(new ColorChanged(body, color.R, color.G, color.B, 0x20));
+            
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -327,10 +305,7 @@ namespace RemoteSoccer
             var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
             localSettings.Values[LocalSettingsKeys.PlayerName] = name;
 
-            SingleSignalRHandler.GetOrThrow().ContinueWith(x =>
-            {
-                x.Result.Send(gameName, new NameChanged(body, name));
-            });
+            game.NameChanged(new NameChanged(body, name));
         }
 
         public async Task StopSendingInputs() {
@@ -341,10 +316,9 @@ namespace RemoteSoccer
         private async void Button_Click_1(object sender, RoutedEventArgs e)
         {
             await StopSendingInputs();
-            var handler = (await SingleSignalRHandler.GetOrThrow());
-            handler.Send(new LeaveGame());
-            handler.SetOnClosed(null);
-            handler.ClearCallBacks();
+            game.LeaveGame(new LeaveGame());
+            game.OnDisconnect(null);
+            game.ClearCallbacks();
 
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                 CoreDispatcherPriority.Normal,
