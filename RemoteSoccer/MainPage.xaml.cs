@@ -1,25 +1,15 @@
 ﻿using Common;
-using Microsoft.Toolkit.Uwp.UI.Media;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
-using Windows.Foundation;
-using Windows.Media.Core;
-using Windows.Media.Playback;
 using Windows.System;
-using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-using Windows.UI.Xaml.Shapes;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -110,7 +100,7 @@ namespace RemoteSoccer
                     frame.thing++;
 
 
-                    while ((1000.0 * frame.thing / 75.0) > sw.ElapsedMilliseconds)
+                    while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
                     {
                     }
 
@@ -142,9 +132,10 @@ namespace RemoteSoccer
                 try
                 {
                     game = new LocalGame();
-                    //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
+                    game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
                     game.OnDisconnect(OnDisconnect);
                     game.SetCallbacks(rge);
+                    //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
                     inputs = new ControllerInputes(lockCurser, game, body, foot);
 
                     var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
@@ -245,7 +236,7 @@ namespace RemoteSoccer
             }
             else
             {
-                Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+                Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
             }
         }
 

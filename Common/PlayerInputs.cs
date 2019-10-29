@@ -20,6 +20,7 @@ namespace Common
 
     public struct PlayerInputs
     {
+        public bool Controller { get; set; }
         public double FootX { get; set; }
         public double FootY { get; set; }
         public double BodyX { get; set; }
@@ -27,7 +28,7 @@ namespace Common
         public Guid FootId { get; set; }
         public Guid BodyId { get; set; }
 
-        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId)
+        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId, bool controller)
         {
             this.FootX = footX;
             this.FootY = footY;
@@ -35,6 +36,7 @@ namespace Common
             this.BodyY = bodyY;
             this.FootId = footId;
             this.BodyId = bodyId;
+            this.Controller = controller;
         }
     }
 }

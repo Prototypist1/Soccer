@@ -12,7 +12,6 @@ namespace RemoteSoccer
         private readonly IReadonlyRef<bool> lockCurser;
 
         private readonly IGame game;
-        double lastX = 0, lastY = 0;
         private readonly Guid body;
         private readonly Guid foot;
 
@@ -36,16 +35,12 @@ namespace RemoteSoccer
             if (lockCurser.Thing && gamepad != null)
             {
                 var snap = gamepad.GetCurrentReading();
-                    var footX = (snap.LeftThumbstickX - lastX);// * .75;
-                    var footY = (snap.LeftThumbstickY - lastY);// * .75;
 
-                    lastX = snap.LeftThumbstickX;
-                    lastY = snap.LeftThumbstickY;
-                return Task.FromResult(new PlayerInputs((Constants.footLen- Constants.PlayerRadius)* footX, -(Constants.footLen - Constants.PlayerRadius) * footY, snap.RightThumbstickX, -snap.RightThumbstickY, foot, body));
+                return Task.FromResult(new PlayerInputs(snap.LeftThumbstickX, -snap.LeftThumbstickY, snap.RightThumbstickX, -snap.RightThumbstickY, foot, body,true));
             }
             else
             {
-                return Task.FromResult( new PlayerInputs(0, 0, 0, 0, foot, body));
+                return Task.FromResult( new PlayerInputs(0, 0, 0, 0, foot, body,true));
             }
         }
     }

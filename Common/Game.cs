@@ -505,7 +505,10 @@ namespace Common
 
                         var max = Constants.footLen - Constants.PlayerRadius;
 
-                        var target = new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
+
+                        var target = input.Controller ?
+                            new Vector(input.FootX*(Constants.footLen- Constants.PlayerRadius), input.FootY * (Constants.footLen - Constants.PlayerRadius))
+                            :new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
 
                         if (target.Length > max)
                         {
