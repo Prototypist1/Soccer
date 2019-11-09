@@ -1,16 +1,21 @@
 ﻿using physics2;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Physics2
 {
-    internal static  class math
+
+
+    internal static class math
     {
 
         private const double CLOSE = .01;
 
-        internal static MightBeCollision DoCollision(PhysicsObject physicsObject1, PhysicsObject physicsObject2, double radius1, double radius2, Vector normal)
+
+
+        internal static DoubleUpdatePositionVelocityEvent DoCollision(PhysicsObject physicsObject1, PhysicsObject physicsObject2, double radius1, double radius2, double time, Vector normal)
         {
             // update the V of both
 
@@ -28,25 +33,50 @@ namespace Physics2
 
             if (physicsObject1.Mobile == false)
             {
-                physicsObject2.Velocity = normal.NewScaled(-2 * v2).NewAdded(physicsObject2.Velocity);
-                return new MightBeCollision(new Collision(
+                var o2v = normal.NewScaled(-2 * v2).NewAdded(physicsObject2.Velocity);
+                return new DoubleUpdatePositionVelocityEvent(
+                    time,
+                    physicsObject1,
+                    physicsObject1.X + (time * physicsObject1.Vx),
+                    physicsObject1.Y + (time * physicsObject1.Vy),
+                    physicsObject1.Vx,
+                    physicsObject1.Vy,
+                    physicsObject2,
+                    physicsObject2.X + (time * physicsObject2.Vx),
+                    physicsObject2.Y + (time * physicsObject2.Vy),
+                    o2v.x,
+                    o2v.y,
+                    new MightBeCollision(
+                     new Collision(
                     physicsObject2.X + normal.NewScaled(radius2).x,
                     physicsObject2.Y + normal.NewScaled(radius2).y,
                     normal.NewScaled(-2 * v2 * m2).x,
                     normal.NewScaled(-2 * v2 * m2).y,
                     false
-                ));
+                )));
             }
             else if (physicsObject2.Mobile == false)
             {
-                physicsObject1.Velocity = normal.NewScaled(-2 * v1).NewAdded(physicsObject1.Velocity);
-                return new MightBeCollision(new Collision(
-                    physicsObject1.X + normal.NewScaled(radius1).x,
-                    physicsObject1.Y + normal.NewScaled(radius1).y,
-                    normal.NewScaled(-2 * v1 * m1).x,
-                    normal.NewScaled(-2 * v1 * m1).y,
-                    false
-                ));
+                var v1o = normal.NewScaled(-2 * v1).NewAdded(physicsObject1.Velocity);
+                return new DoubleUpdatePositionVelocityEvent(
+                    time,
+                    physicsObject1,
+                    physicsObject1.X + (time * physicsObject1.Vx),
+                    physicsObject1.Y + (time * physicsObject1.Vy),
+                    v1o.x,
+                    v1o.y,
+                    physicsObject2,
+                    physicsObject2.X + (time * physicsObject2.Vx),
+                    physicsObject2.Y + (time * physicsObject2.Vy),
+                    physicsObject2.Vx,
+                    physicsObject2.Vy,
+                    new MightBeCollision(
+                        new Collision(
+                            physicsObject2.X + (time * physicsObject2.Vx) + normal.NewScaled(radius2).x,
+                            physicsObject2.Y + (time * physicsObject2.Vy) + normal.NewScaled(radius2).y,
+                            normal.NewScaled(-2 * v2 * m2).x,
+                            normal.NewScaled(-2 * v2 * m2).y,
+                            false)));
             }
             else
             {
@@ -113,26 +143,40 @@ namespace Physics2
                 {
                     throw new Exception("A should not be 0! if A is zer something has 0 mass");
                 }
-                physicsObject2.Velocity = normal.NewScaled(vf2).NewAdded(normal.NewScaled(-v2)).NewAdded(physicsObject2.Velocity);
 
-                var f = (vf2 - v2) * m2;
-                var vf1 = v1 - (f / m1);
-                physicsObject1.Velocity = normal.NewScaled(vf1).NewAdded(normal.NewScaled(-v1)).NewAdded(physicsObject1.Velocity);
-                return new MightBeCollision(new Collision(
-                    physicsObject2.X + normal.NewScaled(radius2).x,
-                    physicsObject2.Y + normal.NewScaled(radius2).y,
-                    normal.NewScaled(vf1).x,
-                    normal.NewScaled(vf1).y,
-                    false
-                ));
+                {
+                    var o2v = normal.NewScaled(vf2).NewAdded(normal.NewScaled(-v2)).NewAdded(physicsObject2.Velocity);
+
+                    var f = (vf2 - v2) * m2;
+                    var vf1 = v1 - (f / m1);
+                    var o1v = normal.NewScaled(vf1).NewAdded(normal.NewScaled(-v1)).NewAdded(physicsObject1.Velocity);
+                    return new DoubleUpdatePositionVelocityEvent(
+                    time,
+                    physicsObject1,
+                    physicsObject1.X + (time * physicsObject1.Vx),
+                    physicsObject1.Y + (time * physicsObject1.Vy),
+                    o1v.x,
+                    o1v.y,
+                    physicsObject2,
+                    physicsObject2.X + (time * physicsObject2.Vx),
+                    physicsObject2.Y + (time * physicsObject2.Vy),
+                    o2v.x,
+                    o2v.y,
+                    new MightBeCollision(new Collision(
+                        physicsObject2.X + (time * physicsObject2.Vx) + normal.NewScaled(radius2).x,
+                        physicsObject2.Y + (time * physicsObject2.Vy) + normal.NewScaled(radius2).y,
+                        normal.NewScaled(f).x,
+                        normal.NewScaled(f).y,
+                        false
+                    )));
+                }
             }
-
         }
 
-        private static Vector GetNormal(PhysicsObject physicsObject1, PhysicsObject physicsObject2)
+        private static Vector GetNormal(PhysicsObject physicsObject1, PhysicsObject physicsObject2, double time)
         {
-            var dx = physicsObject1.X - physicsObject2.X;
-            var dy = physicsObject1.Y - physicsObject2.Y;
+            var dx = physicsObject1.X + (time * physicsObject1.Vx) - (physicsObject2.X + (time * physicsObject2.Vx));
+            var dy = physicsObject1.Y + (time * physicsObject1.Vy) - (physicsObject2.Y + (time * physicsObject2.Vy));
             var normal = new Vector(dx, dy).NewUnitized();
             return normal;
         }
@@ -143,62 +187,48 @@ namespace Physics2
         }
 
 
-        internal static bool TryCollisionBallTime(PhysicsObject self, PhysicsObject that, Circle c1, Circle c2,  double endTime, out double time)
+        internal static bool TryCollisionBall(PhysicsObject self, PhysicsObject that, Circle c1, Circle c2, double endTime, out IEvent evnt)
         {
 
-            double startTime, thisX0, thatX0, thisY0, thatY0, DX, DY;
             // how  are they moving relitive to us
             double DVX = that.Vx - self.Vx,
                    DVY = that.Vy - self.Vy;
 
-            if (self.Time > that.Time)
-            {
-                startTime = self.Time;
-                thisX0 = self.X;
-                thisY0 = self.Y;
-                thatX0 = that.X + (that.Vx * (self.Time - that.Time));
-                thatY0 = that.Y + (that.Vy * (self.Time - that.Time));
-            }
-            else
-            {
-                startTime = that.Time;
-                thatX0 = that.X;
-                thatY0 = that.Y;
-                thisX0 = self.X + (self.Vx * (that.Time - self.Time));
-                thisY0 = self.Y + (self.Vy * (that.Time - self.Time));
-            }
+            var thisX0 = self.X;
+            var thisY0 = self.Y;
+            var thatX0 = that.X;
+            var thatY0 = that.Y;
+
             // how far they are from us
-            DX = thatX0 - thisX0;
-            DY = thatY0 - thisY0;
+            var DX = thatX0 - thisX0;
+            var DY = thatY0 - thisY0;
 
             // if the objects are not moving towards each other dont bother
             var V = -new Vector(DVX, DVY).Dot(new Vector(DX, DY).NewUnitized());
             if (V <= 0)
             {
-                time = default;
+                evnt = default;
                 return false;
             }
 
-            var R = c1.Radious + c2.Radious;
+            var R = c1.Radius + c2.Radius;
 
             var A = (DVX * DVX) + (DVY * DVY);
             var B = 2 * ((DX * DVX) + (DY * DVY));
             var C = (DX * DX) + (DY * DY) - (R * R);
 
-            if (TrySolveQuadratic(A, B, C, out var res) && startTime + res <= endTime)
+            if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
             {
 
-                time = startTime + res;
+                evnt = DoCollision(self, that, c1.Radius, c2.Radius, time, GetNormal(self, that, time));
                 return true;
             }
-            time = default;
+            evnt = default;
             return false;
-
-
         }
 
 
-        public static bool TrySolveQuadratic(double a, double b, double c, out double res)
+        public static bool TrySolveQuadratic(double a, double b, double c, out double[] res)
         {
             var sqrtpart = (b * b) - (4 * a * c);
             double x1, x2;
@@ -206,7 +236,7 @@ namespace Physics2
             {
                 x1 = (-b + Math.Sqrt(sqrtpart)) / (2 * a);
                 x2 = (-b - Math.Sqrt(sqrtpart)) / (2 * a);
-                res = Math.Min(x1, x2);
+                res = new double[] { x1,x2};
                 return true;
             }
             else if (sqrtpart < 0)
@@ -216,13 +246,77 @@ namespace Physics2
             }
             else
             {
-                res = (-b + Math.Sqrt(sqrtpart)) / (2 * a);
+                res = new double[] { (-b + Math.Sqrt(sqrtpart)) / (2 * a) };
                 return true;
             }
         }
 
-        
-        protected override bool TryNextCollisionLine(PhysicsObject self, PhysicsObject line, Circle circle, Line lineShape, double endTime, out IEvent collision)
+
+
+
+        internal static bool TryNextCollisionBallLine2(PhysicsObject line1, PhysicsObject line2, PhysicsObject ball, Circle circle, double endTime, out IEvent collision)
+        {
+            // we have to determine what point is the left point and what point is the right point
+            PhysicsObject left, right;
+            if (line1.Velocity.Dot(new Vector((line1.Y - line2.Y), (line2.X - line1.X))) > 0)
+            {
+                left = line1;
+                right = line2;
+            }
+            else
+            {
+                left = line2;
+                right = line1;
+            }
+
+            var lineStartNormal = new Vector(left.Y - right.Y, right.X - left.X).NewUnitized();
+            var lineEndNormal = new Vector((left.Y + (left.Vy*endTime)) - (right.Y + (right.Vy * endTime)), (right.X+ (right.Vx * endTime)) - (left.X + (left.Vx * endTime))).NewUnitized();
+            var normalDiff = lineEndNormal.NewAdded(lineStartNormal.NewMinus()).NewScaled(1/endTime);
+
+            var lineCenterStart = new Vector((left.X + right.X)/2.0, (left.Y + right.Y) / 2.0);
+            var lineCenterEnd = new Vector((left.X + (left.Vx * endTime) + right.X + (right.Vx*endTime))/2.0, (left.Y + (left.Vy * endTime) + right.Y + (right.Vy * endTime)) / 2.0);
+
+            var lineCenterDiff = lineCenterEnd.NewAdded(lineCenterStart.NewMinus()).NewScaled(1 / endTime);
+            var ballDiff = new Vector(ball.Vx * endTime, ball.Vy * endTime).NewScaled(1 / endTime);
+
+            var A = 
+                - (lineCenterStart.x * lineStartNormal.x)
+                - (lineCenterStart.y * lineStartNormal.y) 
+                + (ball.X * lineStartNormal.x) 
+                + (ball.Y * lineStartNormal.y)
+                - circle.Radius;
+
+            var B =  
+                 - (lineCenterStart.x * normalDiff.x)  + (lineStartNormal.x * lineCenterDiff.x) 
+                 - (lineCenterStart.y * normalDiff.y) + (lineStartNormal.y * lineCenterDiff.y)
+                 + (ball.X * normalDiff.x) - (lineStartNormal.x * ballDiff.x)
+                 + (ball.Y * normalDiff.x) - (lineStartNormal.y * ballDiff.y);
+
+            var C = 
+                - (lineCenterDiff.x * lineStartNormal.x)
+                - (lineCenterDiff.y * lineStartNormal.y)
+                + (ballDiff.x * lineStartNormal.x)
+                + (ballDiff.y * lineStartNormal.y);
+
+            if (TrySolveQuadratic(A, B, C, out var res))
+            {
+                foreach (var time in res.Where(x=>x>0).OrderBy(x=>x))
+                {
+                    var normalAt = lineStartNormal.NewAdded(normalDiff.NewScaled(time));
+                    var parallelAt = new Vector(-normalAt.y, normalAt.x);
+                    var centerAt = lineCenterStart.NewAdded(lineCenterDiff.NewScaled(time));
+                    var ballAt = ball.Position.NewAdded(ballDiff.NewScaled(time));
+
+
+                }
+            }
+            else {
+                collision = default;
+                return false;
+            }
+        }
+
+        internal static bool TryNextCollisionBallLine(PhysicsObject self, PhysicsObject line, Circle circle, Line lineShape, double endTime, out IEvent collision)
         {
 
             var normalDistance = new Vector(self.X, self.Y).Dot(lineShape.NormalUnit.NewUnitized());//myPhysicsObject.X
@@ -233,10 +327,10 @@ namespace Physics2
             {
                 if (normalVelocity > 0)
                 {
-                    var time = (lineNormalDistance - (normalDistance + circle.Radious)) / normalVelocity;
+                    var time = (lineNormalDistance - (normalDistance + circle.Radius)) / normalVelocity;
                     if (self.Time + time < endTime)
                     {
-                        var force = line.shape.NormalUnit.NewScaled(-2 * normalVelocity);
+                        var force = lineShape.NormalUnit.NewScaled(-2 * normalVelocity);
 
                         collision = new UpdatePositionVelocityEvent(
                             self.Time + time,
@@ -246,8 +340,8 @@ namespace Physics2
                             self.Vx + force.x,
                             self.Vy + force.y,
                             new MightBeCollision(new Collision(
-                                self.X + (time * self.Vx) + (line.shape.NormalUnit.NewUnitized().x* self.shape.Radius), 
-                                self.Y + (time * self.Vy) + (line.shape.NormalUnit.NewUnitized().y * self.shape.Radius),
+                                self.X + (time * self.Vx) + (lineShape.NormalUnit.NewUnitized().x * circle.Radius),
+                                self.Y + (time * self.Vy) + (lineShape.NormalUnit.NewUnitized().y * circle.Radius),
                                 force.x,
                                 force.y,
                                 false)));
@@ -269,10 +363,10 @@ namespace Physics2
             {
                 if (normalVelocity < 0)
                 {
-                    var time = (lineNormalDistance - (normalDistance - circle.Radious)) / normalVelocity;
+                    var time = (lineNormalDistance - (normalDistance - circle.Radius)) / normalVelocity;
                     if (self.Time + time < endTime)
                     {
-                        var force = line.shape.NormalUnit.NewScaled(-2 * normalVelocity);
+                        var force = lineShape.NormalUnit.NewScaled(-2 * normalVelocity);
 
                         collision = new UpdatePositionVelocityEvent(
                             self.Time + time,
@@ -282,10 +376,10 @@ namespace Physics2
                             self.Vx + force.x,
                             self.Vy + force.y,
                             new MightBeCollision(new Collision(
-                                self.X + (time * self.Vx) + (-line.shape.NormalUnit.NewUnitized().x * self.shape.Radius), 
-                                self.Y + (time * self.Vy) + (-line.shape.NormalUnit.NewUnitized().y * self.shape.Radius), 
-                                force.x, 
-                                force.y, 
+                                self.X + (time * self.Vx) + (-lineShape.NormalUnit.NewUnitized().x * circle.Radius),
+                                self.Y + (time * self.Vy) + (-lineShape.NormalUnit.NewUnitized().y * circle.Radius),
+                                force.x,
+                                force.y,
                                 false)));
                         return true;
                     }
@@ -305,7 +399,7 @@ namespace Physics2
             {
                 if (normalVelocity < 0)
                 {
-                    var time = (lineNormalDistance - (normalDistance - circle.Radious)) / normalVelocity;
+                    var time = (lineNormalDistance - (normalDistance - circle.Radius)) / normalVelocity;
                     if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
@@ -316,10 +410,10 @@ namespace Physics2
                             -self.Vx,
                             self.Vy,
                             new MightBeCollision(new Collision(
-                                self.X + (time * self.Vx) + (-line.shape.NormalUnit.NewUnitized().x * self.shape.Radius), 
-                                self.Y + (time * self.Vy) + (-line.shape.NormalUnit.NewUnitized().y * self.shape.Radius), 
-                                -self.Vx*2*self.Mass, 
-                                0, 
+                                self.X + (time * self.Vx) + (-lineShape.NormalUnit.NewUnitized().x * circle.Radius),
+                                self.Y + (time * self.Vy) + (-lineShape.NormalUnit.NewUnitized().y * circle.Radius),
+                                -self.Vx * 2 * self.Mass,
+                                0,
                                 false)));
                         return true;
                     }
@@ -331,7 +425,7 @@ namespace Physics2
                 }
                 else if (normalVelocity > 0)
                 {
-                    var time = (lineNormalDistance - (normalDistance + self.shape.Radius)) / normalVelocity;
+                    var time = (lineNormalDistance - (normalDistance + circle.Radius)) / normalVelocity;
                     if (self.Time + time < endTime)
                     {
                         collision = new UpdatePositionVelocityEvent(
@@ -342,10 +436,10 @@ namespace Physics2
                             -self.Vx,
                             self.Vy,
                             new MightBeCollision(new Collision(
-                                self.X + (time * self.Vx) + (line.shape.NormalUnit.NewUnitized().x * self.shape.Radius), 
-                                self.Y + (time * self.Vy) + (line.shape.NormalUnit.NewUnitized().y * self.shape.Radius),
-                                0, 
-                                -2*self.Vy*self.Mass, 
+                                self.X + (time * self.Vx) + (lineShape.NormalUnit.NewUnitized().x * circle.Radius),
+                                self.Y + (time * self.Vy) + (lineShape.NormalUnit.NewUnitized().y * circle.Radius),
+                                0,
+                                -2 * self.Vy * self.Mass,
                                 false)));
                         return true;
                     }
@@ -363,7 +457,5 @@ namespace Physics2
                 }
             }
         }
-
-
     }
 }

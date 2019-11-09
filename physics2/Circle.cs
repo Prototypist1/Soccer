@@ -8,10 +8,10 @@ namespace physics2
     {
         public Circle(double radious)
         {
-            Radious = radious;
+            Radius = radious;
         }
 
-        public double Radious { get; set; }
+        public double Radius { get; set; }
 
     }
 

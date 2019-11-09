@@ -16,14 +16,13 @@ namespace physics2
             Y = y;
         }
 
-        public double Time { get; internal set; } = 0;
         public double Vx { get; set; }
         public double Vy { get; set; }
         public double X { get; set; }
         public double Y { get; set; }
         public double Mass { get; }
         public double Speed => Math.Sqrt((Vx * Vx) + (Vy * Vy));
-        public abstract bool Mobile { get; }
+        public bool Mobile { get; }
         public Vector Velocity
         {
             get
@@ -45,11 +44,6 @@ namespace physics2
             Vy += fy / Mass;
         }
 
-        internal abstract bool TryNextCollision(PhysicsObject that, double endTime, out IEvent collision);
-
-        internal abstract HashSet<PhysicsObject> AddToGrid(GridManager gridManager);
-
-        internal abstract void RemoveFromGrid(GridManager gridManager);
     }
 
 }
