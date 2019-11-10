@@ -10,7 +10,7 @@ namespace physics2
     {
         private PhysicsObjectWithCircle ball;
         private readonly List<PhysicsObjectWithLine> parameters = new List<PhysicsObjectWithLine>();
-        private readonly List<PhysicsObjectWithLine> players = new List<PhysicsObjectWithLine>();
+        private readonly List<Player> players = new List<Player>();
         private readonly List<(PhysicsObjectWithCircle,  IGoalManager)> goals = new List<(PhysicsObjectWithCircle, IGoalManager)>();
 
         public readonly List<PhysicsObject> items = new List<PhysicsObject>();
@@ -58,7 +58,7 @@ namespace physics2
                     }
                 }
 
-                events = events.Where(x => x.Time > 0).ToList();
+                events = events.Where(x => x.Time > -1).ToList();
 
                 if (events.Any())
                 {
@@ -102,7 +102,7 @@ namespace physics2
             parameters.Add(physicsObject);
         }
 
-        public void AddPlayer(PhysicsObjectWithLine physicsObject)
+        public void AddPlayer(Player physicsObject)
         {
             players.Add(physicsObject);
         }

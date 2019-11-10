@@ -348,5 +348,120 @@ namespace Physics2
                 }
             }
         }
+
+
+
+        //internal static bool TryNextCollisionBallLineSweep(PhysicsObject self, Line startSweep, Line endSweep, Circle circle,  double endTime, out IEvent collision)
+        //{
+
+        //    var normalDistance = new Vector(self.X, self.Y).Dot(startSweep.NormalUnit.NewUnitized());//myPhysicsObject.X
+        //    var normalVelocity = new Vector(self.Vx - line.Vx, self.Vy - line.Vy).Dot(startSweep.NormalUnit.NewUnitized());//myPhysicsObject.Vx
+        //    var lineNormalDistance = startSweep.NormalDistance;//line.X
+
+        //    if (lineNormalDistance > normalDistance)
+        //    {
+        //        if (normalVelocity > 0)
+        //        {
+        //            var time = (lineNormalDistance - (normalDistance + circle.Radius)) / normalVelocity;
+
+        //            var directionDistance = self.Position.NewAdded(self.Velocity.NewScaled(time)).Dot(startSweep.DirectionUnit) -
+        //            line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(startSweep.DirectionUnit);
+
+
+        //            if (time < endTime && Math.Abs(directionDistance) < startSweep.Length * .5)
+        //            {
+        //                collision = DoCollision(self, line, circle.Radius, 0, time, startSweep.NormalUnit);
+        //                return true;
+        //            }
+        //            else
+        //            {
+        //                collision = default;
+        //                return false;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            collision = default;
+        //            return false;
+        //        }
+        //    }
+        //    else if (lineNormalDistance < normalDistance)
+        //    {
+        //        if (normalVelocity < 0)
+        //        {
+        //            var time = (lineNormalDistance - (normalDistance - circle.Radius)) / normalVelocity;
+
+        //            var directionDistance = self.Position.NewAdded(self.Velocity.NewScaled(time)).Dot(startSweep.DirectionUnit) -
+        //            line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(startSweep.DirectionUnit);
+
+
+        //            if (time < endTime && Math.Abs(directionDistance) < startSweep.Length * .5)
+        //            {
+        //                collision = DoCollision(self, line, circle.Radius, 0, time, startSweep.NormalUnit);
+        //                return true;
+        //            }
+        //            else
+        //            {
+        //                collision = default;
+        //                return false;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            collision = default;
+        //            return false;
+        //        }
+        //    }
+        //    else //if (lineNormalDistance == normalDistance)
+        //    {
+        //        if (normalVelocity < 0)
+        //        {
+        //            var time = (lineNormalDistance - (normalDistance - circle.Radius)) / normalVelocity;
+
+        //            var directionDistance = self.Position.NewAdded(self.Velocity.NewScaled(time)).Dot(startSweep.DirectionUnit) -
+        //            line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(startSweep.DirectionUnit);
+
+
+        //            if (time < endTime && Math.Abs(directionDistance) < lineShape.Length * .5)
+        //            {
+        //                collision = DoCollision(self, line, circle.Radius, 0, time, startSweep.NormalUnit);
+        //                return true;
+        //            }
+        //            else
+        //            {
+        //                collision = default;
+        //                return false;
+        //            }
+        //        }
+        //        else if (normalVelocity > 0)
+        //        {
+        //            var time = (lineNormalDistance - (normalDistance + circle.Radius)) / normalVelocity;
+
+        //            var directionDistance = self.Position.NewAdded(self.Velocity.NewScaled(time)).Dot(startSweep.DirectionUnit) -
+        //            line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit);
+
+
+        //            if (time < endTime && Math.Abs(directionDistance) < lineShape.Length * .5)
+        //            {
+        //                collision = DoCollision(self, line, circle.Radius, 0, time, lineShape.NormalUnit);
+        //                return true;
+        //            }
+        //            else
+        //            {
+        //                collision = default;
+        //                return false;
+        //            }
+        //        }
+        //        else //normalVelocity == 0
+        //        {
+        //            // how?? :(
+        //            collision = default;
+        //            return false;
+        //        }
+        //    }
+        //}
+
+
+
     }
 }

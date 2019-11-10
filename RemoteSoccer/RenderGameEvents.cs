@@ -343,8 +343,10 @@ namespace RemoteSoccer
                     {
                         Points = points,
                         Fill = new SolidColorBrush(color),
-                        Stroke = new SolidColorBrush(color),
-
+                        Stroke = new SolidColorBrush(Color.FromArgb(0x88,0xff,0xff,0xff)),
+                        StrokeThickness = 50,
+                        StrokeLineJoin = PenLineJoin.Round
+                        
                         
                     };
                     shape = polygon;
@@ -549,7 +551,7 @@ namespace RemoteSoccer
                             var skip = polygon.Points.Count > 200 ? 1 : 0;
                             double p1 = .97, p2 = 1-p1;
 
-                            for (int i = skip; i < polygon.Points.Count/2; i++)
+                            for (int i = skip; i < (polygon.Points.Count/2); i++)
                             {
                                 var point = polygon.Points[i];
                                 var pair = polygon.Points[(polygon.Points.Count - 1) - i];
@@ -559,27 +561,16 @@ namespace RemoteSoccer
 
                             var vv = new Physics2.Vector(position.Vx*10, position.Vy * 10);
 
-                            var num = random.Next() * 360;
-                            vv = vv.NewAdded(new Physics2.Vector(Math.Sin(num),  Math.Cos(num)).NewScaled(Math.Max(0,40-(vv.Length/20))));
-
                             if (vv.Length > Constants.PlayerRadius) {
                                 vv = vv.NewScaled(Constants.PlayerRadius / vv.Length);
                             }
-                            //if (vv.Length < 20)
-                            //{
-                            //    if (vv.Length < 10)
-                            //    {
-                                    
-                            //    }
-                            //    else {
-                            //        vv = vv.NewScaled(20 / vv.Length);
-                            //    }
-                            //}
-
+                            
                             points.Add(new Windows.Foundation.Point(vv.y, -vv.x));
+                            
+                           
                             points.Add(new Windows.Foundation.Point(-vv.y, vv.x));
                             
-                            for (int i = polygon.Points.Count/2; i < polygon.Points.Count - skip; i++)
+                            for (int i = (polygon.Points.Count/2); i < polygon.Points.Count - skip; i++)
                             {
                                 var point = polygon.Points[i];
                                 var pair = polygon.Points[(polygon.Points.Count - 1)-i];
