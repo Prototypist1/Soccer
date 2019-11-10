@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Physics\Physics.csproj" />
+    <ProjectReference Include="..\physics2\physics2.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Physics", "Physics\Physics.csproj", "{26AC031C-8701-4882-ADD9-9D4D8A337D3E}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server", "Server\Server.csproj", "{10F6E1DE-84E8-4E9B-9D81-04E0BB9ED379}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{0DE2F9B3-E060-4886-987E-C269D7AE8648}"
@@ -27,26 +25,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|ARM.Build.0 = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|x64.Build.0 = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Debug|x86.Build.0 = Debug|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|ARM.ActiveCfg = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|ARM.Build.0 = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|ARM64.ActiveCfg = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|ARM64.Build.0 = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|x64.ActiveCfg = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|x64.Build.0 = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|x86.ActiveCfg = Release|Any CPU
-		{26AC031C-8701-4882-ADD9-9D4D8A337D3E}.Release|x86.Build.0 = Release|Any CPU
 		{10F6E1DE-84E8-4E9B-9D81-04E0BB9ED379}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{10F6E1DE-84E8-4E9B-9D81-04E0BB9ED379}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10F6E1DE-84E8-4E9B-9D81-04E0BB9ED379}.Debug|ARM.ActiveCfg = Debug|Any CPU

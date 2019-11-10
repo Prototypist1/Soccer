@@ -223,9 +223,9 @@
       <Project>{0de2f9b3-e060-4886-987e-c269d7ae8648}</Project>
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Physics\Physics.csproj">
-      <Project>{26ac031c-8701-4882-add9-9d4d8a337d3e}</Project>
-      <Name>Physics</Name>
+    <ProjectReference Include="..\physics2\physics2.csproj">
+      <Project>{3c02fd6e-b7b5-4c9f-8e96-323e882b2574}</Project>
+      <Name>physics2</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

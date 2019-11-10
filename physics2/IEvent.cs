@@ -1,10 +1,10 @@
 ﻿namespace physics2
 {
-    internal interface IEvent
+    public interface IEvent
     {
         double Time { get; }
 
-        MightBeCollision Enact(double endtime);
+        MightBeCollision Enact();
     }
 
 }

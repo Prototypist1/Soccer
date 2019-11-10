@@ -72,10 +72,10 @@ namespace RemoteSoccer
         private class ElementEntry
         {
             private const int V = 0;
-            public readonly Ellipse element;
+            public readonly Shape element;
             private readonly Brush[] brushes;
 
-            public ElementEntry(Ellipse element, Color color)
+            public ElementEntry(Shape element, Color color)
             {
                 this.element = element ?? throw new ArgumentNullException(nameof(element));
                 //this.brushes = GenerateBrushes(color);
@@ -557,7 +557,7 @@ namespace RemoteSoccer
                         var dy = collision.Y - playerY;
                         var d = Math.Sqrt((dx * dx) + (dy * dy));
 
-                        item.Volume = Math.Min(1, (new Physics.Vector(collision.Fx, collision.Fy).Length * new Physics.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
+                        item.Volume = Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
                         item.AudioBalance = dx / d;
                         item.Play();
                     }

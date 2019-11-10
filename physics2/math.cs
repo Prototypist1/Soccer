@@ -8,14 +8,14 @@ namespace Physics2
 {
 
 
-    internal static class math
+    internal static class PhysicsMath
     {
 
         private const double CLOSE = .01;
 
 
 
-        internal static DoubleUpdatePositionVelocityEvent DoCollision(PhysicsObject physicsObject1, PhysicsObject physicsObject2, double radius1, double radius2, double time, Vector normal)
+        internal static DoubleUpdatePositionVelocityEvent DoCollision(PhysicsObject physicsObject1, IPhysicsObject physicsObject2, double radius1, double radius2, double time, Vector normal)
         {
             // update the V of both
 
@@ -37,13 +37,9 @@ namespace Physics2
                 return new DoubleUpdatePositionVelocityEvent(
                     time,
                     physicsObject1,
-                    physicsObject1.X + (time * physicsObject1.Vx),
-                    physicsObject1.Y + (time * physicsObject1.Vy),
                     physicsObject1.Vx,
                     physicsObject1.Vy,
                     physicsObject2,
-                    physicsObject2.X + (time * physicsObject2.Vx),
-                    physicsObject2.Y + (time * physicsObject2.Vy),
                     o2v.x,
                     o2v.y,
                     new MightBeCollision(
@@ -61,13 +57,9 @@ namespace Physics2
                 return new DoubleUpdatePositionVelocityEvent(
                     time,
                     physicsObject1,
-                    physicsObject1.X + (time * physicsObject1.Vx),
-                    physicsObject1.Y + (time * physicsObject1.Vy),
                     v1o.x,
                     v1o.y,
                     physicsObject2,
-                    physicsObject2.X + (time * physicsObject2.Vx),
-                    physicsObject2.Y + (time * physicsObject2.Vy),
                     physicsObject2.Vx,
                     physicsObject2.Vy,
                     new MightBeCollision(
@@ -153,13 +145,9 @@ namespace Physics2
                     return new DoubleUpdatePositionVelocityEvent(
                     time,
                     physicsObject1,
-                    physicsObject1.X + (time * physicsObject1.Vx),
-                    physicsObject1.Y + (time * physicsObject1.Vy),
                     o1v.x,
                     o1v.y,
                     physicsObject2,
-                    physicsObject2.X + (time * physicsObject2.Vx),
-                    physicsObject2.Y + (time * physicsObject2.Vy),
                     o2v.x,
                     o2v.y,
                     new MightBeCollision(new Collision(
@@ -173,7 +161,7 @@ namespace Physics2
             }
         }
 
-        private static Vector GetNormal(PhysicsObject physicsObject1, PhysicsObject physicsObject2, double time)
+        private static Vector GetNormal(IPhysicsObject physicsObject1, IPhysicsObject physicsObject2, double time)
         {
             var dx = physicsObject1.X + (time * physicsObject1.Vx) - (physicsObject2.X + (time * physicsObject2.Vx));
             var dy = physicsObject1.Y + (time * physicsObject1.Vy) - (physicsObject2.Y + (time * physicsObject2.Vy));
@@ -187,7 +175,7 @@ namespace Physics2
         }
 
 
-        internal static bool TryCollisionBall(PhysicsObject self, PhysicsObject that, Circle c1, Circle c2, double endTime, out IEvent evnt)
+        internal static bool TryCollisionBall(PhysicsObject self, IPhysicsObject that, Circle c1, Circle c2, double endTime, out IEvent evnt)
         {
 
             // how  are they moving relitive to us
@@ -255,7 +243,7 @@ namespace Physics2
         {
 
             var normalDistance = new Vector(self.X, self.Y).Dot(lineShape.NormalUnit.NewUnitized());//myPhysicsObject.X
-            var normalVelocity = new Vector(self.Vx, self.Vy).Dot(lineShape.NormalUnit.NewUnitized());//myPhysicsObject.Vx
+            var normalVelocity = new Vector(self.Vx- line.Vx, self.Vy - line.Vy).Dot(lineShape.NormalUnit.NewUnitized());//myPhysicsObject.Vx
             var lineNormalDistance = lineShape.NormalDistance;//line.X
 
             if (lineNormalDistance > normalDistance)
@@ -263,23 +251,14 @@ namespace Physics2
                 if (normalVelocity > 0)
                 {
                     var time = (lineNormalDistance - (normalDistance + circle.Radius)) / normalVelocity;
-                    if (time < endTime)
-                    {
-                        var force = lineShape.NormalUnit.NewScaled(-2 * normalVelocity);
 
-                        collision = new UpdatePositionVelocityEvent(
-                            time,
-                            self,
-                            self.X + (time * self.Vx),
-                            self.Y + (time * self.Vy),
-                            self.Vx + force.x,
-                            self.Vy + force.y,
-                            new MightBeCollision(new Collision(
-                                self.X + (time * self.Vx) + (lineShape.NormalUnit.NewUnitized().x * circle.Radius),
-                                self.Y + (time * self.Vy) + (lineShape.NormalUnit.NewUnitized().y * circle.Radius),
-                                force.x,
-                                force.y,
-                                false)));
+                    var directionDistance= self.Position.NewAdded(self.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit)-
+                    line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit);
+
+
+                    if (time < endTime && Math.Abs(directionDistance) <lineShape.Length*.5)
+                    {
+                        collision = DoCollision(self, line, circle.Radius, 0, time, lineShape.NormalUnit);
                         return true;
                     }
                     else
@@ -299,23 +278,14 @@ namespace Physics2
                 if (normalVelocity < 0)
                 {
                     var time = (lineNormalDistance - (normalDistance - circle.Radius)) / normalVelocity;
-                    if (time < endTime)
-                    {
-                        var force = lineShape.NormalUnit.NewScaled(-2 * normalVelocity);
 
-                        collision = new UpdatePositionVelocityEvent(
-                            time,
-                            self,
-                            self.X + (time * self.Vx),
-                            self.Y + (time * self.Vy),
-                            self.Vx + force.x,
-                            self.Vy + force.y,
-                            new MightBeCollision(new Collision(
-                                self.X + (time * self.Vx) + (-lineShape.NormalUnit.NewUnitized().x * circle.Radius),
-                                self.Y + (time * self.Vy) + (-lineShape.NormalUnit.NewUnitized().y * circle.Radius),
-                                force.x,
-                                force.y,
-                                false)));
+                    var directionDistance = self.Position.NewAdded(self.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit) -
+                    line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit);
+
+
+                    if (time < endTime && Math.Abs(directionDistance) < lineShape.Length * .5)
+                    {
+                        collision = DoCollision(self, line, circle.Radius, 0, time, lineShape.NormalUnit);
                         return true;
                     }
                     else
@@ -335,21 +305,14 @@ namespace Physics2
                 if (normalVelocity < 0)
                 {
                     var time = (lineNormalDistance - (normalDistance - circle.Radius)) / normalVelocity;
-                    if (time < endTime)
+
+                    var directionDistance = self.Position.NewAdded(self.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit) -
+                    line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit);
+
+
+                    if (time < endTime && Math.Abs(directionDistance) < lineShape.Length * .5)
                     {
-                        collision = new UpdatePositionVelocityEvent(
-                            time,
-                            self,
-                            self.X + (time * self.Vx),
-                            self.Y + (time * self.Vy),
-                            -self.Vx,
-                            self.Vy,
-                            new MightBeCollision(new Collision(
-                                self.X + (time * self.Vx) + (-lineShape.NormalUnit.NewUnitized().x * circle.Radius),
-                                self.Y + (time * self.Vy) + (-lineShape.NormalUnit.NewUnitized().y * circle.Radius),
-                                -self.Vx * 2 * self.Mass,
-                                0,
-                                false)));
+                        collision = DoCollision(self, line, circle.Radius, 0, time, lineShape.NormalUnit);
                         return true;
                     }
                     else
@@ -361,21 +324,14 @@ namespace Physics2
                 else if (normalVelocity > 0)
                 {
                     var time = (lineNormalDistance - (normalDistance + circle.Radius)) / normalVelocity;
-                    if (time < endTime)
+
+                    var directionDistance = self.Position.NewAdded(self.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit) -
+                    line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit);
+
+
+                    if (time < endTime && Math.Abs(directionDistance) < lineShape.Length * .5)
                     {
-                        collision = new UpdatePositionVelocityEvent(
-                            time,
-                            self,
-                            self.X + (time * self.Vx),
-                            self.Y + (time * self.Vy),
-                            -self.Vx,
-                            self.Vy,
-                            new MightBeCollision(new Collision(
-                                self.X + (time * self.Vx) + (lineShape.NormalUnit.NewUnitized().x * circle.Radius),
-                                self.Y + (time * self.Vy) + (lineShape.NormalUnit.NewUnitized().y * circle.Radius),
-                                0,
-                                -2 * self.Vy * self.Mass,
-                                false)));
+                        collision = DoCollision(self, line, circle.Radius, 0, time, lineShape.NormalUnit);
                         return true;
                     }
                     else

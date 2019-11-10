@@ -4,7 +4,7 @@ using System.Text;
 
 namespace physics2
 {
-    internal class Circle
+    public class Circle
     {
         public Circle(double radious)
         {

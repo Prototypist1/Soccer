@@ -5,7 +5,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
-using Physics;
+using physics2;
+using Physics2;
 using Prototypist.TaskChain;
 
 namespace Common
@@ -16,11 +17,11 @@ namespace Common
         private int players = 0;
 
 
-        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(1000, Constants.xMax, Constants.yMax));
+        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine());
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
-        private readonly PhysicsObject ball;
+        private readonly PhysicsObjectWithCircle ball;
 
         private readonly ConcurrentSet<FootCreated> feetCreaated = new ConcurrentSet<FootCreated>();
         private readonly ConcurrentSet<BodyCreated> bodiesCreated = new ConcurrentSet<BodyCreated>();
@@ -31,14 +32,14 @@ namespace Common
 
         private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
         public DateTime LastInputUTC { get; private set; } = DateTime.Now;
-        private int leftScore = 0, rightScore = 0;
+
 
 
         private readonly GameStateTracker gameStateTracker;
 
         private class GameStateTracker
         {
-
+            public int leftScore = 0, rightScore = 0;
             private readonly Action resetBallAction;
             private readonly double ballStartX, ballStartY;
 
@@ -112,6 +113,68 @@ namespace Common
                 }
                 ballWall = default;
                 return false;
+            }
+        }
+
+        private class GoalManager : IGoalManager
+        {
+            private readonly GameStateTracker gameStateTracker;
+            private readonly Action<UpdateScore> onUpdateScore;
+            private bool right;
+
+            public GoalManager(GameStateTracker gameStateTracker, Action<UpdateScore> onUpdateScore, bool right)
+            {
+                this.gameStateTracker = gameStateTracker ?? throw new ArgumentNullException(nameof(gameStateTracker));
+                this.onUpdateScore = onUpdateScore ?? throw new ArgumentNullException(nameof(onUpdateScore));
+                this.right = right;
+            }
+
+            private class UpdateScoreEvent : IEvent
+            {
+                private readonly GameStateTracker gameStateTracker;
+                private readonly Action<UpdateScore> onUpdateScore;
+                private bool right;
+                
+
+                public UpdateScoreEvent(GameStateTracker gameStateTracker, Action<UpdateScore> onUpdateScore, bool right, double time)
+                {
+                    this.gameStateTracker = gameStateTracker ?? throw new ArgumentNullException(nameof(gameStateTracker));
+                    this.onUpdateScore = onUpdateScore ?? throw new ArgumentNullException(nameof(onUpdateScore));
+                    this.right = right;
+                    Time = time;
+                }
+
+                public double Time
+                {
+                    get;
+                }
+
+                public MightBeCollision Enact()
+                {
+                    gameStateTracker.Scored();
+                    if (right)
+                    {
+                        gameStateTracker.rightScore++;
+                    }
+                    else
+                    {
+                        gameStateTracker.leftScore++;
+
+                    }
+                    onUpdateScore(new UpdateScore() { Left = gameStateTracker.leftScore, Right = gameStateTracker.rightScore });
+
+                    return new MightBeCollision();
+                }
+            }
+
+            public IEvent GetGoalEvent(double time)
+            {
+                return new UpdateScoreEvent(gameStateTracker, onUpdateScore, right, time);
+            }
+
+            public bool IsEnabled()
+            {
+                return gameStateTracker.CanScore();
             }
         }
 
@@ -207,9 +270,9 @@ namespace Common
         public UpdateScore Reset()
         {
             gameStateTracker.Scored();
-            leftScore = 0;
-            rightScore = 0;
-            return new UpdateScore() { Left = leftScore, Right = rightScore };
+            gameStateTracker.leftScore = 0;
+            gameStateTracker.rightScore = 0;
+            return new UpdateScore() { Left = gameStateTracker.leftScore, Right = gameStateTracker.rightScore };
         }
 
         public Game(Action<UpdateScore> onUpdateScore)
@@ -222,8 +285,9 @@ namespace Common
 
 
             ballId = Guid.NewGuid();
-            ball = PhysicsObjectBuilder.Ball(Constants.BallMass, Constants.BallRadius, Constants.xMax / 2, Constants.yMax / 2);
 
+            ball = new PhysicsObjectWithCircle(Constants.BallMass, Constants.xMax / 2, Constants.yMax / 2, true, new Circle(Constants.BallRadius));
+            
             ballCreated = new BallCreated(
                ball.X,
                ball.Y,
@@ -236,15 +300,9 @@ namespace Common
                255);
 
             var leftGoalId = Guid.NewGuid();
-            var leftGoal = PhysicsObjectBuilder.Goal(Constants.footLen, (Constants.footLen * 3), Constants.yMax / 2.0, x => x == ball && gameStateTracker.CanScore(), x =>
-            {
-                if (gameStateTracker.CanScore())
-                {
-                    gameStateTracker.Scored();
-                    rightScore++;
-                    onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
-                }
-            });
+            var leftGoal = new PhysicsObjectWithCircle(1, (Constants.footLen * 3), Constants.yMax / 2.0, false, new Circle(Constants.footLen));
+           
+
             goalsCreated.AddOrThrow(new GoalCreated(
                leftGoal.X,
                leftGoal.Y,
@@ -257,15 +315,9 @@ namespace Common
                0xff));
 
             var rightGoalId = Guid.NewGuid();
-            var rightGoal = PhysicsObjectBuilder.Goal(Constants.footLen, Constants.xMax - (Constants.footLen * 3), Constants.yMax / 2.0, x => x == ball && gameStateTracker.CanScore(), x =>
-            {
-                if (gameStateTracker.CanScore())
-                {
-                    gameStateTracker.Scored();
-                    leftScore++;
-                    onUpdateScore(new UpdateScore() { Left = leftScore, Right = rightScore });
-                }
-            });
+
+            var rightGoal = new PhysicsObjectWithCircle(1, Constants.xMax - (Constants.footLen * 3), Constants.yMax / 2.0, false, new Circle(Constants.footLen));
+            
             goalsCreated.AddOrThrow(new GoalCreated(
                rightGoal.X,
                rightGoal.Y,
@@ -295,16 +347,22 @@ namespace Common
             Constants.yMax / 2.0
             );
 
+            var rightGoalManger = new GoalManager(gameStateTracker, onUpdateScore, true);
+            var leftGoalManger = new GoalManager(gameStateTracker, onUpdateScore, false);
+
             physicsEngine.Run(x =>
             {
-                x.AddObject(ball);
-                x.AddObject(leftGoal);
-                x.AddObject(rightGoal);
+                x.SetBall(ball);
+                x.AddGoal(leftGoal,leftGoalManger);
+                x.AddGoal(rightGoal, rightGoalManger);
                 foreach (var side in points)
                 {
-                    var line = PhysicsObjectBuilder.Line(side.Item1, side.Item2);
-
-                    x.AddObject(line);
+                    var line = new Line(side.Item1, side.Item2);
+                    var pos = side.Item1.NewAdded(side.Item2).NewScaled(.5);
+                    // the position on this is pretty wierd
+                    // pretty sure it is not used
+                    var linePhysicObject = new PhysicsObjectWithFixedLine(0,line, false);
+                    x.AddWall(linePhysicObject);
                 }
                 return x;
             });
@@ -319,9 +377,9 @@ namespace Common
         {
             double startX = 400;
             double startY = 400;
-            var foot = PhysicsObjectBuilder.Ball(1, createPlayer.FootDiameter / 2.0, startX, startY);
+            var foot = new Player(1,  startX, startY, true, Constants.PlayerRadius*2);
 
-            physicsEngine.Run(x => { x.AddObject(foot); return x; });
+            physicsEngine.Run(x => { x.AddPlayer(foot); return x; });
             feet[createPlayer.Foot] = foot;
 
             var body = new Center(
@@ -555,7 +613,7 @@ namespace Common
                 Collision[] collisions = null;
                 physicsEngine.Run(x =>
                 {
-                    collisions = x.Simulate(simulationTime);
+                    collisions = x.Simulate();
                     return x;
                 });
 

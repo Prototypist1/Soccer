@@ -132,11 +132,11 @@ namespace RemoteSoccer
                 try
                 {
                     game = new LocalGame();
-                    game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
+                    //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
                     game.OnDisconnect(OnDisconnect);
                     game.SetCallbacks(rge);
-                    //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
-                    inputs = new ControllerInputes(lockCurser, game, body, foot);
+                    inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
+                    //inputs = new ControllerInputes(lockCurser, game, body, foot);
 
                     var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
 
