@@ -385,10 +385,6 @@ namespace Common
             var body = new Center(
                 startX,
                 startY,
-                Constants.xMax,
-                0,
-                0,
-                Constants.yMax,
                 foot,
                 createPlayer.BodyDiameter / 2.0
                 );

@@ -11,16 +11,12 @@ namespace Common
         public double Y { get; private set; }
         public PhysicsObject Foot { get; }
         public double X { get; private set; }
-        public double vx, vy, maxX, minX, minY, maxY , radius;
+        public double vx, vy, radius;
 
-        public Center(double x, double y, double maxX, double minX, double minY, double maxY, PhysicsObject foot, double radius)
+        public Center(double x, double y, PhysicsObject foot, double radius)
         {
             Y = y;
             X = x;
-            this.maxX = maxX;
-            this.minX = minX;
-            this.minY = minY;
-            this.maxY = maxY;
             Foot = foot ?? throw new ArgumentNullException(nameof(foot));
             this.radius = radius;
         }
@@ -46,25 +42,25 @@ namespace Common
             X += vx;
             Y += vy;
 
-            if (X > maxX)
-            {
-                X = maxX;
-            }
+            //if (X > maxX)
+            //{
+            //    X = maxX;
+            //}
 
-            if (Y > maxY)
-            {
-                Y = maxY;
-            }
+            //if (Y > maxY)
+            //{
+            //    Y = maxY;
+            //}
 
-            if (X < minX)
-            {
-                X = minX;
-            }
+            //if (X < minX)
+            //{
+            //    X = minX;
+            //}
 
-            if (Y < minY)
-            {
-                Y = minY;
-            }
+            //if (Y < minY)
+            //{
+            //    Y = minY;
+            //}
 
             if (useBallWall)
             {

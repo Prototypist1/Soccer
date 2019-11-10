@@ -43,14 +43,16 @@ namespace physics2
         }
 
         public override Line GetLine() {
-            var v = Velocity;
-            if (v.Length == 0) {
-                v = new Physics2.Vector(1, 0);
+            
+            // this is shared code
+            var v = new Physics2.Vector(Vx * 10, Vy * 10);
+            if (v.Length > length*.5)
+            {
+                v = v.NewScaled(length * .5 / v.Length);
             }
-            v = v.NewUnitized().NewScaled(length);
             return new Line(
-                new Physics2.Vector(X - (v.y / 2.0), Y + (v.x / 2.0)),
-                new Physics2.Vector(X + (v.y / 2.0), Y - (v.x / 2.0)));
+                new Physics2.Vector(X - v.y, Y + v.x),
+                new Physics2.Vector(X + v.y, Y - v.x));
         }
     }
 

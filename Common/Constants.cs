@@ -13,7 +13,7 @@
         public const double footLen = 2000;
         public const double xMax = 16*2500;
         public const double yMax = 9*2500;
-        public const int PlayerRadius = 250;
+        public const int PlayerRadius = 500;
         public const int BallRadius = 250;
         public const double BallMass = .1;
     }

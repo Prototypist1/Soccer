@@ -167,6 +167,8 @@ namespace RemoteSoccer
 
         private readonly TextBlock leftScore, rightScore;
         private readonly Zoomer zoomer;
+
+        private Random random = new Random();
         private readonly IReadonlyRef<int> frame;
 
         public RenderGameEvents(
@@ -183,7 +185,6 @@ namespace RemoteSoccer
             this.leftScore = leftScore;
             this.rightScore = rightScore;
             this.zoomer = zoomer;
-            var random = new Random();
             for (int i = 0; i < 10; i++)
             {
 
@@ -266,7 +267,6 @@ namespace RemoteSoccer
                 });
         }
 
-
         public async void HandleColorChanged(ColorChanged obj)
         {
 
@@ -290,8 +290,6 @@ namespace RemoteSoccer
                             text.Text = obj.Name;
                         });
         }
-
-
 
         public void HandleObjectsCreated(ObjectsCreated objectsCreated)
         {
@@ -331,33 +329,70 @@ namespace RemoteSoccer
                         objectCreated.G,
                         objectCreated.B);
 
-                var ellipse = new Ellipse()
+                Shape shape;
+
+                if (objectCreated is FootCreated)
                 {
-                    Width = objectCreated.Diameter,
-                    Height = objectCreated.Diameter,
-                    Fill = new SolidColorBrush(color),
-                };
+                    var points = new PointCollection();
+                    points.Add(new Windows.Foundation.Point(0, 0));
+                    points.Add(new Windows.Foundation.Point(0, 0));
+                    points.Add(new Windows.Foundation.Point(0, 0));
+                    points.Add(new Windows.Foundation.Point(0, 0));
 
-                Canvas.SetZIndex(ellipse, objectCreated.Z);
+                    var polygon = new Polygon()
+                    {
+                        Points = points,
+                        Fill = new SolidColorBrush(color),
+                        Stroke = new SolidColorBrush(color),
 
-                ellipse.TransformMatrix =
-                // first we center
-                new System.Numerics.Matrix4x4(
-                    1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    (float)(-ellipse.Width / 2.0), (float)(-ellipse.Height / 2.0), 0, 1)
-                *
-                // then we move to the right spot
-                new System.Numerics.Matrix4x4(
-                    1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
+                        
+                    };
+                    shape = polygon;
+
+                    shape.TransformMatrix =
+                    // then we move to the right spot
+                    new System.Numerics.Matrix4x4(
+                        1, 0, 0, 0,
+                        0, 1, 0, 0,
+                        0, 0, 1, 0,
+                        (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
+                }
+                else
+                {
+                    var ellipse = new Ellipse()
+                    {
+                        Width = objectCreated.Diameter,
+                        Height = objectCreated.Diameter,
+                        Fill = new SolidColorBrush(color),
+                    };
+                    ellipse.TransformMatrix =
+                    // first we center
+                    new System.Numerics.Matrix4x4(
+                        1, 0, 0, 0,
+                        0, 1, 0, 0,
+                        0, 0, 1, 0,
+                        (float)(-ellipse.Width / 2.0), (float)(-ellipse.Height / 2.0), 0, 1)
+                    *
+                    // then we move to the right spot
+                    new System.Numerics.Matrix4x4(
+                        1, 0, 0, 0,
+                        0, 1, 0, 0,
+                        0, 0, 1, 0,
+                        (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
+
+                    shape = ellipse;
+
+                    if (objectCreated is BallCreated)
+                    {
+                        this.ball = ellipse;
+                    }
+                }
+
+                Canvas.SetZIndex(shape, objectCreated.Z);
 
 
-                elements.Add(objectCreated.Id, new ElementEntry(ellipse, color));// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
-                this.gameArea.Children.Add(ellipse);
+                elements.Add(objectCreated.Id, new ElementEntry(shape, color));// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
+                this.gameArea.Children.Add(shape);
 
                 if (objectCreated is BodyCreated foot)
                 {
@@ -392,15 +427,9 @@ namespace RemoteSoccer
                     texts.Add(foot.Id, text);
                 }
 
-                if (objectCreated is BallCreated)
-                {
-                    this.ball = ellipse;
-                }
 
             }
         }
-
-
 
         double framesRecieved = 0;
         private Stopwatch stopWatch =new Stopwatch();
@@ -452,67 +481,122 @@ namespace RemoteSoccer
 
                     if (elements.TryGetValue(position.Id, out var element))
                     {
-                        var v = Math.Sqrt((position.Vx * position.Vx) + (position.Vy * position.Vy));
 
-                        var Stretch = (v / element.element.Width);
 
-                        //element.element.Fill = element.GetBrush( element.element.Width,v);
-
-                        if (v != 0)
+                        if (element.element is Ellipse)
                         {
-                            element.element.TransformMatrix =
-                            // first we center
-                            new System.Numerics.Matrix4x4(
-                                1, 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
-                            // then we stretch
-                            * new System.Numerics.Matrix4x4(
-                               (float)(1 + Stretch), 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                0, 0, 0, 1)
-                            // slide it back a little bit
-                            * new System.Numerics.Matrix4x4(
-                                1, 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                (float)(-v / 2.0), 0, 0, 1)
-                            // then we rotate
-                            * new System.Numerics.Matrix4x4(
-                                (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
-                                (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
-                                0, 0, 1, 0,
-                                0, 0, 0, 1)
-                            // then we move to the right spot
-                            * new System.Numerics.Matrix4x4(
-                                1, 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                (float)(position.X), (float)(position.Y), 0, 1);
-                        }
-                        else
-                        {
+                            var v = Math.Sqrt((position.Vx * position.Vx) + (position.Vy * position.Vy));
 
-                            element.element.TransformMatrix =
-                            // first we center
-                            new System.Numerics.Matrix4x4(
-                                1, 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
-                            *
-                            // then we move to the right spot
-                            new System.Numerics.Matrix4x4(
-                                1, 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                (float)(position.X), (float)(position.Y), 0, 1);
-                        }
 
-                        //Canvas.SetLeft(element, position.X - (element.Width / 2.0));
-                        //Canvas.SetTop(element, position.Y - (element.Height / 2.0));
+                            var Stretch = (v / element.element.Width);
+
+
+                            if (v != 0)
+                            {
+                                element.element.TransformMatrix =
+                                // first we center
+                                new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
+                                // then we stretch
+                                * new System.Numerics.Matrix4x4(
+                                   (float)(1 + Stretch), 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    0, 0, 0, 1)
+                                // slide it back a little bit
+                                * new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(-v / 2.0), 0, 0, 1)
+                                // then we rotate
+                                * new System.Numerics.Matrix4x4(
+                                    (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
+                                    (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
+                                    0, 0, 1, 0,
+                                    0, 0, 0, 1)
+                                // then we move to the right spot
+                                * new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(position.X), (float)(position.Y), 0, 1);
+                            }
+                            else
+                            {
+
+                                element.element.TransformMatrix =
+                                // first we center
+                                new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
+                                *
+                                // then we move to the right spot
+                                new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(position.X), (float)(position.Y), 0, 1);
+                            }
+                        }
+                        else if (element.element is Polygon polygon) {
+                            var points = new PointCollection();
+                            var skip = polygon.Points.Count > 200 ? 1 : 0;
+                            double p1 = .97, p2 = 1-p1;
+
+                            for (int i = skip; i < polygon.Points.Count/2; i++)
+                            {
+                                var point = polygon.Points[i];
+                                var pair = polygon.Points[(polygon.Points.Count - 1) - i];
+
+                                points.Add(new Windows.Foundation.Point((point.X*p1 + pair.X*p2) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
+                            }
+
+                            var vv = new Physics2.Vector(position.Vx*10, position.Vy * 10);
+
+                            var num = random.Next() * 360;
+                            vv = vv.NewAdded(new Physics2.Vector(Math.Sin(num),  Math.Cos(num)).NewScaled(Math.Max(0,40-(vv.Length/20))));
+
+                            if (vv.Length > Constants.PlayerRadius) {
+                                vv = vv.NewScaled(Constants.PlayerRadius / vv.Length);
+                            }
+                            //if (vv.Length < 20)
+                            //{
+                            //    if (vv.Length < 10)
+                            //    {
+                                    
+                            //    }
+                            //    else {
+                            //        vv = vv.NewScaled(20 / vv.Length);
+                            //    }
+                            //}
+
+                            points.Add(new Windows.Foundation.Point(vv.y, -vv.x));
+                            points.Add(new Windows.Foundation.Point(-vv.y, vv.x));
+                            
+                            for (int i = polygon.Points.Count/2; i < polygon.Points.Count - skip; i++)
+                            {
+                                var point = polygon.Points[i];
+                                var pair = polygon.Points[(polygon.Points.Count - 1)-i];
+
+                                points.Add(new Windows.Foundation.Point((point.X * p1 + pair.X * p2) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
+                            }
+
+                            polygon.Points = points;
+
+                            polygon.TransformMatrix =
+                                // then we move to the right spot
+                                new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(position.X), (float)(position.Y), 0, 1);
+                                    }
                     }
 
                     if (element != null && texts.TryGetValue(position.Id, out var text))
