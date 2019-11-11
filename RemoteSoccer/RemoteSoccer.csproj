@@ -144,6 +144,9 @@
       <DependentUpon>LandingPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="LocalGame.cs" />
+    <Compile Include="LocalLanding.xaml.cs">
+      <DependentUpon>LocalLanding.xaml</DependentUpon>
+    </Compile>
     <Compile Include="LocalSettingsKeys.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -187,6 +190,10 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Page Include="LandingPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LocalLanding.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
