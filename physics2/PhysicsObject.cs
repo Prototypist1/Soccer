@@ -6,7 +6,7 @@ using System.Text;
 namespace physics2
 {
 
-    public class PhysicsObject : IPhysicsObject
+    public class PhysicsObject : IPhysicsObject, IUpdatePosition
     {
 
         public PhysicsObject(double mass, double x, double y, bool mobile)
@@ -19,8 +19,8 @@ namespace physics2
 
         public double Vx { get; set; }
         public double Vy { get; set; }
-        public double X { get; set; }
-        public double Y { get; set; }
+        public double X { get; protected set; }
+        public double Y { get; protected set; }
         public double Mass { get; }
         public double Speed => Math.Sqrt((Vx * Vx) + (Vy * Vy));
         public bool Mobile { get; }
@@ -45,6 +45,11 @@ namespace physics2
             Vy += fy / Mass;
         }
 
+        public virtual void Update(double step, double timeLeft)
+        {
+            X += Vx * step;
+            Y += Vy * step;
+        }
     }
 
 }

@@ -1,119 +1,119 @@
-﻿using Physics2;
-using System;
+﻿//using Physics2;
+//using System;
 
-namespace physics2
-{
-    public class PassThroughPhysicObject : IPhysicsObject {
-        IPhysicsObject backing;
-        Vector offset;
+//namespace physics2
+//{
+//    public class PassThroughPhysicObject : IPhysicsObject {
+//        IPhysicsObject backing;
+//        Vector offset;
 
-        public PassThroughPhysicObject(IPhysicsObject backing, Vector offset)
-        {
-            this.backing = backing ?? throw new ArgumentNullException(nameof(backing));
-            this.offset = offset;
-        }
+//        public PassThroughPhysicObject(IPhysicsObject backing, Vector offset)
+//        {
+//            this.backing = backing ?? throw new ArgumentNullException(nameof(backing));
+//            this.offset = offset;
+//        }
 
-        public double Mass
-        {
-            get
-            {
-                return backing.Mass;
-            }
-        }
+//        public double Mass
+//        {
+//            get
+//            {
+//                return backing.Mass;
+//            }
+//        }
 
-        public bool Mobile
-        {
-            get
-            {
-                return backing.Mobile;
-            }
-        }
+//        public bool Mobile
+//        {
+//            get
+//            {
+//                return backing.Mobile;
+//            }
+//        }
 
-        public Vector Position
-        {
-            get
-            {
-                return backing.Position;
-            }
-        }
+//        public Vector Position
+//        {
+//            get
+//            {
+//                return backing.Position;
+//            }
+//        }
 
-        public double Speed
-        {
-            get
-            {
-                return backing.Speed;
-            }
-        }
+//        public double Speed
+//        {
+//            get
+//            {
+//                return backing.Speed;
+//            }
+//        }
 
-        public Vector Velocity
-        {
-            get
-            {
-                return backing.Velocity;
-            }
+//        public Vector Velocity
+//        {
+//            get
+//            {
+//                return backing.Velocity;
+//            }
 
-            set
-            {
-                backing.Velocity = value;
-            }
-        }
+//            set
+//            {
+//                backing.Velocity = value;
+//            }
+//        }
 
-        public double Vx
-        {
-            get
-            {
-                return backing.Vx;
-            }
+//        public double Vx
+//        {
+//            get
+//            {
+//                return backing.Vx;
+//            }
 
-            set
-            {
-                backing.Vx = value;
-            }
-        }
+//            set
+//            {
+//                backing.Vx = value;
+//            }
+//        }
 
-        public double Vy
-        {
-            get
-            {
-                return backing.Vy;
-            }
+//        public double Vy
+//        {
+//            get
+//            {
+//                return backing.Vy;
+//            }
 
-            set
-            {
-                backing.Vy = value;
-            }
-        }
+//            set
+//            {
+//                backing.Vy = value;
+//            }
+//        }
 
-        public double X
-        {
-            get
-            {
-                return backing.X + offset.x;
-            }
+//        public double X
+//        {
+//            get
+//            {
+//                return backing.X + offset.x;
+//            }
 
-            set
-            {
-                backing.X = value - offset.x;
-            }
-        }
+//            set
+//            {
+//                backing.X = value - offset.x;
+//            }
+//        }
 
-        public double Y
-        {
-            get
-            {
-                return backing.Y + offset.y;
-            }
+//        public double Y
+//        {
+//            get
+//            {
+//                return backing.Y + offset.y;
+//            }
 
-            set
-            {
-                backing.Y = value - offset.y;
-            }
-        }
+//            set
+//            {
+//                backing.Y = value - offset.y;
+//            }
+//        }
 
-        public void ApplyForce(double fx, double fy)
-        {
-            backing.ApplyForce(fx, fy);
-        }
-    }
+//        public void ApplyForce(double fx, double fy)
+//        {
+//            backing.ApplyForce(fx, fy);
+//        }
+//    }
 
-}
+//}

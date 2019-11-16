@@ -10,6 +10,8 @@
         public const int footZ = 3;
         public const int effectZ = 5;
 
+        public const double playerPadding = 50;
+
         public const double footLen = 2000;
         public const double xMax = 16*2500;
         public const double yMax = 9*2500;

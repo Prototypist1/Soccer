@@ -8,10 +8,10 @@ namespace physics2
 {
     public class PhysicsEngine
     {
-        private PhysicsObjectWithCircle ball;
-        private readonly List<PhysicsObjectWithLine> parameters = new List<PhysicsObjectWithLine>();
+        private Ball ball;
+        private readonly List<PhysicsObjectWithFixedLine> parameters = new List<PhysicsObjectWithFixedLine>();
         private readonly List<Player> players = new List<Player>();
-        private readonly List<(PhysicsObjectWithCircle,  IGoalManager)> goals = new List<(PhysicsObjectWithCircle, IGoalManager)>();
+        private readonly List<(Ball,  IGoalManager)> goals = new List<(Ball, IGoalManager)>();
 
         public readonly List<PhysicsObject> items = new List<PhysicsObject>();
 
@@ -35,22 +35,34 @@ namespace physics2
                 }
                 foreach (var player in players)
                 {
-                    if (PhysicsMath.TryNextCollisionBallLine(ball, player, ball.GetCircle(), player.GetLine(), timeLeft, out var @event))
                     {
-                        events.Add(@event);
+                        //foreach (var partical in player.line)
+                        //{
+                        //    if (PhysicsMath.TryCollisionPointCloudParticle(ball, player, partical.X, partical.Y, partical.Vx(timeLeft), partical.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
+                        //    {
+                        //        events.Add(@event);
+                        //    }
+                        //}
                     }
-                    if (PhysicsMath.TryCollisionBall(ball, player.GetStart(), ball.GetCircle(), new Circle(0), timeLeft, out  @event))
+
                     {
-                        events.Add(@event);
+                        var start = player.start;
+                        if (PhysicsMath.TryCollisionBall(ball, player, start.X, start.Y, start.Vx(timeLeft), start.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
+                        {
+                            events.Add(@event);
+                        }
                     }
-                    if (PhysicsMath.TryCollisionBall(ball, player.GetEnd(), ball.GetCircle(), new Circle(0), timeLeft, out  @event))
                     {
-                        events.Add(@event);
+                        var end = player.end;
+                        if (PhysicsMath.TryCollisionBall(ball, player, end.X, end.Y, end.Vx(timeLeft), end.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
+                        {
+                            events.Add(@event);
+                        }
                     }
                 }
                 foreach (var goal in goals)
                 {
-                    if (goal.Item2.IsEnabled() && PhysicsMath.TryCollisionBall(ball, goal.Item1, ball.GetCircle(), goal.Item1.GetCircle(), timeLeft, out var @event))
+                    if (goal.Item2.IsEnabled() && PhysicsMath.TryCollisionBall(ball, goal.Item1, goal.Item1.X, goal.Item1.Y, goal.Item1.Vx, goal.Item1.Vy, ball.GetCircle(), goal.Item1.GetCircle(), timeLeft, out var @event))
                     {
                         // man I hate goals
                         // we need to replace the event
@@ -58,7 +70,7 @@ namespace physics2
                     }
                 }
 
-                events = events.Where(x => x.Time > -1).ToList();
+                events = events.Where(x => x.Time >= 0).ToList();
 
                 if (events.Any())
                 {
@@ -67,8 +79,7 @@ namespace physics2
                     // move everyone
                     foreach (var physicObject in PhysicsObject())
                     {
-                        physicObject.X = physicObject.X + (physicObject.Vx * toEnact.Time);
-                        physicObject.Y = physicObject.Y + (physicObject.Vy * toEnact.Time);
+                        physicObject.Update(toEnact.Time, timeLeft);
                     }
 
                     if (toEnact.Enact().IsIt(out var collision))
@@ -82,8 +93,7 @@ namespace physics2
                 {
                     foreach (var physicObject in PhysicsObject())
                     {
-                        physicObject.X = physicObject.X + (physicObject.Vx * timeLeft);
-                        physicObject.Y = physicObject.Y + (physicObject.Vy * timeLeft);
+                        physicObject.Update(timeLeft, timeLeft);
                     }
 
                     timeLeft -= timeLeft;
@@ -94,11 +104,11 @@ namespace physics2
             return collisions.ToArray();
         }
 
-        public void SetBall(PhysicsObjectWithCircle physicsObject) {
+        public void SetBall(Ball physicsObject) {
             ball = physicsObject;
         }
 
-        public void AddWall(PhysicsObjectWithLine physicsObject) {
+        public void AddWall(PhysicsObjectWithFixedLine physicsObject) {
             parameters.Add(physicsObject);
         }
 
@@ -107,12 +117,12 @@ namespace physics2
             players.Add(physicsObject);
         }
 
-        public void AddGoal(PhysicsObjectWithCircle physicsObject, IGoalManager goalManger)
+        public void AddGoal(Ball physicsObject, IGoalManager goalManger)
         {
             goals.Add((physicsObject, goalManger));
         }
 
-        private IEnumerable<PhysicsObject> PhysicsObject()
+        private IEnumerable<IUpdatePosition> PhysicsObject()
         {
             yield return ball;
             foreach (var parameter in parameters)
@@ -128,5 +138,9 @@ namespace physics2
                 yield return goal.Item1;
             }
         }
+    }
+
+    internal interface IUpdatePosition {
+        void Update(double step, double timeLeft);
     }
 }

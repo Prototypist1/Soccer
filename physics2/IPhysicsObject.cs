@@ -11,8 +11,8 @@ namespace physics2
         Vector Velocity { get; set; }
         double Vx { get; set; }
         double Vy { get; set; }
-        double X { get; set; }
-        double Y { get; set; }
+        double X { get;  }
+        double Y { get;  }
 
         void ApplyForce(double fx, double fy);
     }

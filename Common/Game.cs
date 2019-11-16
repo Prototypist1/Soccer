@@ -21,7 +21,7 @@ namespace Common
         private readonly ConcurrentIndexed<Guid, PhysicsObject> feet = new ConcurrentIndexed<Guid, PhysicsObject>();
         private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
         private readonly Guid ballId;
-        private readonly PhysicsObjectWithCircle ball;
+        private readonly Ball ball;
 
         private readonly ConcurrentSet<FootCreated> feetCreaated = new ConcurrentSet<FootCreated>();
         private readonly ConcurrentSet<BodyCreated> bodiesCreated = new ConcurrentSet<BodyCreated>();
@@ -286,7 +286,7 @@ namespace Common
 
             ballId = Guid.NewGuid();
 
-            ball = new PhysicsObjectWithCircle(Constants.BallMass, Constants.xMax / 2, Constants.yMax / 2, true, new Circle(Constants.BallRadius));
+            ball = new Ball(Constants.BallMass, Constants.xMax / 2, Constants.yMax / 2, true, new Circle(Constants.BallRadius));
             
             ballCreated = new BallCreated(
                ball.X,
@@ -300,7 +300,7 @@ namespace Common
                255);
 
             var leftGoalId = Guid.NewGuid();
-            var leftGoal = new PhysicsObjectWithCircle(1, (Constants.footLen * 3), Constants.yMax / 2.0, false, new Circle(Constants.footLen));
+            var leftGoal = new Ball(1, (Constants.footLen * 3), Constants.yMax / 2.0, false, new Circle(Constants.footLen));
            
 
             goalsCreated.AddOrThrow(new GoalCreated(
@@ -316,7 +316,7 @@ namespace Common
 
             var rightGoalId = Guid.NewGuid();
 
-            var rightGoal = new PhysicsObjectWithCircle(1, Constants.xMax - (Constants.footLen * 3), Constants.yMax / 2.0, false, new Circle(Constants.footLen));
+            var rightGoal = new Ball(1, Constants.xMax - (Constants.footLen * 3), Constants.yMax / 2.0, false, new Circle(Constants.footLen));
             
             goalsCreated.AddOrThrow(new GoalCreated(
                rightGoal.X,
@@ -336,15 +336,10 @@ namespace Common
                 (new Vector(Constants.xMax-1,Constants.yMax-1),new Vector(Constants.xMax-1,0)),
             };
 
-            gameStateTracker = new GameStateTracker(() =>
-            {
-                ball.X = Constants.xMax / 2.0;
-                ball.Y = Constants.yMax / 2.0;
-                ball.Vx = 0;
-                ball.Vy = 0;
-            },
-            Constants.xMax / 2.0,
-            Constants.yMax / 2.0
+            gameStateTracker = new GameStateTracker(
+                ball.Reset,
+                Constants.xMax / 2.0,
+                Constants.yMax / 2.0
             );
 
             var rightGoalManger = new GoalManager(gameStateTracker, onUpdateScore, true);
@@ -377,7 +372,7 @@ namespace Common
         {
             double startX = 400;
             double startY = 400;
-            var foot = new Player(1,  startX, startY, true, Constants.PlayerRadius*2);
+            var foot = new Player(1,  startX, startY, true, Constants.PlayerRadius*2,Constants.playerPadding);
 
             physicsEngine.Run(x => { x.AddPlayer(foot); return x; });
             feet[createPlayer.Foot] = foot;
