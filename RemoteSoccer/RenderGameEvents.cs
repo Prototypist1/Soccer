@@ -42,13 +42,13 @@ namespace RemoteSoccer
 
             foreach (var position in positionsList)
             {
-                    if (position.Id == body)
-                    {
-                        return ( position.X, 
-                            position.Y,
-                            (viewFrameWidth / 2.0) - (position.X * times),
-                        (viewFrameHeight / 2.0) - (position.Y * times));
-                    }
+                if (position.Id == body)
+                {
+                    return (position.X,
+                        position.Y,
+                        (viewFrameWidth / 2.0) - (position.X * times),
+                    (viewFrameHeight / 2.0) - (position.Y * times));
+                }
             }
 
             throw new Exception("we are following something without a position");
@@ -66,7 +66,7 @@ namespace RemoteSoccer
         }
     }
 
-    class RenderGameEvents: IGameView
+    class RenderGameEvents : IGameView
     {
 
         private class ElementEntry
@@ -157,7 +157,7 @@ namespace RemoteSoccer
         private readonly Ellipse ballWall;
 
 
-        private Ellipse ball;
+        private Polyline ball;
         private readonly LinkedList<MediaPlayer> players = new LinkedList<MediaPlayer>();
 
         private readonly MediaPlayer bell;
@@ -172,10 +172,10 @@ namespace RemoteSoccer
         private readonly IReadonlyRef<int> frame;
 
         public RenderGameEvents(
-            Canvas gameArea, 
-            TextBlock fps, 
-            TextBlock leftScore, 
-            TextBlock rightScore, 
+            Canvas gameArea,
+            TextBlock fps,
+            TextBlock leftScore,
+            TextBlock rightScore,
             Zoomer zoomer,
             IReadonlyRef<int> frame)
         {
@@ -343,11 +343,9 @@ namespace RemoteSoccer
                     {
                         Points = points,
                         Fill = new SolidColorBrush(color),
-                        //Stroke = new SolidColorBrush(Color.FromArgb(0x88,0xff,0xff,0xff)),
-                        //StrokeThickness = 50,
-                        //StrokeLineJoin = PenLineJoin.Round
-                        
-                        
+                        Stroke = new SolidColorBrush(color),//new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff)),
+                        StrokeThickness = 200,
+                        StrokeLineJoin = PenLineJoin.Round
                     };
                     shape = polygon;
 
@@ -359,8 +357,37 @@ namespace RemoteSoccer
                         0, 0, 1, 0,
                         (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
                 }
+                else if (objectCreated is BallCreated)
+                {
+                    var points = new PointCollection();
+                    points.Add(new Windows.Foundation.Point(0, 0));
+
+                    var polyline = new Polyline()
+                    {
+                        Points = points,
+                        StrokeThickness = objectCreated.Diameter,
+                        StrokeLineJoin = PenLineJoin.Round,
+                        StrokeEndLineCap = PenLineCap.Round,
+                        StrokeStartLineCap = PenLineCap.Round,
+                        Stroke = new SolidColorBrush(color),
+                        Fill = new SolidColorBrush(color),
+                    };
+
+                    this.ball = polyline;
+
+                    shape = polyline;
+
+                    shape.TransformMatrix =
+                    // then we move to the right spot
+                    new System.Numerics.Matrix4x4(
+                        1, 0, 0, 0,
+                        0, 1, 0, 0,
+                        0, 0, 1, 0,
+                        (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
+                }
                 else
                 {
+
                     var ellipse = new Ellipse()
                     {
                         Width = objectCreated.Diameter,
@@ -384,10 +411,7 @@ namespace RemoteSoccer
 
                     shape = ellipse;
 
-                    if (objectCreated is BallCreated)
-                    {
-                        this.ball = ellipse;
-                    }
+
                 }
 
                 Canvas.SetZIndex(shape, objectCreated.Z);
@@ -433,8 +457,9 @@ namespace RemoteSoccer
             }
         }
 
+
         double framesRecieved = 0;
-        private Stopwatch stopWatch =new Stopwatch();
+        private Stopwatch stopWatch = new Stopwatch();
 
         private long droppedFrames = 0;
         private long framesInGroup = 0;
@@ -546,34 +571,37 @@ namespace RemoteSoccer
                                     (float)(position.X), (float)(position.Y), 0, 1);
                             }
                         }
-                        else if (element.element is Polygon polygon) {
+                        else if (element.element is Polygon polygon)
+                        {
                             var points = new PointCollection();
-                            var skip = polygon.Points.Count > 200 ? 1 : 0;
-                            double p1 = .97, p2 = 1-p1;
+                            var skip = polygon.Points.Count > 6 ? 1 : 0;
+                            double p1 = .98, p2 = 1 - p1;
 
-                            for (int i = skip; i < (polygon.Points.Count/2); i++)
+                            for (int i = skip; i < (polygon.Points.Count / 2); i++)
                             {
                                 var point = polygon.Points[i];
                                 var pair = polygon.Points[(polygon.Points.Count - 1) - i];
 
-                                points.Add(new Windows.Foundation.Point((point.X*p1 + pair.X*p2) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
+                                points.Add(new Windows.Foundation.Point((point.X * p1 + pair.X * p2) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
                             }
 
-                            var vv = new Physics2.Vector(position.Vx*10, position.Vy * 10);
 
-                            if (vv.Length > Constants.PlayerRadius) {
+                            // duplicate code
+                            // serach for {3E1769BA-B690-4440-87BE-C74113D0D5EC}
+                            var vv = new Physics2.Vector(position.Vx * 20, position.Vy * 20);
+
+                            if (vv.Length > Constants.PlayerRadius)
+                            {
                                 vv = vv.NewScaled(Constants.PlayerRadius / vv.Length);
                             }
-                            
+
                             points.Add(new Windows.Foundation.Point(vv.y, -vv.x));
-                            
-                           
                             points.Add(new Windows.Foundation.Point(-vv.y, vv.x));
-                            
-                            for (int i = (polygon.Points.Count/2); i < polygon.Points.Count - skip; i++)
+
+                            for (int i = (polygon.Points.Count / 2); i < polygon.Points.Count - skip; i++)
                             {
                                 var point = polygon.Points[i];
-                                var pair = polygon.Points[(polygon.Points.Count - 1)-i];
+                                var pair = polygon.Points[(polygon.Points.Count - 1) - i];
 
                                 points.Add(new Windows.Foundation.Point((point.X * p1 + pair.X * p2) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
                             }
@@ -587,25 +615,51 @@ namespace RemoteSoccer
                                     0, 1, 0, 0,
                                     0, 0, 1, 0,
                                     (float)(position.X), (float)(position.Y), 0, 1);
-                                    }
-                    }
+                        }
 
-                    if (element != null && texts.TryGetValue(position.Id, out var text))
-                    {
-                        text.TransformMatrix =
-                            // first we center
-                            new System.Numerics.Matrix4x4(
-                                1, 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                (float)(-text.ActualWidth / 2.0), (float)(-text.ActualHeight / 2.0), 0, 1)
-                            *
-                            // then we move to the right spot
-                            new System.Numerics.Matrix4x4(
-                                1, 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                (float)(position.X), (float)(position.Y), 0, 1);
+                        else if (element.element is Polyline polyline)
+                        {
+                            var points = new PointCollection();
+                            var skip = polyline.Points.Count > 3 ? 1 : 0;
+
+                            for (int i = skip; i < (polyline.Points.Count); i++)
+                            {
+                                var point = polyline.Points[i];
+
+                                points.Add(new Windows.Foundation.Point(point.X - position.Vx, point.Y - position.Vy));
+                            }
+
+                            points.Add(new Windows.Foundation.Point(0, 0));
+
+                            polyline.Points = points;
+
+                            polyline.TransformMatrix =
+                                // then we move to the right spot
+                                new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(position.X), (float)(position.Y), 0, 1);
+                        }
+
+
+                        if (element != null && texts.TryGetValue(position.Id, out var text))
+                        {
+                            text.TransformMatrix =
+                                // first we center
+                                new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(-text.ActualWidth / 2.0), (float)(-text.ActualHeight / 2.0), 0, 1)
+                                *
+                                // then we move to the right spot
+                                new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(position.X), (float)(position.Y), 0, 1);
+                        }
                     }
                 }
 
@@ -679,12 +733,12 @@ namespace RemoteSoccer
                         var line1 = new Line
                         {
 
-                            X1 = -(collision.Fy * 10),
-                            Y1 = (collision.Fx * 10),
+                            X1 = -(collision.Fy * 10) * 10,
+                            Y1 = (collision.Fx * 10) * 10,
                             X2 = -(10 * collision.Fy / 1.2),
                             Y2 = (10 * collision.Fx / 1.2),
-                            StrokeThickness = 5,
-                            Stroke = new SolidColorBrush(Colors.Black),
+                            StrokeThickness = 5 * 10,
+                            Stroke = new SolidColorBrush(Colors.Green),
                             Opacity = 1,
                             OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
                             Scale = new Vector3(.4f, .4f, 1f),
@@ -701,12 +755,12 @@ namespace RemoteSoccer
                         var line2 = new Line
                         {
 
-                            X1 = (collision.Fy * (10)),
-                            Y1 = -(collision.Fx * (10)),
+                            X1 = (collision.Fy * (10)) * 10,
+                            Y1 = -(collision.Fx * (10)) * 10,
                             X2 = (10 * collision.Fy / 1.2),
                             Y2 = -(10 * collision.Fx / 1.2),
-                            StrokeThickness = (5),
-                            Stroke = new SolidColorBrush(Colors.Black),
+                            StrokeThickness = (5) * 10,
+                            Stroke = new SolidColorBrush(Colors.Green),
                             Opacity = 1,
                             OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
                             Scale = new Vector3(.4f, .4f, 1f),

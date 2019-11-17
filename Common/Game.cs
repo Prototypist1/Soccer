@@ -480,17 +480,38 @@ namespace Common
             {
                 var countDownSate = gameStateTracker.UpdateGameState();
 
-                ball.ApplyForce(
-                    -Math.Sign(ball.Vx) * (ball.Vx * ball.Vx * ball.Mass) / 4000.0,
-                    -Math.Sign(ball.Vy) * (ball.Vy * ball.Vy * ball.Mass) / 4000.0);
+                if (ball.Velocity.Length > 0)
+                {
+                    var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Velocity.Length * ball.Mass / 4000.0);
+
+                    ball.ApplyForce(
+                        friction.x,
+                        friction.y);
+
+                }
+
+                if (ball.Velocity.Length > .03)
+                {
+                    var friction = ball.Velocity.NewUnitized().NewScaled(-.03);
+
+                    ball.ApplyForce(
+                        friction.x,
+                        friction.y);
+                }
+                else {
+                    ball.ApplyForce(
+                        -ball.Velocity.x,
+                        -ball.Velocity.y);
+                }
+
 
                 //ball.ApplyForce(
                 //    (-ball.Vx *Math.Pow( 10/(10+ Math.Abs(ball.Vx)),2) * ball.Mass) ,
                 //    (-ball.Vy * Math.Pow(10 / (10 + Math.Abs(ball.Vy)),2) * ball.Mass));
 
-                ball.ApplyForce(
-                    -Math.Sign(ball.Vx) *Math.Min(.02,Math.Abs(ball.Vx)),
-                    -Math.Sign(ball.Vy) * Math.Min(.02,Math.Abs(ball.Vy)));
+                //ball.ApplyForce(
+                //    -Math.Sign(ball.Vx) *Math.Min(.02,Math.Abs(ball.Vx)),
+                //    -Math.Sign(ball.Vy) * Math.Min(.02,Math.Abs(ball.Vy)));
 
                 foreach (var center in bodies)
                 {

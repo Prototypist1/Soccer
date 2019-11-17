@@ -157,8 +157,8 @@ namespace Physics2
                     o2v.x,
                     o2v.y,
                     new MightBeCollision(new Collision(
-                        physicsObject1.X + (time * physicsObject1.Vx) + normal.NewScaled(radius1).x,
-                        physicsObject1.Y + (time * physicsObject1.Vy) + normal.NewScaled(radius1).y,
+                        physicsObject1.X + (time * physicsObject1.Vx) + normal.NewScaled(-radius1).x,
+                        physicsObject1.Y + (time * physicsObject1.Vy) + normal.NewScaled(-radius1).y,
                         normal.NewScaled(f).x,
                         normal.NewScaled(f).y,
                         false
@@ -167,10 +167,10 @@ namespace Physics2
             }
         }
 
-        private static Vector GetNormal(IPhysicsObject physicsObject1, IPhysicsObject physicsObject2, double time)
+        private static Vector GetNormal(IPhysicsObject physicsObject1, double X, double Y, double Vx, double Vy, double time)
         {
-            var dx = physicsObject1.X + (time * physicsObject1.Vx) - (physicsObject2.X + (time * physicsObject2.Vx));
-            var dy = physicsObject1.Y + (time * physicsObject1.Vy) - (physicsObject2.Y + (time * physicsObject2.Vy));
+            var dx = physicsObject1.X + (time * physicsObject1.Vx) - (X + (time * Vx));
+            var dy = physicsObject1.Y + (time * physicsObject1.Vy) - (Y + (time * Vy));
             var normal = new Vector(dx, dy).NewUnitized();
             return normal;
         }
@@ -223,7 +223,7 @@ namespace Physics2
             if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
             {
 
-                evnt = DoCollision(self, collider, c1.Radius, time, GetNormal(self, collider, time), self.Velocity, collider.Velocity);
+                evnt = DoCollision(self, collider, c1.Radius, time, GetNormal(self, particalX,particalY,particalVx,particalVy, time), self.Velocity, collider.Velocity);
                 return true;
             }
             evnt = default;
@@ -460,6 +460,17 @@ namespace Physics2
             }
         }
 
+
+        //internal static bool TryCollisionBallLine3(
+        //    PhysicsObject ball,
+        //    PhysicsObject line,
+
+
+        //    ) { 
+        
+        
+        //}
+
         internal static bool TryCollisionBallLine2(
             PhysicsObject ball, 
             PhysicsObject line, 
@@ -546,6 +557,8 @@ namespace Physics2
             // the point we collided with is not moving at the speed 
             {
                 var collisionTime = times.OrderBy(x => x).First();
+
+
 
                 var D = new Vector(DX + (DDX * collisionTime), DY + (DDY * collisionTime));
 

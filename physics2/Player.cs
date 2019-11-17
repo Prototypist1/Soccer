@@ -46,7 +46,6 @@ namespace physics2
                 start.Ty = 0;
             }
 
-
             end.Tx = -start.Tx;
             end.Ty = -start.Ty;
 
@@ -76,7 +75,9 @@ namespace physics2
 
         private Vector GetParallelVector()
         {
-            var v = new Physics2.Vector(-Vy * 10, Vx * 10);
+            // duplicate code
+            // serach for {3E1769BA-B690-4440-87BE-C74113D0D5EC}
+            var v = new Physics2.Vector(-Vy * 20, Vx * 20);
             if (v.Length > length * .5)
             {
                 v = v.NewScaled(length * .5 / v.Length);

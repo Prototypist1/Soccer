@@ -45,37 +45,37 @@ namespace physics2
                     //}
                     //}
 
-                    if (PhysicsMath.TryCollisionBallLine2(
-                        ball,
-                        player,
-                        ball.GetCircle(),
-                        player.GetLength(),
-                        timeLeft,
-                        new Vector(player.start.X, player.start.Y),
-                        new Vector(player.start.Tx, player.start.Ty).NewAdded(new Vector(player.start.X, player.start.Y).NewMinus()).NewScaled(1 / timeLeft),
-                        out var @event
-                        ))
-                    {
-                        events.Add(@event);
-                    }
-
-                    //for (var i = -1.0; i <= 1.0; i += .10)
+                    //if (PhysicsMath.TryCollisionBallLine2(
+                    //    ball,
+                    //    player,
+                    //    ball.GetCircle(),
+                    //    player.GetLength(),
+                    //    timeLeft,
+                    //    new Vector(player.start.X, player.start.Y),
+                    //    new Vector(player.start.Tx, player.start.Ty).NewAdded(new Vector(player.start.X, player.start.Y).NewMinus()).NewScaled(1 / timeLeft),
+                    //    out var @event
+                    //    ))
                     //{
-                    //    if (PhysicsMath.TryCollisionBall(
-                    //        ball,
-                    //        player,
-                    //        (player.start.X * i) + player.X,
-                    //        (player.start.Y * i) + player.Y,
-                    //        player.Vx + ((player.start.Tx - player.start.X) * i * (1 / timeLeft)),
-                    //        player.Vy + ((player.start.Ty - player.start.Y) * i * (1 / timeLeft)),
-                    //        ball.GetCircle(),
-                    //        new Circle(100),
-                    //        timeLeft,
-                    //        out var @event))
-                    //    {
-                    //        events.Add(@event);
-                    //    }
+                    //    events.Add(@event);
                     //}
+
+                    for (var i = -1.0; i <= 1.0; i += 0.1)
+                    {
+                        if (PhysicsMath.TryCollisionBall(
+                            ball,
+                            player,
+                            (player.start.X * i) + player.X,
+                            (player.start.Y * i) + player.Y,
+                            player.Vx + ((player.start.Tx - player.start.X) * i * (1 / timeLeft)),
+                            player.Vy + ((player.start.Ty - player.start.Y) * i * (1 / timeLeft)),
+                            ball.GetCircle(),
+                            new Circle(100),
+                            timeLeft,
+                            out var @event))
+                        {
+                            events.Add(@event);
+                        }
+                    }
 
                     //{
                     //    var start = player.start;
