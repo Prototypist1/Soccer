@@ -35,30 +35,43 @@ namespace physics2
                 }
                 foreach (var player in players)
                 {
-                    {
-                        //foreach (var partical in player.line)
-                        //{
-                        //    if (PhysicsMath.TryCollisionPointCloudParticle(ball, player, partical.X, partical.Y, partical.Vx(timeLeft), partical.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
-                        //    {
-                        //        events.Add(@event);
-                        //    }
-                        //}
+                    //{
+                    //foreach (var partical in player.line)
+                    //{
+                    //    if (PhysicsMath.TryCollisionPointCloudParticle(ball, player, partical.X, partical.Y, partical.Vx(timeLeft), partical.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
+                    //    {
+                    //        events.Add(@event);
+                    //    }
+                    //}
+                    //}
+
+                    if (PhysicsMath.TryCollisionBallLine2(
+                        ball,
+                        player,
+                        ball.GetCircle(),
+                        player.GetLength(),
+                        timeLeft,
+                        new Vector(-player.start.Vy(timeLeft), player.start.Vx(timeLeft)),
+                        new Vector(-player.start.Vy(0), player.start.Vx(0)),
+                        out var @event
+                        )) {
+                        events.Add(@event);
                     }
 
-                    {
-                        var start = player.start;
-                        if (PhysicsMath.TryCollisionBall(ball, player, start.X, start.Y, start.Vx(timeLeft), start.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
-                        {
-                            events.Add(@event);
-                        }
-                    }
-                    {
-                        var end = player.end;
-                        if (PhysicsMath.TryCollisionBall(ball, player, end.X, end.Y, end.Vx(timeLeft), end.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
-                        {
-                            events.Add(@event);
-                        }
-                    }
+                    //{
+                    //    var start = player.start;
+                    //    if (PhysicsMath.TryCollisionBall(ball, player, start.X, start.Y, start.Vx(timeLeft), start.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
+                    //    {
+                    //        events.Add(@event);
+                    //    }
+                    //}
+                    //{
+                    //    var end = player.end;
+                    //    if (PhysicsMath.TryCollisionBall(ball, player, end.X, end.Y, end.Vx(timeLeft), end.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
+                    //    {
+                    //        events.Add(@event);
+                    //    }
+                    //}
                 }
                 foreach (var goal in goals)
                 {

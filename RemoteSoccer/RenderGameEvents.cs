@@ -343,9 +343,9 @@ namespace RemoteSoccer
                     {
                         Points = points,
                         Fill = new SolidColorBrush(color),
-                        Stroke = new SolidColorBrush(Color.FromArgb(0x88,0xff,0xff,0xff)),
-                        StrokeThickness = 50,
-                        StrokeLineJoin = PenLineJoin.Round
+                        //Stroke = new SolidColorBrush(Color.FromArgb(0x88,0xff,0xff,0xff)),
+                        //StrokeThickness = 50,
+                        //StrokeLineJoin = PenLineJoin.Round
                         
                         
                     };

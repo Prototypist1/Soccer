@@ -8,9 +8,9 @@ namespace physics2
         bool Mobile { get; }
         Vector Position { get; }
         double Speed { get; }
-        Vector Velocity { get; set; }
-        double Vx { get; set; }
-        double Vy { get; set; }
+        Vector Velocity { get;  }
+        double Vx { get;  }
+        double Vy { get; }
         double X { get;  }
         double Y { get;  }
 

@@ -23,12 +23,12 @@ namespace physics2
 
         public double X { get; private set; }
         public double Y { get; private set; }
-        public double Vx(double timeRemaining)=> player.Position
+        public double Vx(double timeRemaining)=> timeRemaining ==0?player.Vx :(player.Position
             .NewAdded(player.Velocity.NewScaled(timeRemaining))
-            .NewAdded( player.GetVector().NewScaled( index)).x - X;
-        public double Vy(double timeRemaining) => player.Position
+            .NewAdded( player.GetVector().NewScaled( index)).x - X)/timeRemaining;
+        public double Vy(double timeRemaining) => timeRemaining == 0 ? player.Vy: (player.Position
             .NewAdded(player.Velocity.NewScaled(timeRemaining))
-            .NewAdded(player.GetVector().NewScaled(index)).y - Y;
+            .NewAdded(player.GetVector().NewScaled(index)).y - Y)/timeRemaining;
     }
 
 }

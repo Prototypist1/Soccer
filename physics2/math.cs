@@ -39,7 +39,7 @@ namespace Physics2
 
             if (physicsObject1.Mobile == false)
             {
-                var o2v = normal.NewScaled(-2 * v2).NewAdded(velocityVector2);
+                var o2v = normal.NewScaled(-2 * v2).NewAdded(physicsObject2.Velocity);
                 return new DoubleUpdatePositionVelocityEvent(
                     time,
                     physicsObject1,
@@ -59,7 +59,7 @@ namespace Physics2
             }
             else if (physicsObject2.Mobile == false)
             {
-                var v1o = normal.NewScaled(-2 * v1).NewAdded(velocityVector1);
+                var v1o = normal.NewScaled(-2 * v1).NewAdded(physicsObject1.Velocity);
                 return new DoubleUpdatePositionVelocityEvent(
                     time,
                     physicsObject1,
@@ -143,11 +143,11 @@ namespace Physics2
                 }
 
                 {
-                    var o2v = normal.NewScaled(vf2).NewAdded(normal.NewScaled(-v2)).NewAdded(velocityVector2);
+                    var o2v = normal.NewScaled(vf2).NewAdded(normal.NewScaled(-v2)).NewAdded(physicsObject2.Velocity);
 
                     var f = (vf2 - v2) * m2;
                     var vf1 = v1 - (f / m1);
-                    var o1v = normal.NewScaled(vf1).NewAdded(normal.NewScaled(-v1)).NewAdded(velocityVector1);
+                    var o1v = normal.NewScaled(vf1).NewAdded(normal.NewScaled(-v1)).NewAdded(physicsObject1.Velocity);
                     return new DoubleUpdatePositionVelocityEvent(
                     time,
                     physicsObject1,
@@ -281,6 +281,22 @@ namespace Physics2
 
         public static bool TrySolveQuadratic(double a, double b, double c, out double res)
         {
+            if (a == 0)
+            {
+                if (b == 0)
+                {
+                    if (c == 0)
+                    {
+                        res= 0 ;
+                        return true;
+                    }
+                    res = default;
+                    return false;
+                }
+                res= -c / b ;
+                return true;
+            }
+
             var sqrtpart = (b * b) - (4 * a * c);
             double x1, x2;
             if (sqrtpart > 0)
@@ -305,13 +321,22 @@ namespace Physics2
 
         public static  IEnumerable<double> SolveQuadratic(double a, double b, double c)
         {
+            if (a == 0)
+            {
+                if (b == 0) {
+                    if (c == 0) {
+                        return new double[] { 0 };
+                    }
+                    return new double[] { };
+                }
+                return new double[] { -c / b };
+            }
+
             var sqrtpart = (b * b) - (4 * a * c);
-            double x1, x2;
+            
             if (sqrtpart > 0)
             {
-                x1 = (-b + Math.Sqrt(sqrtpart)) / (2 * a);
-                x2 = (-b - Math.Sqrt(sqrtpart)) / (2 * a);
-                return new[] { x1,x2};
+                return new[] { (-b + Math.Sqrt(sqrtpart)) / (2 * a), (-b - Math.Sqrt(sqrtpart)) / (2 * a) };
             }
             else if (sqrtpart < 0)
             {
@@ -439,7 +464,7 @@ namespace Physics2
             PhysicsObject ball, 
             PhysicsObject line, 
             Circle circle, 
-            Line lineShape, 
+            double length, 
             double endTime, 
             Vector lineParallelStart,
             Vector lineParallelEnd,
@@ -449,17 +474,35 @@ namespace Physics2
             var DDY = ball.Vy - line.Vy;
             var DX = ball.X - line.X;
             var DY = ball.Y - line.Y;
+
+            if (new Vector(DX, DY).Dot(new Vector(DDX, DDY)) > 0)
+            {
+                collision = default;
+                return false;
+            }
+
             var PX = lineParallelStart.x;
             var PY = lineParallelStart.y;
             var DPX = lineParallelEnd.x - lineParallelStart.x;
             var DPY = lineParallelEnd.y - lineParallelStart.y;
 
-            var A = DDX * DPY - DDY * DPX;
-            var B = DPY * DX - DPX * DY + DDX * PY - DDY * PX;
-            var C = DX * PY - DY * PX;
+            var A = (DDX * DPY) - (DDY * DPX);
+
+            var B = (DPY * DX)  + (DDX * PY) - (DDY * PX) - (DPX * DY);
+            var C = (DX * PY) - (DY * PX);
 
 
-            var times = SolveQuadratic(A, B, C).Where(x=>x>0 && x<endTime && AreCloseAtTime(x)).ToArray();
+            var times = SolveQuadratic(A, B, C);
+
+            if (new Vector(DX, DY).Length < 1000) {
+                var db = 0;
+            }
+
+            if (times.Any(x => x < 0 && x > -1 && AreCloseAtTime(x))) {
+                var db = 0; 
+            }
+
+            times= times.Where(x=> x > 0 && x < endTime && AreCloseAtTime(x)).ToArray();
 
             if (!times.Any()) {
                 collision = default;
@@ -470,23 +513,23 @@ namespace Physics2
             
             var collisionTime = times.First();
 
-            var D = new Vector(DX + DDX * collisionTime, DY + DDY * collisionTime);
+            var D = new Vector(DX + (DDX * collisionTime), DY + (DDY * collisionTime));
 
-            var collisionPosition = D.NewAdded(new Vector(line.X + line.Vx * collisionTime, line.Y + line.Vy * collisionTime));
+            var collisionPosition = D.NewAdded(new Vector(line.X + (line.Vx * collisionTime), line.Y + (line.Vy * collisionTime)));
 
             var startPosition = new Vector(line.X, line.Y).NewAdded(new Vector(PX, PY).NewUnitized().NewScaled(D.Length));
 
-            var linePointVelocity = collisionPosition.NewAdded(startPosition.NewMinus()).NewScaled(collisionTime);
+            var linePointVelocity = collisionPosition.NewAdded(startPosition.NewMinus()).NewScaled(1.0/collisionTime);
 
-            var lineNormal = new Vector(-(PY + DPY * collisionTime), -(PX + DPX * collisionTime));
+            var lineNormal = new Vector((PY + (DPY * collisionTime)), -(PX + (DPX * collisionTime))).NewUnitized();
 
-            collision = DoCollision(ball,line,circle.Radius, collisionTime, lineNormal, ball.Velocity, linePointVelocity);
+            collision = DoCollision(ball,line,0, collisionTime, lineNormal, ball.Velocity, linePointVelocity);
             return true;
 
             bool AreCloseAtTime(double time) {
-                var DXtime = DX + DDX * time;
-                var DYtime = DY + DDY * time;
-                return lineShape.Length / 2.0 < new Vector(DXtime, DYtime).Length;
+                var DXtime = DX + (DDX * time);
+                var DYtime = DY + (DDY * time);
+                return length/2.0 > new Vector(DXtime, DYtime).Length;
             }
         }
 

@@ -17,8 +17,8 @@ namespace physics2
             Mobile = mobile;
         }
 
-        public double Vx { get; set; }
-        public double Vy { get; set; }
+        public double Vx { get; protected set; }
+        public double Vy { get; protected set; }
         public double X { get; protected set; }
         public double Y { get; protected set; }
         public double Mass { get; }
@@ -30,14 +30,14 @@ namespace physics2
             {
                 return new Vector(Vx, Vy);
             }
-            set
-            {
-                Vx = value.x;
-                Vy = value.y;
-            }
         }
 
         public Vector Position => new Vector(X, Y);
+
+        public virtual void UpdateVelocity(double vx, double vy) {
+            this.Vx = vx;
+            this.Vy = vy;
+        }
 
         public void ApplyForce(double fx, double fy)
         {
