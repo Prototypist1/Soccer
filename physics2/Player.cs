@@ -42,9 +42,8 @@ namespace physics2
 
             }
             else {
-                var t = new Vector(start.Tx, start.Ty).NewUnitized().NewScaled(.001);
-                start.Tx = t.x;
-                start.Ty = t.y;
+                start.Tx = 0;
+                start.Ty = 0;
             }
 
 

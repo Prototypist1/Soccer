@@ -17,8 +17,8 @@ namespace Physics2
 
         public DoubleUpdatePositionVelocityEvent(
             double time,
-            IPhysicsObject myPhysicsObject_1, 
-            double vx_1, 
+            IPhysicsObject myPhysicsObject_1,
+            double vx_1,
             double vy_1,
             IPhysicsObject myPhysicsObject_2,
             double vx_2,
@@ -42,7 +42,7 @@ namespace Physics2
 
         public MightBeCollision Enact()
         {
-            myPhysicsObject_1.UpdateVelocity(vx_1,vy_1);
+            myPhysicsObject_1.UpdateVelocity(vx_1, vy_1);
             myPhysicsObject_2.UpdateVelocity(vx_2, vy_2);
 
             return res;
