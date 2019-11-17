@@ -13,7 +13,7 @@ namespace physics2
         double Vy { get; }
         double X { get;  }
         double Y { get;  }
-
+        void UpdateVelocity(double vx, double vy);
         void ApplyForce(double fx, double fy);
     }
 }

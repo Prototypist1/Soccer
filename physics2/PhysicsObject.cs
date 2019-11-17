@@ -41,8 +41,7 @@ namespace physics2
 
         public void ApplyForce(double fx, double fy)
         {
-            Vx += fx / Mass;
-            Vy += fy / Mass;
+            UpdateVelocity(Vx + (fx / Mass), Vy + (fy / Mass));
         }
 
         public virtual void Update(double step, double timeLeft)

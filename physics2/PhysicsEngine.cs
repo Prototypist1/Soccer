@@ -11,7 +11,7 @@ namespace physics2
         private Ball ball;
         private readonly List<PhysicsObjectWithFixedLine> parameters = new List<PhysicsObjectWithFixedLine>();
         private readonly List<Player> players = new List<Player>();
-        private readonly List<(Ball,  IGoalManager)> goals = new List<(Ball, IGoalManager)>();
+        private readonly List<(Ball, IGoalManager)> goals = new List<(Ball, IGoalManager)>();
 
         public readonly List<PhysicsObject> items = new List<PhysicsObject>();
 
@@ -51,10 +51,11 @@ namespace physics2
                         ball.GetCircle(),
                         player.GetLength(),
                         timeLeft,
-                        new Vector(-player.start.Vy(timeLeft), player.start.Vx(timeLeft)),
-                        new Vector(-player.start.Vy(0), player.start.Vx(0)),
+                        new Vector(player.start.X, player.start.Y),
+                        new Vector(player.start.Tx, player.start.Ty).NewAdded(new Vector(player.start.X, player.start.Y).NewMinus()).NewScaled(1/timeLeft),
                         out var @event
-                        )) {
+                        ))
+                    {
                         events.Add(@event);
                     }
 
@@ -83,7 +84,7 @@ namespace physics2
                     }
                 }
 
-                events = events.Where(x => x.Time >= 0).ToList();
+                events = events.Where(x => x.Time >= -1).ToList();
 
                 if (events.Any())
                 {
@@ -117,11 +118,13 @@ namespace physics2
             return collisions.ToArray();
         }
 
-        public void SetBall(Ball physicsObject) {
+        public void SetBall(Ball physicsObject)
+        {
             ball = physicsObject;
         }
 
-        public void AddWall(PhysicsObjectWithFixedLine physicsObject) {
+        public void AddWall(PhysicsObjectWithFixedLine physicsObject)
+        {
             parameters.Add(physicsObject);
         }
 
@@ -153,7 +156,8 @@ namespace physics2
         }
     }
 
-    internal interface IUpdatePosition {
+    internal interface IUpdatePosition
+    {
         void Update(double step, double timeLeft);
     }
 }

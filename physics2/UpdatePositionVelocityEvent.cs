@@ -42,10 +42,8 @@ namespace Physics2
 
         public MightBeCollision Enact()
         {
-            myPhysicsObject_1.Vx = vx_1;
-            myPhysicsObject_1.Vy = vy_1;
-            myPhysicsObject_2.Vx = vx_2;
-            myPhysicsObject_2.Vy = vy_2;
+            myPhysicsObject_1.UpdateVelocity(vx_1,vy_1);
+            myPhysicsObject_2.UpdateVelocity(vx_2, vy_2);
 
             return res;
         }
@@ -71,8 +69,7 @@ namespace Physics2
 
         public MightBeCollision Enact()
         {
-            myPhysicsObject.Vx = vx;
-            myPhysicsObject.Vy = vy;
+            myPhysicsObject.UpdateVelocity(vx, vy);
 
             return res;
         }

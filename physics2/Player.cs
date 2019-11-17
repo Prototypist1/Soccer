@@ -8,39 +8,75 @@ namespace physics2
         private readonly double length;
         public readonly PointCloudPartical start, end;
 
-        //public readonly PointCloudPartical[] line;
+        // position is realitive to player
+        public class PointCloudPartical
+        {
+            public double X, Y, Tx, Ty;
 
+            public PointCloudPartical(double x, double y, double tx, double ty)
+            {
+                X = x;
+                Y = y;
+                Tx = tx;
+                Ty = ty;
+            }
+        }
 
         public Player(double mass, double x, double y, bool mobile, double length, double padding) : base(mass, x, y, mobile)
         {
             this.length = length;
-            start = new PointCloudPartical(this, -1, x, y);
-            //line = new[] {
-            //    new PointCloudPartical(this,-.9,x,y),
-            //    new PointCloudPartical(this,0,x,y),
-            //    new PointCloudPartical(this,.9,x,y)
-            //};
-            end = new PointCloudPartical(this, 1, x, y);
+            start = new PointCloudPartical(x, y, x, y);
+            end = new PointCloudPartical(x, y, x, y);
+
+        }
+
+        public override void UpdateVelocity(double vx, double vy)
+        {
+
+            base.UpdateVelocity(vx, vy);
+
+            if (new Vector(vx, vy).Length != 0)
+            {
+                start.Tx = GetParallelVector().x;
+                start.Ty = GetParallelVector().y;
+
+            }
+            else {
+                var t = new Vector(start.Tx, start.Ty).NewUnitized().NewScaled(.001);
+                start.Tx = t.x;
+                start.Ty = t.y;
+            }
+
+
+            end.Tx = -start.Tx;
+            end.Ty = -start.Ty;
+
+            var s = new Vector(start.X, start.Y).Length == 0? new Vector(start.Tx,start.Ty) :new Vector(start.X, start.Y).NewUnitized().NewScaled(GetLength()/2.0);
+            start.X = s.x;
+            start.Y = s.y;
+
+            var e = new Vector(end.X, end.Y).Length == 0 ? new Vector(end.Tx, end.Ty) : new Vector(end.X, end.Y).NewUnitized().NewScaled(GetLength() / 2.0);
+            end.X = e.x;
+            end.Y = e.y;
 
         }
 
         public override void Update(double step, double timeLeft)
         {
-            //foreach (var entry in line)
-            //{
-            //    entry.Update(step, timeLeft);
-            //}
-            start.Update(step, timeLeft);
-            end.Update(step, timeLeft);
+            start.X = (start.X * ((timeLeft - step) / timeLeft)) + (start.Tx * (step / timeLeft));
+            start.Y = (start.Y * ((timeLeft - step) / timeLeft)) + (start.Ty * (step / timeLeft));
+
+            end.X = (end.X * ((timeLeft - step) / timeLeft)) + (end.Tx * (step / timeLeft)); ;
+            end.Y = (end.Y * ((timeLeft - step) / timeLeft)) + (end.Ty * (step / timeLeft));
 
             base.Update(step, timeLeft);
         }
 
-        public double GetLength() => GetVector().Length*2;
 
-        public Vector GetVector()
+        public double GetLength() => GetParallelVector().Length * 2;
+
+        private Vector GetParallelVector()
         {
-            // this is shared code
             var v = new Physics2.Vector(-Vy * 10, Vx * 10);
             if (v.Length > length * .5)
             {

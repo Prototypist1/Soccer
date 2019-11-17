@@ -467,7 +467,7 @@ namespace Physics2
             double length, 
             double endTime, 
             Vector lineParallelStart,
-            Vector lineParallelEnd,
+            Vector DlineParallel,
             out IEvent collision) {
 
             var DDX = ball.Vx - line.Vx;
@@ -475,16 +475,16 @@ namespace Physics2
             var DX = ball.X - line.X;
             var DY = ball.Y - line.Y;
 
-            if (new Vector(DX, DY).Dot(new Vector(DDX, DDY)) > 0)
-            {
-                collision = default;
-                return false;
-            }
+            //if (new Vector(DX, DY).Dot(new Vector(DDX, DDY)) < 0)
+            //{
+            //    collision = default;
+            //    return false;
+            //}
 
             var PX = lineParallelStart.x;
             var PY = lineParallelStart.y;
-            var DPX = lineParallelEnd.x - lineParallelStart.x;
-            var DPY = lineParallelEnd.y - lineParallelStart.y;
+            var DPX = DlineParallel.x;
+            var DPY = DlineParallel.y;
 
             var A = (DDX * DPY) - (DDY * DPX);
 
@@ -494,15 +494,17 @@ namespace Physics2
 
             var times = SolveQuadratic(A, B, C);
 
-            if (new Vector(DX, DY).Length < 1000) {
+            if (new Vector(DX, DY).Length < 500)
+            {
                 var db = 0;
             }
 
-            if (times.Any(x => x < 0 && x > -1 && AreCloseAtTime(x))) {
-                var db = 0; 
-            }
+            //if (times.Any(x => x < 0 && x > -1 && AreCloseAtTime(x))) {
+            //    var db = 0; 
+            //}
 
-            times= times.Where(x=> x > 0 && x < endTime && AreCloseAtTime(x)).ToArray();
+
+            times = times.Where(x=> x > 0 && x <= endTime && AreCloseAtTime(x)).ToArray();
 
             if (!times.Any()) {
                 collision = default;
@@ -511,7 +513,7 @@ namespace Physics2
 
             // the point we collided with is not moving at the speed 
             
-            var collisionTime = times.First();
+            var collisionTime = times.OrderBy(x=>x).First();
 
             var D = new Vector(DX + (DDX * collisionTime), DY + (DDY * collisionTime));
 
@@ -521,7 +523,7 @@ namespace Physics2
 
             var linePointVelocity = collisionPosition.NewAdded(startPosition.NewMinus()).NewScaled(1.0/collisionTime);
 
-            var lineNormal = new Vector((PY + (DPY * collisionTime)), -(PX + (DPX * collisionTime))).NewUnitized();
+            var lineNormal = new Vector(PY + (DPY * collisionTime), -(PX + (DPX * collisionTime))).NewUnitized();
 
             collision = DoCollision(ball,line,0, collisionTime, lineNormal, ball.Velocity, linePointVelocity);
             return true;

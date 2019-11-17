@@ -632,7 +632,7 @@ namespace RemoteSoccer
                         var dy = collision.Y - playerY;
                         var d = Math.Sqrt((dx * dx) + (dy * dy));
 
-                        item.Volume = Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
+                        item.Volume = 1;// Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
                         item.AudioBalance = dx / d;
                         item.Play();
                     }
