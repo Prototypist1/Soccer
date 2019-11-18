@@ -661,10 +661,10 @@ namespace RemoteSoccer
                         var line = new Line
                         {
 
-                            X1 = -(collision.Fy * 4000),
-                            Y1 = (collision.Fx * 4000),
-                            X2 = (collision.Fy * 4000),
-                            Y2 = -(collision.Fx * 4000),
+                            X1 = (collision.Fx),
+                            Y1 = (collision.Fy),
+                            X2 = -(collision.Fx),
+                            Y2 = -(collision.Fy),
                             StrokeThickness = 20,
                             Stroke = new SolidColorBrush(Colors.Black),
                             Opacity = 1,

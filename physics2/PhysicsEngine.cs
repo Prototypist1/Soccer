@@ -59,7 +59,7 @@ namespace physics2
                     //    events.Add(@event);
                     //}
 
-                    for (var i = -1.0; i <= 1.0; i += 0.01)
+                    for (var i = -1.0; i <= 1.0; i += 0.05)
                     {
                         if (PhysicsMath.TryCollisionBall(
                             ball,
@@ -98,7 +98,25 @@ namespace physics2
                     {
                         // man I hate goals
                         // we need to replace the event
-                        events.Add(goal.Item2.GetGoalEvent(@event.Time));
+                        if (@event.res.IsIt(out var collision)) {
+                            collision.IsGoal = true;
+
+                            var radius = goal.Item1.GetCircle().Radius;
+
+                            var realPos = goal.Item1.Position.NewAdded(new Vector(collision.X - goal.Item1.X, collision.Y - goal.Item1.Y).NewUnitized().NewScaled(radius));
+
+                            collision.X = realPos.x;
+                            collision.Y = realPos.y;
+
+                            var dx = goal.Item1.X - collision.X;
+                            var dy = goal.Item1.Y - collision.Y;
+
+                            collision.Fx = -dy;
+                            collision.Fy = dx;
+
+                            events.Add(goal.Item2.GetGoalEvent(@event.Time, collision));
+                        }
+
                     }
                 }
 

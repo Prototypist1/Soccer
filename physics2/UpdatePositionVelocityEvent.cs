@@ -13,7 +13,7 @@ namespace Physics2
         private readonly double vx_2;
         private readonly double vy_2;
 
-        private readonly MightBeCollision res;
+        public readonly MightBeCollision res;
 
         public DoubleUpdatePositionVelocityEvent(
             double time,

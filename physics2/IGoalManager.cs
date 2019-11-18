@@ -3,6 +3,6 @@
     public interface IGoalManager
     {
         bool IsEnabled();
-        IEvent GetGoalEvent(double time);
+        IEvent GetGoalEvent(double time, Collision collision);
     }
 }

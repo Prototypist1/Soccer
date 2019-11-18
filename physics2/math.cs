@@ -35,8 +35,6 @@ namespace Physics2
             var v2 = normal.Dot(velocityVector2);
             var m2 = physicsObject2.Mass;
 
-
-
             if (physicsObject1.Mobile == false)
             {
                 var o2v = normal.NewScaled(-2 * v2).NewAdded(physicsObject2.Velocity);
@@ -180,7 +178,6 @@ namespace Physics2
             return vf != v;
         }
 
-
         internal static bool TryCollisionBall(PhysicsObject self, 
             IPhysicsObject collider,
             double particalX,
@@ -190,7 +187,7 @@ namespace Physics2
             Circle c1, 
             Circle c2, 
             double endTime, 
-            out IEvent evnt)
+            out DoubleUpdatePositionVelocityEvent evnt)
         {
 
             // how  are they moving relitive to us
@@ -229,8 +226,6 @@ namespace Physics2
             evnt = default;
             return false;
         }
-
-
 
         internal static bool TryCollisionPointCloudParticle(
             PhysicsObject self,

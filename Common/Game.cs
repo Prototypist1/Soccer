@@ -134,14 +134,15 @@ namespace Common
                 private readonly GameStateTracker gameStateTracker;
                 private readonly Action<UpdateScore> onUpdateScore;
                 private bool right;
-                
+                private readonly Collision collision;
 
-                public UpdateScoreEvent(GameStateTracker gameStateTracker, Action<UpdateScore> onUpdateScore, bool right, double time)
+                public UpdateScoreEvent(GameStateTracker gameStateTracker, Action<UpdateScore> onUpdateScore, bool right, double time, Collision collision)
                 {
                     this.gameStateTracker = gameStateTracker ?? throw new ArgumentNullException(nameof(gameStateTracker));
                     this.onUpdateScore = onUpdateScore ?? throw new ArgumentNullException(nameof(onUpdateScore));
                     this.right = right;
                     Time = time;
+                    this.collision = collision;
                 }
 
                 public double Time
@@ -163,13 +164,13 @@ namespace Common
                     }
                     onUpdateScore(new UpdateScore() { Left = gameStateTracker.leftScore, Right = gameStateTracker.rightScore });
 
-                    return new MightBeCollision();
+                    return new MightBeCollision(collision);
                 }
             }
 
-            public IEvent GetGoalEvent(double time)
+            public IEvent GetGoalEvent(double time, Collision collision)
             {
-                return new UpdateScoreEvent(gameStateTracker, onUpdateScore, right, time);
+                return new UpdateScoreEvent(gameStateTracker, onUpdateScore, right, time, collision);
             }
 
             public bool IsEnabled()
