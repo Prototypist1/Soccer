@@ -157,7 +157,7 @@ namespace RemoteSoccer
         private readonly Ellipse ballWall;
 
 
-        private Polyline ball;
+        private Ellipse ball;
         private readonly LinkedList<MediaPlayer> players = new LinkedList<MediaPlayer>();
 
         private readonly MediaPlayer bell;
@@ -276,6 +276,7 @@ namespace RemoteSoccer
                         {
                             var element = elements[obj.Id];
                             element.element.Fill = new SolidColorBrush(Color.FromArgb(obj.A, obj.R, obj.G, obj.B));
+                            element.element.Stroke = new SolidColorBrush(Color.FromArgb(obj.A, obj.R, obj.G, obj.B));
                         });
         }
 
@@ -344,38 +345,10 @@ namespace RemoteSoccer
                         Points = points,
                         Fill = new SolidColorBrush(color),
                         Stroke = new SolidColorBrush(color),//new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff)),
-                        StrokeThickness = 200,
+                        StrokeThickness = 2*Constants.playerPadding,
                         StrokeLineJoin = PenLineJoin.Round
                     };
                     shape = polygon;
-
-                    shape.TransformMatrix =
-                    // then we move to the right spot
-                    new System.Numerics.Matrix4x4(
-                        1, 0, 0, 0,
-                        0, 1, 0, 0,
-                        0, 0, 1, 0,
-                        (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
-                }
-                else if (objectCreated is BallCreated)
-                {
-                    var points = new PointCollection();
-                    points.Add(new Windows.Foundation.Point(0, 0));
-
-                    var polyline = new Polyline()
-                    {
-                        Points = points,
-                        StrokeThickness = objectCreated.Diameter,
-                        StrokeLineJoin = PenLineJoin.Round,
-                        StrokeEndLineCap = PenLineCap.Round,
-                        StrokeStartLineCap = PenLineCap.Round,
-                        Stroke = new SolidColorBrush(color),
-                        Fill = new SolidColorBrush(color),
-                    };
-
-                    this.ball = polyline;
-
-                    shape = polyline;
 
                     shape.TransformMatrix =
                     // then we move to the right spot
@@ -410,6 +383,10 @@ namespace RemoteSoccer
                         (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
 
                     shape = ellipse;
+
+                    if (objectCreated is BallCreated) {
+                        ball = ellipse;
+                    }
 
 
                 }
@@ -574,7 +551,7 @@ namespace RemoteSoccer
                         else if (element.element is Polygon polygon)
                         {
                             var points = new PointCollection();
-                            var skip = polygon.Points.Count > 6 ? 1 : 0;
+                            var skip = polygon.Points.Count > 8 ? 1 : 0;
                             double p1 = .98, p2 = 1 - p1;
 
                             for (int i = skip; i < (polygon.Points.Count / 2); i++)
@@ -617,30 +594,6 @@ namespace RemoteSoccer
                                     (float)(position.X), (float)(position.Y), 0, 1);
                         }
 
-                        else if (element.element is Polyline polyline)
-                        {
-                            var points = new PointCollection();
-                            var skip = polyline.Points.Count > 3 ? 1 : 0;
-
-                            for (int i = skip; i < (polyline.Points.Count); i++)
-                            {
-                                var point = polyline.Points[i];
-
-                                points.Add(new Windows.Foundation.Point(point.X - position.Vx, point.Y - position.Vy));
-                            }
-
-                            points.Add(new Windows.Foundation.Point(0, 0));
-
-                            polyline.Points = points;
-
-                            polyline.TransformMatrix =
-                                // then we move to the right spot
-                                new System.Numerics.Matrix4x4(
-                                    1, 0, 0, 0,
-                                    0, 1, 0, 0,
-                                    0, 0, 1, 0,
-                                    (float)(position.X), (float)(position.Y), 0, 1);
-                        }
 
 
                         if (element != null && texts.TryGetValue(position.Id, out var text))
@@ -686,7 +639,7 @@ namespace RemoteSoccer
                         var dy = collision.Y - playerY;
                         var d = Math.Sqrt((dx * dx) + (dy * dy));
 
-                        item.Volume = 1;// Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
+                        item.Volume = Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
                         item.AudioBalance = dx / d;
                         item.Play();
                     }
@@ -733,12 +686,12 @@ namespace RemoteSoccer
                         var line1 = new Line
                         {
 
-                            X1 = -(collision.Fy * 10) * 10,
-                            Y1 = (collision.Fx * 10) * 10,
+                            X1 = -(collision.Fy * 10) * 2,
+                            Y1 = (collision.Fx * 10) * 2,
                             X2 = -(10 * collision.Fy / 1.2),
                             Y2 = (10 * collision.Fx / 1.2),
-                            StrokeThickness = 5 * 10,
-                            Stroke = new SolidColorBrush(Colors.Green),
+                            StrokeThickness = 5 * 2,
+                            Stroke = new SolidColorBrush(Colors.Black),
                             Opacity = 1,
                             OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
                             Scale = new Vector3(.4f, .4f, 1f),
@@ -755,12 +708,12 @@ namespace RemoteSoccer
                         var line2 = new Line
                         {
 
-                            X1 = (collision.Fy * (10)) * 10,
-                            Y1 = -(collision.Fx * (10)) * 10,
+                            X1 = (collision.Fy * (10)) * 2,
+                            Y1 = -(collision.Fx * (10)) * 2,
                             X2 = (10 * collision.Fy / 1.2),
                             Y2 = -(10 * collision.Fx / 1.2),
-                            StrokeThickness = (5) * 10,
-                            Stroke = new SolidColorBrush(Colors.Green),
+                            StrokeThickness = (5) * 2,
+                            Stroke = new SolidColorBrush(Colors.Black),
                             Opacity = 1,
                             OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
                             Scale = new Vector3(.4f, .4f, 1f),

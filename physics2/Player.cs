@@ -25,6 +25,7 @@ namespace physics2
         public Player(double mass, double x, double y, bool mobile, double length, double padding) : base(mass, x, y, mobile)
         {
             this.length = length;
+            this.Padding = padding;
             start = new PointCloudPartical(x, y, x, y);
             end = new PointCloudPartical(x, y, x, y);
 

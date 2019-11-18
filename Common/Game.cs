@@ -573,7 +573,7 @@ namespace Common
                             (body.vy - lastVy) * foot.Mass);
 
 
-                        var max = Constants.footLen - Constants.PlayerRadius;
+                        var max = Constants.footLen - Constants.PlayerRadius - Constants.playerPadding;
 
 
                         var target = input.Controller ?

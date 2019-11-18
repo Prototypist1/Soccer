@@ -59,7 +59,7 @@ namespace physics2
                     //    events.Add(@event);
                     //}
 
-                    for (var i = -1.0; i <= 1.0; i += 0.1)
+                    for (var i = -1.0; i <= 1.0; i += 0.01)
                     {
                         if (PhysicsMath.TryCollisionBall(
                             ball,
@@ -69,7 +69,7 @@ namespace physics2
                             player.Vx + ((player.start.Tx - player.start.X) * i * (1 / timeLeft)),
                             player.Vy + ((player.start.Ty - player.start.Y) * i * (1 / timeLeft)),
                             ball.GetCircle(),
-                            new Circle(100),
+                            new Circle(player.Padding),
                             timeLeft,
                             out var @event))
                         {
