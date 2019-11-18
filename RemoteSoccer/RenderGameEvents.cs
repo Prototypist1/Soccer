@@ -565,7 +565,7 @@ namespace RemoteSoccer
 
                             // duplicate code
                             // serach for {3E1769BA-B690-4440-87BE-C74113D0D5EC}
-                            var vv = new Physics2.Vector(position.Vx * 20, position.Vy * 20);
+                            var vv = new Physics2.Vector(position.Vx *5 , position.Vy *5);
 
                             if (vv.Length > Constants.PlayerRadius)
                             {
