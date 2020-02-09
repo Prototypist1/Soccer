@@ -130,7 +130,7 @@ namespace RemoteSoccer
             Task.Run(async () =>
             {
                 try
-                {
+                {  
                     game = new LocalGame();
                     //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
                     game.OnDisconnect(OnDisconnect);
