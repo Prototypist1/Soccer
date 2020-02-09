@@ -523,103 +523,111 @@ namespace Common
                     var lastVx = body.vx;
                     var lastVy = body.vy;
 
+
+                    var foot = body.Foot;
+                    var target = new Vector(foot.X - lastX, foot.Y - lastY);
+
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
 
 
-                        // crush oppozing forces
                         if (input.BodyX != 0 || input.BodyY != 0)
                         {
-                            var v = new Vector(body.vx, body.vy);
-                            var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY));
-                            var with = v.Dot(f) / f.Length;
-                            if (with <= 0)
+                            // crush oppozing forces
+                            if (!input.Controller)
                             {
-                                body.ApplyForce(-body.vx, -body.vy);
+                                var v = new Vector(body.vx, body.vy);
+                                var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY));
+                                var with = v.Dot(f) / f.Length;
+                                if (with <= 0)
+                                {
+                                    body.ApplyForce(-body.vx, -body.vy);
+                                }
+                                else
+                                {
+                                    var withVector = f.NewUnitized().NewScaled(with);
+                                    var notWith = v.NewAdded(withVector.NewScaled(-1));
+                                    var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
+
+
+                                    body.ApplyForce(-body.vx + withVector.x + notWithScald.x, -body.vy + withVector.y + notWithScald.y);
+                                }
+
+
+                                var damp = .98;
+
+                                var R0 = EInverse(E(Math.Sqrt(Math.Pow(body.vx, 2) + Math.Pow(body.vy, 2))) + EnergyAdd);
+                                var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
+                                var b = 2 * ((Math.Sign(input.BodyX) * body.vx * damp) + (Math.Sign(input.BodyY) * body.vy * damp));
+                                var c = Math.Pow(body.vx * damp, 2) + Math.Pow(body.vy * damp, 2) - Math.Pow(R0, 2);
+
+                                var t = (-b + Math.Sqrt(Math.Pow(b, 2) - (4 * a * c))) / (2 * a);
+
+                                body.ApplyForce(-(1 - damp) * body.vx, -(1 - damp) * body.vy);
+                                body.ApplyForce(t * input.BodyX, t * input.BodyY);
                             }
                             else
                             {
-                                var withVector = f.NewUnitized().NewScaled(with);
-                                var notWith = v.NewAdded(withVector.NewScaled(-1));
-                                var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
-                                
 
-                                body.ApplyForce(-body.vx + withVector.x + notWithScald.x, -body.vy + withVector.y + notWithScald.y);
+                                // base velocity becomes the part of the velocity in the direction of the players movement
+                                var v = new Vector(body.vx, body.vy);
+                                var f = new Vector(input.BodyX, input.BodyY).NewUnitized();
+                                var with = v.Dot(f);
+                                var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
+
+                                //
+                                var finalE = E(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + EnergyAdd;
+                                var inputAmount = new Vector(input.BodyX, input.BodyY).Length;
+                                if (inputAmount < .1)
+                                {
+                                    finalE = 0;
+                                }
+                                else if (inputAmount < 1)
+                                {
+                                    finalE = Math.Min(finalE, (inputAmount - .1) * (inputAmount - .1) * EnergyAdd * 100);
+                                }
+
+                                var finalSpeed = EInverse(finalE);
+                                var finalVelocity = f.NewScaled(finalSpeed);
+
+                                // clear velocity and then set it
+                                body.ApplyForce(-body.vx, -body.vy);
+                                body.ApplyForce(finalVelocity.x, finalVelocity.y);
+
                             }
 
-                            var damp =.98;
-
-                            var R0 = EInverse(E(Math.Sqrt(Math.Pow(body.vx, 2) + Math.Pow(body.vy, 2))) + EnergyAdd);
-                            var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
-                            var b = 2 * ((Math.Sign(input.BodyX) * body.vx* damp) + (Math.Sign(input.BodyY) * body.vy* damp));
-                            var c = Math.Pow(body.vx* damp, 2) + Math.Pow(body.vy* damp, 2) - Math.Pow(R0, 2);
-
-                            var t = (-b + Math.Sqrt(Math.Pow(b,2) - (4 * a * c))) / (2 * a);
-
-                            body.ApplyForce(-(1-damp)*body.vx, -(1 - damp) * body.vy);
-                            body.ApplyForce(t* input.BodyX, t * input.BodyY);
                         }
-                        else {
-                            body.ApplyForce(-body.vx,-body.vy);
-                        }
-
-
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
-
-                        var foot = body.Foot;
-
-                        // apply whatever force was applied to that body
-                        foot.ApplyForce(
-                            (body.vx - lastVx) * foot.Mass,
-                            (body.vy - lastVy) * foot.Mass);
-
-
-                        var max = Constants.footLen - Constants.PlayerRadius - Constants.playerPadding;
-
-
-                        var target = input.Controller ?
-                            new Vector(input.FootX*(Constants.footLen- Constants.PlayerRadius), input.FootY * (Constants.footLen - Constants.PlayerRadius))
-                            :new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
-
-                        if (target.Length > max)
+                        else
                         {
-                            target = target.NewScaled(max / target.Length);
+                            body.ApplyForce(-body.vx, -body.vy);
                         }
 
-                        var targetX = target.x + body.X;
-                        var targetY = target.y + body.Y;
-
-                        foot.ApplyForce(
-                            (targetX - (foot.X + foot.Vx)) * foot.Mass / 1.0,
-                            (targetY - (foot.Y + foot.Vy)) * foot.Mass / 1.0);
+                        target = GetTarget(lastX, lastY, input, foot);
                     }
-                    else
+
+
+                    body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
+
+
+                    // apply full force to get us to the bodies current pos
+                    foot.ApplyForce(
+                        (body.vx - lastVx) * foot.Mass,
+                        (body.vy - lastVy) * foot.Mass);
+
+                    var max = Constants.footLen - Constants.PlayerRadius - Constants.playerPadding;
+
+
+                    if (target.Length > max)
                     {
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
-
-                        var foot = body.Foot;
-
-                        // apply full force to get us to the bodies current pos
-                        foot.ApplyForce(
-                            (body.vx - lastVx) * foot.Mass,
-                            (body.vy - lastVy) * foot.Mass);
-
-                        var max = Constants.footLen;
-
-                        var target = new Vector(foot.X - lastX, foot.Y - lastY);
-
-                        if (target.Length > max)
-                        {
-                            target = target.NewScaled(max / target.Length);
-                        }
-
-                        var targetX = target.x + body.X;
-                        var targetY = target.y + body.Y;
-
-                        foot.ApplyForce(
-                            (targetX - (foot.X + foot.Vx)) * foot.Mass / 1.0,
-                            (targetY - (foot.Y + foot.Vy)) * foot.Mass / 1.0);
+                        target = target.NewScaled(max / target.Length);
                     }
+
+                    var targetX = target.x + body.X;
+                    var targetY = target.y + body.Y;
+
+                    foot.ApplyForce(
+                        (targetX - (foot.X + foot.Vx)) * foot.Mass / (1.0),
+                        (targetY - (foot.Y + foot.Vy)) * foot.Mass / (1.0));
                 }
 
                 simulationTime++;
@@ -636,6 +644,26 @@ namespace Common
             var next = new Node(positions);
             lastPositions.next.SetResult(next);
             lastPositions = next;
+        }
+
+        private static Vector GetTarget(double lastX, double lastY, PlayerInputs input, PhysicsObject foot)
+        {
+            // old controller:
+            if (input.Controller) {
+                return new Vector(input.FootX * (Constants.footLen - Constants.PlayerRadius), input.FootY * (Constants.footLen - Constants.PlayerRadius));
+            }
+
+            if (input.Controller) {
+                var inputVector = new Vector(input.FootX, input.FootY);
+                if (inputVector.Length < .1)
+                {
+                    return new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
+                }
+                var realInput = inputVector.NewUnitized().NewScaled(-.1).NewAdded(inputVector).NewScaled(1/.9);
+
+                return new Vector(foot.X + (realInput.x* Math.Abs(realInput.x) * Math.Abs(realInput.x) * 200) - lastX, foot.Y + (realInput.y * Math.Abs(realInput.y) * Math.Abs(realInput.y) * 200) - lastY);
+            } 
+            return new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY); ;
         }
 
         private int running = 0;

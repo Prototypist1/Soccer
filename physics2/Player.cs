@@ -74,11 +74,11 @@ namespace physics2
 
         public double GetLength() => GetParallelVector().Length * 2;
 
-        private Vector GetParallelVector()
+        public Vector GetParallelVector()
         {
             // duplicate code
             // serach for {3E1769BA-B690-4440-87BE-C74113D0D5EC}
-            var v = new Physics2.Vector(-Vy *5 , Vx*5 );
+            var v = new Physics2.Vector(-Vy *10 , Vx*10 );
             if (v.Length > length * .5)
             {
                 v = v.NewScaled(length * .5 / v.Length);

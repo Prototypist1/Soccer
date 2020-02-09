@@ -59,15 +59,16 @@ namespace physics2
                     //    events.Add(@event);
                     //}
 
+                    var parallelVector = player.GetParallelVector();
                     for (var i = -1.0; i <= 1.0; i += 0.05)
                     {
                         if (PhysicsMath.TryCollisionBall(
                             ball,
                             player,
-                            (player.start.X * i) + player.X,
-                            (player.start.Y * i) + player.Y,
-                            player.Vx + ((player.start.Tx - player.start.X) * i * (1 / timeLeft)),
-                            player.Vy + ((player.start.Ty - player.start.Y) * i * (1 / timeLeft)),
+                            (parallelVector.x * i) + player.X,
+                            (parallelVector.y * i) + player.Y,
+                            player.Vx,// + ((player.start.Tx - player.start.X) * i * (1 / timeLeft)),
+                            player.Vy,// + ((player.start.Ty - player.start.Y) * i * (1 / timeLeft)),
                             ball.GetCircle(),
                             new Circle(player.Padding),
                             timeLeft,

@@ -17,6 +17,6 @@
         public const double yMax = 9*2500;
         public const int PlayerRadius = 300;
         public const int BallRadius = 100;//250;//30;//
-        public const double BallMass = .1;
+        public const double BallMass = 1;
     }
 }

@@ -550,8 +550,9 @@ namespace RemoteSoccer
                         }
                         else if (element.element is Polygon polygon)
                         {
+
                             var points = new PointCollection();
-                            var skip = polygon.Points.Count > 8 ? 1 : 0;
+                            var skip = polygon.Points.Count > 2 ? 1 : 0;
                             double p1 = .98, p2 = 1 - p1;
 
                             for (int i = skip; i < (polygon.Points.Count / 2); i++)
@@ -565,7 +566,7 @@ namespace RemoteSoccer
 
                             // duplicate code
                             // serach for {3E1769BA-B690-4440-87BE-C74113D0D5EC}
-                            var vv = new Physics2.Vector(position.Vx *5 , position.Vy *5);
+                            var vv = new Physics2.Vector(position.Vx *10 , position.Vy *10);
 
                             if (vv.Length > Constants.PlayerRadius)
                             {
@@ -639,9 +640,12 @@ namespace RemoteSoccer
                         var dy = collision.Y - playerY;
                         var d = Math.Sqrt((dx * dx) + (dy * dy));
 
-                        item.Volume = Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
-                        item.AudioBalance = dx / d;
-                        item.Play();
+                        Task.Run(() =>
+                        {
+                            item.Volume = Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
+                            item.AudioBalance = dx / d;
+                            item.Play();
+                        });
                     }
                     else
                     {
@@ -649,10 +653,12 @@ namespace RemoteSoccer
                         var dx = collision.X - playerX;
                         var dy = collision.Y - playerY;
                         var d = Math.Sqrt((dx * dx) + (dy * dy));
-
-                        bell.Volume = Math.Min(1, .05 + (5.0 / (Math.Max(1, Math.Log(d)))));
-                        bell.AudioBalance = dx / d;
-                        bell.Play();
+                        Task.Run(() =>
+                        {
+                            bell.Volume = Math.Min(1, .05 + (5.0 / (Math.Max(1, Math.Log(d)))));
+                            bell.AudioBalance = dx / d;
+                            bell.Play();
+                        });
                     }
 
                     if (collision.IsGoal)

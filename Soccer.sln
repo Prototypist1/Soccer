@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteSoccer", "RemoteSoccer\RemoteSoccer.csproj", "{1CDDB5B4-DE87-4FF1-A8E4-AE68F1978C69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "physics2", "physics2\physics2.csproj", "{3C02FD6E-B7B5-4C9F-8E96-323E882B2574}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "physics2", "physics2\physics2.csproj", "{3C02FD6E-B7B5-4C9F-8E96-323E882B2574}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

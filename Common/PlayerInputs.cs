@@ -38,5 +38,10 @@ namespace Common
             this.BodyId = bodyId;
             this.Controller = controller;
         }
+
+        public override string ToString()
+        {
+            return $"{BodyX},{BodyY}";
+        }
     }
 }
