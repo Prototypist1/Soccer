@@ -176,35 +176,38 @@ namespace RemoteSoccer
             Canvas.SetZIndex(field, -2);
             this.gameArea.Children.Add(field);
 
-            var lineBrush =
-                new SolidColorBrush(Color.FromArgb(0xff, 0xcc, 0xcc, 0xcc));
-            for (double i = 0; i <= Constants.yMax; i += Constants.yMax / 4)
+            if (false)
             {
-                var line = new Line()
+                var lineBrush =
+                    new SolidColorBrush(Color.FromArgb(0xff, 0xcc, 0xcc, 0xcc));
+                for (double i = 0; i <= Constants.yMax; i += Constants.yMax / 4)
                 {
-                    X1 = 0,
-                    X2 = Constants.xMax,
-                    Y1 = i,
-                    Y2 = i,
-                    Stroke = lineBrush,
-                    StrokeThickness = 5,
-                };
-                Canvas.SetZIndex(line, -1);
-                this.gameArea.Children.Add(line);
-            }
-            for (double i = 0; i <= Constants.xMax; i += Constants.yMax / 4)
-            {
-                var line = new Line()
+                    var line = new Line()
+                    {
+                        X1 = 0,
+                        X2 = Constants.xMax,
+                        Y1 = i,
+                        Y2 = i,
+                        Stroke = lineBrush,
+                        StrokeThickness = 5,
+                    };
+                    Canvas.SetZIndex(line, -1);
+                    this.gameArea.Children.Add(line);
+                }
+                for (double i = 0; i <= Constants.xMax; i += Constants.yMax / 4)
                 {
-                    X1 = i,
-                    X2 = i,
-                    Y1 = 0,
-                    Y2 = Constants.yMax,
-                    Stroke = lineBrush,
-                    StrokeThickness = 5,
-                };
-                Canvas.SetZIndex(line, -1);
-                this.gameArea.Children.Add(line);
+                    var line = new Line()
+                    {
+                        X1 = i,
+                        X2 = i,
+                        Y1 = 0,
+                        Y2 = Constants.yMax,
+                        Stroke = lineBrush,
+                        StrokeThickness = 5,
+                    };
+                    Canvas.SetZIndex(line, -1);
+                    this.gameArea.Children.Add(line);
+                }
             }
 
         }

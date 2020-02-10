@@ -13,7 +13,6 @@ namespace Common
 {
     public class Game
     {
-        private const int EnergyAdd = 800;
         private int players = 0;
 
 
@@ -81,10 +80,10 @@ namespace Common
 
             private const int play = -1;
             private const int startGrowingCircle = 0;
-            private const int stopGrowingCircle = 300;
-            private const int resetBall = 300;
+            private const int stopGrowingCircle = 100;
+            private const int resetBall = 100;
             private const int startCountDown = 0;
-            private const int endCountDown = 600;
+            private const int endCountDown = 200;
 
             private int gameState = play;
 
@@ -301,7 +300,7 @@ namespace Common
                255);
 
             var leftGoalId = Guid.NewGuid();
-            var leftGoal = new Ball(1, (Constants.footLen * 3), Constants.yMax / 2.0, false, new Circle(Constants.footLen));
+            var leftGoal = new Ball(1, 0, Constants.yMax / 2.0, false, new Circle(Constants.footLen));
            
 
             goalsCreated.AddOrThrow(new GoalCreated(
@@ -317,7 +316,7 @@ namespace Common
 
             var rightGoalId = Guid.NewGuid();
 
-            var rightGoal = new Ball(1, Constants.xMax - (Constants.footLen * 3), Constants.yMax / 2.0, false, new Circle(Constants.footLen));
+            var rightGoal = new Ball(1, Constants.xMax, Constants.yMax / 2.0, false, new Circle(Constants.footLen));
             
             goalsCreated.AddOrThrow(new GoalCreated(
                rightGoal.X,
@@ -669,10 +668,11 @@ namespace Common
         private int running = 0;
 
 
-        private const double SpeedScale = .5;
-        private const double Add = 20;
-        private double E(double v) => Math.Pow(Math.Max(0,v-Add),3.0)* SpeedScale;
-        private double EInverse(double e) => Math.Pow(e/ SpeedScale, 1/3.0) + Add;
+        private const int EnergyAdd = 1000;
+        private const double SpeedScale = 1;
+        private const double Add = 0;
+        private double E(double v) => Math.Pow(Math.Max(0,v-Add),2.1)* SpeedScale;
+        private double EInverse(double e) => Math.Pow(e/ SpeedScale, 1/2.1) + Add;
 
         public void PlayerInputs(PlayerInputs playerInputs)
         {
