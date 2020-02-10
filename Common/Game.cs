@@ -668,12 +668,15 @@ namespace Common
 
         private int running = 0;
 
-        private double E(double d) => Math.Pow(d,3.0);
-        private double EInverse(double d) => Math.Pow(d,1/3.0);
+
+        private const double SpeedScale = .5;
+        private const double Add = 20;
+        private double E(double v) => Math.Pow(Math.Max(0,v-Add),3.0)* SpeedScale;
+        private double EInverse(double e) => Math.Pow(e/ SpeedScale, 1/3.0) + Add;
 
         public void PlayerInputs(PlayerInputs playerInputs)
         {
-            var lastLast = LastInputUTC;
+            //var lastLast = LastInputUTC;
             playersInputs.Add(playerInputs);
             while (playersInputs.Count > (players - 1.0) && Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {

@@ -135,11 +135,13 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="ControllerInputes.cs" />
+    <Compile Include="FullField.cs" />
     <Compile Include="IGameView.cs" />
     <Compile Include="IInputs.cs" />
     <Compile Include="IRemoteGame.cs" />
     <Compile Include="IScaler.cs" />
     <Compile Include="ISignalRHandler.cs" />
+    <Compile Include="IZoomer.cs" />
     <Compile Include="LandingPage.xaml.cs">
       <DependentUpon>LandingPage.xaml</DependentUpon>
     </Compile>
@@ -157,6 +159,7 @@
     <Compile Include="RenderGameEvents.cs" />
     <Compile Include="Scaler.cs" />
     <Compile Include="SignalRHandler.cs" />
+    <Compile Include="Zoomer.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

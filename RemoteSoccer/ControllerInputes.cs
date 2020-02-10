@@ -12,17 +12,16 @@ namespace RemoteSoccer
 
         private readonly IReadonlyRef<bool> lockCurser;
 
-        private readonly IGame game;
         private readonly Guid body;
         private readonly Guid foot;
+        private readonly Gamepad gamepad;
 
-
-        public ControllerInputes(IReadonlyRef<bool> lockCurser, IGame game, Guid body, Guid foot)
+        public ControllerInputes(IReadonlyRef<bool> lockCurser, Guid body, Guid foot, Gamepad gamepad)
         {
             this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
-            this.game = game ?? throw new ArgumentNullException(nameof(game));
             this.body = body;
             this.foot = foot;
+            this.gamepad = gamepad;
         }
 
         public Task Init()
@@ -32,8 +31,8 @@ namespace RemoteSoccer
 
         public Task<PlayerInputs> Next()
         {
-            var gamepad = Gamepad.Gamepads?.FirstOrDefault();
-            if (lockCurser.Thing && gamepad != null)
+            
+            if (lockCurser.Thing)
             {
                 var snap = gamepad.GetCurrentReading();
 

@@ -20,51 +20,6 @@ using Windows.UI.Xaml.Shapes;
 
 namespace RemoteSoccer
 {
-    class Zoomer
-    {
-
-        private double viewFrameWidth;
-        private double viewFrameHeight;
-        private Guid body;
-        private double times = .1;
-
-        public Zoomer(double viewFrameWidth, double viewFrameHeight, Guid body)
-        {
-            this.viewFrameWidth = viewFrameWidth;
-            this.viewFrameHeight = viewFrameHeight;
-            this.body = body;
-        }
-
-        public double GetTimes() => times;
-
-        internal (double, double, double, double) Update(Position[] positionsList)
-        {
-
-            foreach (var position in positionsList)
-            {
-                if (position.Id == body)
-                {
-                    return (position.X,
-                        position.Y,
-                        (viewFrameWidth / 2.0) - (position.X * times),
-                    (viewFrameHeight / 2.0) - (position.Y * times));
-                }
-            }
-
-            throw new Exception("we are following something without a position");
-        }
-
-        internal void UpdateWindow(double actualWidth, double actualHeight)
-        {
-            this.viewFrameWidth = actualWidth;
-            this.viewFrameHeight = actualHeight;
-        }
-
-        internal void SetTimes(double v)
-        {
-            times = v;
-        }
-    }
 
     class RenderGameEvents : IGameView
     {
@@ -166,7 +121,7 @@ namespace RemoteSoccer
         private readonly TextBlock fps;
 
         private readonly TextBlock leftScore, rightScore;
-        private readonly Zoomer zoomer;
+        private readonly IZoomer zoomer;
 
         private Random random = new Random();
         private readonly IReadonlyRef<int> frame;
@@ -176,7 +131,7 @@ namespace RemoteSoccer
             TextBlock fps,
             TextBlock leftScore,
             TextBlock rightScore,
-            Zoomer zoomer,
+            IZoomer zoomer,
             IReadonlyRef<int> frame)
         {
             this.frame = frame;
