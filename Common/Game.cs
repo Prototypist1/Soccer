@@ -482,7 +482,7 @@ namespace Common
 
                 if (ball.Velocity.Length > 0)
                 {
-                    var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Velocity.Length * ball.Mass / 4000.0);
+                    var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Velocity.Length * ball.Mass / 6000.0);
 
                     ball.ApplyForce(
                         friction.x,
@@ -490,9 +490,9 @@ namespace Common
 
                 }
 
-                if (ball.Velocity.Length > .03)
+                if (ball.Velocity.Length > .05)
                 {
-                    var friction = ball.Velocity.NewUnitized().NewScaled(-.03);
+                    var friction = ball.Velocity.NewUnitized().NewScaled(-.05);
 
                     ball.ApplyForce(
                         friction.x,
@@ -525,6 +525,9 @@ namespace Common
 
                     var foot = body.Foot;
                     var target = new Vector(foot.X - lastX, foot.Y - lastY);
+
+                    var leanChangeX = 0.0;
+                    var leanChangeY = 0.0;
 
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
@@ -568,6 +571,7 @@ namespace Common
                             else
                             {
 
+
                                 // base velocity becomes the part of the velocity in the direction of the players movement
                                 var v = new Vector(body.vx, body.vy);
                                 var f = new Vector(input.BodyX, input.BodyY).NewUnitized();
@@ -602,16 +606,28 @@ namespace Common
                         }
 
                         target = GetTarget(lastX, lastY, input, foot);
+
+                        if (input.Controller)
+                        {
+                            leanChangeX = (input.BodyX*500)- body.leanX;
+                            leanChangeY = (input.BodyY * 500) - body.leanY;
+                            body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * 500, input.BodyY * 500);
+                        }
+                        else {
+                            body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
+                        }
+                    }
+                    else { 
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup,0,0);
+
                     }
 
-
-                    body.Update(gameStateTracker.TryGetBallWall(out var tup), tup);
 
 
                     // apply full force to get us to the bodies current pos
                     foot.ApplyForce(
-                        (body.vx - lastVx) * foot.Mass,
-                        (body.vy - lastVy) * foot.Mass);
+                        ((body.vx - lastVx) + leanChangeX) * foot.Mass,
+                        ((body.vy - lastVy) + leanChangeY) * foot.Mass);
 
                     var max = Constants.footLen - Constants.PlayerRadius - Constants.playerPadding;
 

@@ -9,9 +9,12 @@ namespace Common
     public class Center 
     {
         public double Y { get; private set; }
-        public PhysicsObject Foot { get; }
         public double X { get; private set; }
+        public PhysicsObject Foot { get; }
         public double vx, vy, radius;
+
+        public double leanX=0, leanY=0;
+
 
         public Center(double x, double y, PhysicsObject foot, double radius)
         {
@@ -27,8 +30,18 @@ namespace Common
             vy += fy;
         }
 
-        public void Update(bool useBallWall,(double x, double y, double radius) ballWall)
+        public void Update(bool useBallWall, (double x, double y, double radius) ballWall) {
+            Update(useBallWall, ballWall, this.leanX, this.leanY);
+        }
+
+        public void Update(bool useBallWall,(double x, double y, double radius) ballWall, double NextleanX, double NextleanY)
         {
+            var lastLeanX = this.leanX;
+            var lastLeanY = this.leanY;
+
+            this.leanX = NextleanX;
+            this.leanY = NextleanY;
+
 
             var lastX = X;
             var lastY = Y;
@@ -81,6 +94,9 @@ namespace Common
 
             vx = X - lastX;
             vy = Y - lastY;
+
+            X = X - lastLeanX + NextleanX;
+            Y = Y - lastLeanY + NextleanY;
 
         }
     }
