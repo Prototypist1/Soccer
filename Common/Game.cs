@@ -482,7 +482,7 @@ namespace Common
 
                 if (ball.Velocity.Length > 0)
                 {
-                    var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Velocity.Length * ball.Mass / 6000.0);
+                    var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Velocity.Length * ball.Mass / 8000.0);
 
                     ball.ApplyForce(
                         friction.x,
@@ -490,9 +490,9 @@ namespace Common
 
                 }
 
-                if (ball.Velocity.Length > .05)
+                if (ball.Velocity.Length > 1)
                 {
-                    var friction = ball.Velocity.NewUnitized().NewScaled(-.05);
+                    var friction = ball.Velocity.NewUnitized().NewScaled(-1);
 
                     ball.ApplyForce(
                         friction.x,
@@ -609,9 +609,10 @@ namespace Common
 
                         if (input.Controller)
                         {
-                            leanChangeX = (input.BodyX*500)- body.leanX;
-                            leanChangeY = (input.BodyY * 500) - body.leanY;
-                            body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * 500, input.BodyY * 500);
+                            var lean = 600;
+                            leanChangeX = (input.BodyX * lean) - body.leanX;
+                            leanChangeY = (input.BodyY * lean) - body.leanY;
+                            body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * lean, input.BodyY * lean);
                         }
                         else {
                             body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
@@ -684,11 +685,12 @@ namespace Common
         private int running = 0;
 
 
-        private const int EnergyAdd = 1000;
+        private const int EnergyAdd = 400;
         private const double SpeedScale = 1;
         private const double Add = 0;
-        private double E(double v) => Math.Pow(Math.Max(0,v-Add),2.1)* SpeedScale;
-        private double EInverse(double e) => Math.Pow(e/ SpeedScale, 1/2.1) + Add;
+        private const double ToThe = 1.9;
+        private double E(double v) => Math.Pow(Math.Max(0,v-Add), ToThe) * SpeedScale;
+        private double EInverse(double e) => Math.Pow(e/ SpeedScale, 1/ ToThe) + Add;
 
         public void PlayerInputs(PlayerInputs playerInputs)
         {
