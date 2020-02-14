@@ -303,7 +303,7 @@ namespace RemoteSoccer
                         Points = points,
                         Fill = new SolidColorBrush(color),
                         Stroke = new SolidColorBrush(color),//new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff)),
-                        StrokeThickness = 2*(Constants.playerPadding + Constants.PlayerRadius),
+                        StrokeThickness = 2*(Constants.playerPadding),
                         StrokeLineJoin = PenLineJoin.Round
                     };
                     shape = polygon;
@@ -529,8 +529,6 @@ namespace RemoteSoccer
                             {
                                 vv = vv.NewScaled(Constants.PlayerRadius / vv.Length);
                             }
-
-                            polygon.StrokeThickness = 2*(Constants.playerPadding + Constants.PlayerRadius - vv.Length);
 
                             points.Add(new Windows.Foundation.Point(vv.y, -vv.x));
                             points.Add(new Windows.Foundation.Point(-vv.y, vv.x));

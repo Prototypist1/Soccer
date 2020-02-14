@@ -121,7 +121,9 @@ namespace physics2
                     }
                 }
 
-                events = events.Where(x => x.Time > 0).ToList();
+                events = events
+                    .Where(x => x.Time > 0)
+                    .ToList();
 
                 if (events.Any())
                 {

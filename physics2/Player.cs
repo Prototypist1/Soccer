@@ -4,9 +4,8 @@ namespace physics2
 {
     public class Player : PhysicsObject
     {
-        public double Padding=> (padding + (length/2.0) - GetParallelVector().Length);
+        public readonly double Padding;
         private readonly double length;
-        private readonly double padding;
         public readonly PointCloudPartical start, end;
 
         // position is realitive to player
@@ -26,7 +25,7 @@ namespace physics2
         public Player(double mass, double x, double y, bool mobile, double length, double padding) : base(mass, x, y, mobile)
         {
             this.length = length;
-            this.padding = padding;
+            this.Padding = padding;
             start = new PointCloudPartical(x, y, x, y);
             end = new PointCloudPartical(x, y, x, y);
 

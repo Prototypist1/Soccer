@@ -219,7 +219,6 @@ namespace Physics2
 
             if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
             {
-
                 evnt = DoCollision(self, collider, c1.Radius, time, GetNormal(self, particalX,particalY,particalVx,particalVy, time), self.Velocity, collider.Velocity);
                 return true;
             }
