@@ -42,11 +42,6 @@ namespace Common
             this.leanX = NextleanX;
             this.leanY = NextleanY;
 
-
-            var lastX = X;
-            var lastY = Y;
-
-
             var v = new Vector(vx, vy);
 
             vx = v.x;
@@ -54,26 +49,6 @@ namespace Common
 
             X += vx;
             Y += vy;
-
-            //if (X > maxX)
-            //{
-            //    X = maxX;
-            //}
-
-            //if (Y > maxY)
-            //{
-            //    Y = maxY;
-            //}
-
-            //if (X < minX)
-            //{
-            //    X = minX;
-            //}
-
-            //if (Y < minY)
-            //{
-            //    Y = minY;
-            //}
 
             if (useBallWall)
             {
@@ -89,12 +64,20 @@ namespace Common
                     dis = dis.NewUnitized().NewScaled(ballWall.radius + radius);
                     X = ballWall.x + dis.x;
                     Y = ballWall.y + dis.y;
+
+                    //// get the part going toward the center 
+                    //var partTowards = v.Dot(dis.NewUnitized().NewMinus());
+                    //// get the remaining part
+                    //var remainingPart = v.NewAdded(dis.NewUnitized().NewScaled(partTowards));
+
+                    //// scale the remaining part to be all the speed
+                    //var goal = remainingPart.NewUnitized().NewScaled(v.Length);
+                    //ApplyForce(goal.x - v.x, goal.y - v.y);
+                    
                 }
             }
 
-            vx = X - lastX;
-            vy = Y - lastY;
-
+            
             X = X - lastLeanX + NextleanX;
             Y = Y - lastLeanY + NextleanY;
 

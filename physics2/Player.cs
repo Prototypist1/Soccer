@@ -4,8 +4,9 @@ namespace physics2
 {
     public class Player : PhysicsObject
     {
-        public double Padding;
+        public double Padding=> (padding + (length/2.0) - GetParallelVector().Length);
         private readonly double length;
+        private readonly double padding;
         public readonly PointCloudPartical start, end;
 
         // position is realitive to player
@@ -25,7 +26,7 @@ namespace physics2
         public Player(double mass, double x, double y, bool mobile, double length, double padding) : base(mass, x, y, mobile)
         {
             this.length = length;
-            this.Padding = padding;
+            this.padding = padding;
             start = new PointCloudPartical(x, y, x, y);
             end = new PointCloudPartical(x, y, x, y);
 
@@ -78,7 +79,7 @@ namespace physics2
         {
             // duplicate code
             // serach for {3E1769BA-B690-4440-87BE-C74113D0D5EC}
-            var v = new Physics2.Vector(-Vy *10 , Vx*10 );
+            var v = new Physics2.Vector(-Vy*4  , Vx * 4);
             if (v.Length > length * .5)
             {
                 v = v.NewScaled(length * .5 / v.Length);

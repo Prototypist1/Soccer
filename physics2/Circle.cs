@@ -6,9 +6,9 @@ namespace physics2
 {
     public class Circle
     {
-        public Circle(double radious)
+        public Circle(double radius)
         {
-            Radius = radious;
+            Radius = radius;
         }
 
         public double Radius { get; set; }

@@ -189,7 +189,8 @@ namespace Common
             }
         }
 
-        private class Node {
+        private class Node
+        {
             public readonly Positions positions;
             public readonly TaskCompletionSource<Node> next = new TaskCompletionSource<Node>();
 
@@ -211,7 +212,7 @@ namespace Common
 
             public Positions Current
             {
-                get;private set;
+                get; private set;
             }
 
             public ValueTask DisposeAsync()
@@ -287,7 +288,7 @@ namespace Common
             ballId = Guid.NewGuid();
 
             ball = new Ball(Constants.BallMass, Constants.xMax / 2, Constants.yMax / 2, true, new Circle(Constants.BallRadius));
-            
+
             ballCreated = new BallCreated(
                ball.X,
                ball.Y,
@@ -301,9 +302,11 @@ namespace Common
 
             var leftGoalId = Guid.NewGuid();
             var leftGoal = new Ball(1, 0, Constants.yMax / 2.0, false, new Circle(Constants.footLen));
-           
 
-            goalsCreated.AddOrThrow(new GoalCreated(
+
+            try
+            {
+                goalsCreated.AddOrThrow(new GoalCreated(
                leftGoal.X,
                leftGoal.Y,
                Constants.goalZ,
@@ -313,11 +316,16 @@ namespace Common
                0xee,
                0xee,
                0xff));
+            }
+            catch (Exception e)
+            {
+
+            }
 
             var rightGoalId = Guid.NewGuid();
 
             var rightGoal = new Ball(1, Constants.xMax, Constants.yMax / 2.0, false, new Circle(Constants.footLen));
-            
+
             goalsCreated.AddOrThrow(new GoalCreated(
                rightGoal.X,
                rightGoal.Y,
@@ -328,6 +336,7 @@ namespace Common
                0xee,
                0xee,
                0xff));
+
 
             var points = new[] {
                 (new Vector(0,0) ,new Vector(Constants.xMax-1,0)),
@@ -348,7 +357,7 @@ namespace Common
             physicsEngine.Run(x =>
             {
                 x.SetBall(ball);
-                x.AddGoal(leftGoal,leftGoalManger);
+                x.AddGoal(leftGoal, leftGoalManger);
                 x.AddGoal(rightGoal, rightGoalManger);
                 foreach (var side in points)
                 {
@@ -356,7 +365,7 @@ namespace Common
                     var pos = side.Item1.NewAdded(side.Item2).NewScaled(.5);
                     // the position on this is pretty wierd
                     // pretty sure it is not used
-                    var linePhysicObject = new PhysicsObjectWithFixedLine(0,line, false);
+                    var linePhysicObject = new PhysicsObjectWithFixedLine(0, line, false);
                     x.AddWall(linePhysicObject);
                 }
                 return x;
@@ -372,10 +381,22 @@ namespace Common
         {
             double startX = 400;
             double startY = 400;
-            var foot = new Player(1,  startX, startY, true, Constants.PlayerRadius*2,Constants.playerPadding);
+            var foot = new Player(1, startX, startY, true, Constants.PlayerRadius * 2, Constants.playerPadding);
 
             physicsEngine.Run(x => { x.AddPlayer(foot); return x; });
-            feet[createPlayer.Foot] = foot;
+
+            bool gotItFeet = false;
+            while (!gotItFeet)
+            {
+                try
+                {
+                    // this can throw if the list is being enumerated
+                    // so we just try keep trying in a loop
+                    feet[createPlayer.Foot] = foot;
+                    gotItFeet = true;
+                }
+                catch { }
+            }
 
             var body = new Center(
                 startX,
@@ -383,32 +404,45 @@ namespace Common
                 foot,
                 createPlayer.BodyDiameter / 2.0
                 );
-            bodies[createPlayer.Body] = body;
+
+            bool gotItBody = false;
+            while (!gotItBody)
+            {
+                try
+                {
+                    // this can throw if the list is being enumerated
+                    // so we just try keep trying in a loop
+                    bodies[createPlayer.Body] = body;
+                    gotItBody = true;
+                }
+                catch { }
+            }
 
             var bodyCreated = new BodyCreated(
-                    body.X,
-                    body.Y,
-                    Constants.bodyZ,
-                    createPlayer.Body,
-                    createPlayer.BodyDiameter,
-                    createPlayer.BodyR,
-                    createPlayer.BodyG,
-                    createPlayer.BodyB,
-                    createPlayer.BodyA,
-                    createPlayer.Name);
+                        body.X,
+                        body.Y,
+                        Constants.bodyZ,
+                        createPlayer.Body,
+                        createPlayer.BodyDiameter,
+                        createPlayer.BodyR,
+                        createPlayer.BodyG,
+                        createPlayer.BodyB,
+                        createPlayer.BodyA,
+                        createPlayer.Name);
             bodiesCreated.AddOrThrow(bodyCreated);
-            var footCreated = new FootCreated(
-                    foot.X,
-                    foot.Y,
-                    Constants.footZ,
-                    createPlayer.Foot,
-                    createPlayer.FootDiameter,
-                    createPlayer.FootR,
-                    createPlayer.FootG,
-                    createPlayer.FootB,
-                    createPlayer.FootA);
-            feetCreaated.AddOrThrow(footCreated);
 
+
+            var footCreated = new FootCreated(
+                        foot.X,
+                        foot.Y,
+                        Constants.footZ,
+                        createPlayer.Foot,
+                        createPlayer.FootDiameter,
+                        createPlayer.FootR,
+                        createPlayer.FootG,
+                        createPlayer.FootB,
+                        createPlayer.FootA);
+            feetCreaated.AddOrThrow(footCreated);
 
             connectionObjects.AddOrThrow(connectionId, new List<ObjectCreated>(){
                 bodyCreated,
@@ -498,7 +532,8 @@ namespace Common
                         friction.x,
                         friction.y);
                 }
-                else {
+                else
+                {
                     ball.ApplyForce(
                         -ball.Velocity.x,
                         -ball.Velocity.y);
@@ -528,6 +563,7 @@ namespace Common
 
                     var leanChangeX = 0.0;
                     var leanChangeY = 0.0;
+
 
                     if (inputSet.TryGetValue(center.Key, out var input))
                     {
@@ -614,13 +650,14 @@ namespace Common
                             leanChangeY = (input.BodyY * lean) - body.leanY;
                             body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * lean, input.BodyY * lean);
                         }
-                        else {
+                        else
+                        {
                             body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
                         }
                     }
-                    else { 
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup,0,0);
-
+                    else
+                    {
+                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
                     }
 
 
@@ -644,6 +681,7 @@ namespace Common
                     foot.ApplyForce(
                         (targetX - (foot.X + foot.Vx)) * foot.Mass / (1.0),
                         (targetY - (foot.Y + foot.Vy)) * foot.Mass / (1.0));
+
                 }
 
                 simulationTime++;
@@ -665,20 +703,22 @@ namespace Common
         private static Vector GetTarget(double lastX, double lastY, PlayerInputs input, PhysicsObject foot)
         {
             // old controller:
-            if (input.Controller) {
+            if (input.Controller)
+            {
                 return new Vector(input.FootX * (Constants.footLen - Constants.PlayerRadius), input.FootY * (Constants.footLen - Constants.PlayerRadius));
             }
 
-            if (input.Controller) {
+            if (input.Controller)
+            {
                 var inputVector = new Vector(input.FootX, input.FootY);
                 if (inputVector.Length < .1)
                 {
                     return new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
                 }
-                var realInput = inputVector.NewUnitized().NewScaled(-.1).NewAdded(inputVector).NewScaled(1/.9);
+                var realInput = inputVector.NewUnitized().NewScaled(-.1).NewAdded(inputVector).NewScaled(1 / .9);
 
-                return new Vector(foot.X + (realInput.x* Math.Abs(realInput.x) * Math.Abs(realInput.x) * 200) - lastX, foot.Y + (realInput.y * Math.Abs(realInput.y) * Math.Abs(realInput.y) * 200) - lastY);
-            } 
+                return new Vector(foot.X + (realInput.x * Math.Abs(realInput.x) * Math.Abs(realInput.x) * 200) - lastX, foot.Y + (realInput.y * Math.Abs(realInput.y) * Math.Abs(realInput.y) * 200) - lastY);
+            }
             return new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY); ;
         }
 
@@ -689,14 +729,14 @@ namespace Common
         private const double SpeedScale = 1;
         private const double Add = 0;
         private const double ToThe = 1.9;
-        private double E(double v) => Math.Pow(Math.Max(0,v-Add), ToThe) * SpeedScale;
-        private double EInverse(double e) => Math.Pow(e/ SpeedScale, 1/ ToThe) + Add;
+        private double E(double v) => Math.Pow(Math.Max(0, v - Add), ToThe) * SpeedScale;
+        private double EInverse(double e) => Math.Pow(e / SpeedScale, 1 / ToThe) + Add;
 
         public void PlayerInputs(PlayerInputs playerInputs)
         {
             //var lastLast = LastInputUTC;
             playersInputs.Add(playerInputs);
-            while (playersInputs.Count > (players - 1.0) && Interlocked.CompareExchange(ref running, 1, 0) == 0)
+            while (playersInputs.Count >= players && Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
                 Apply();
                 running = 0;

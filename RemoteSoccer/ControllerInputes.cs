@@ -14,7 +14,7 @@ namespace RemoteSoccer
 
         private readonly Guid body;
         private readonly Guid foot;
-        private readonly Gamepad gamepad;
+        public readonly Gamepad gamepad;
 
         public ControllerInputes(IReadonlyRef<bool> lockCurser, Guid body, Guid foot, Gamepad gamepad)
         {

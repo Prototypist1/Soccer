@@ -23,8 +23,14 @@ namespace RemoteSoccer
         }
 
         public void CreatePlayer(CreatePlayer createPlayer) {
-            gameView?.HandleObjectsCreated(game.GetObjectsCreated());
-            gameView?.HandleObjectsCreated(game.CreatePlayer(ConnectionId + "|" + createPlayer.SubId, createPlayer));
+            try
+            {
+                gameView?.HandleObjectsCreated(game.GetObjectsCreated());
+                gameView?.HandleObjectsCreated(game.CreatePlayer(ConnectionId + "|" + createPlayer.SubId, createPlayer));
+            }
+            catch (Exception e) { 
+            
+            }
         }
 
         public void ResetGame(ResetGame resetGame) {

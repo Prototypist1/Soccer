@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.System;
@@ -150,6 +151,9 @@ namespace RemoteSoccer
                     game.SetCallbacks(rge);
                     //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
 
+
+
+
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
                     {
                         await CreatePlayer(gamePad);
@@ -157,7 +161,6 @@ namespace RemoteSoccer
 
                     Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
                     Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
-
 
                     var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
 
