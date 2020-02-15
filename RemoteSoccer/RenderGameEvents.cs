@@ -587,6 +587,13 @@ namespace RemoteSoccer
 
                 foreach (var collision in positions.Collisions)
                 {
+
+                    var force = Math.Sqrt(collision.Fx * collision.Fx + collision.Fy * collision.Fy);
+
+                    if (force < 20 && !collision.IsGoal) {
+                        continue;
+                    }
+
                     if (!collision.IsGoal)
                     {
                         var item = players.First.Value;
@@ -629,7 +636,7 @@ namespace RemoteSoccer
                             X2 = -(collision.Fx),
                             Y2 = -(collision.Fy),
                             StrokeThickness = 20,
-                            Stroke = new SolidColorBrush(Colors.Black),
+                            Stroke = new SolidColorBrush(Colors.White),
                             Opacity = 1,
                             OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(800), },
                             Scale = new Vector3(.2f, .2f, 1f),
@@ -646,19 +653,26 @@ namespace RemoteSoccer
                     else
                     {
 
+                        var scale = 5;
+
+
                         var line1 = new Line
                         {
 
-                            X1 = -(collision.Fy * 10) * 2,
-                            Y1 = (collision.Fx * 10) * 2,
-                            X2 = -(10 * collision.Fy / 1.2),
-                            Y2 = (10 * collision.Fx / 1.2),
-                            StrokeThickness = 5 * 2,
-                            Stroke = new SolidColorBrush(Colors.Black),
+                            X1 = -(collision.Fy * scale) * 2,
+                            Y1 = (collision.Fx * scale) * 2,
+                            X2 = -(scale * collision.Fy / 1.2),
+                            Y2 = (scale * collision.Fx / 1.2),
+                            StrokeThickness = Math.Max(10, Math.Min(collision.Fx/5, 50)),
+                            Stroke = new SolidColorBrush(Colors.White),
                             Opacity = 1,
-                            OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
+                            OpacityTransition = new ScalarTransition() {
+                                Duration = TimeSpan.FromMilliseconds(400)
+                                ,
+                            
+                            },
                             Scale = new Vector3(.4f, .4f, 1f),
-                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(200) },
+                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
                             Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
 
                         };
@@ -671,16 +685,16 @@ namespace RemoteSoccer
                         var line2 = new Line
                         {
 
-                            X1 = (collision.Fy * (10)) * 2,
-                            Y1 = -(collision.Fx * (10)) * 2,
-                            X2 = (10 * collision.Fy / 1.2),
-                            Y2 = -(10 * collision.Fx / 1.2),
-                            StrokeThickness = (5) * 2,
-                            Stroke = new SolidColorBrush(Colors.Black),
+                            X1 = (collision.Fy * (scale)) * 2,
+                            Y1 = -(collision.Fx * (scale)) * 2,
+                            X2 = (scale * collision.Fy / 1.2),
+                            Y2 = -(scale * collision.Fx / 1.2),
+                            StrokeThickness = Math.Max(10, Math.Min(collision.Fx / 5, 50)),
+                            Stroke = new SolidColorBrush(Colors.White),
                             Opacity = 1,
                             OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
                             Scale = new Vector3(.4f, .4f, 1f),
-                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
+                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) }, // I wish I could ease-out (that is the one that declerates)
                             Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
                         };
                         lineTimes.Add(line2, now);
