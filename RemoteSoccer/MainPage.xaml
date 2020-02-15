@@ -12,12 +12,6 @@
 
     <Grid x:Name="GameHolder" SizeChanged="GameHolder_SizeChanged" Background="#ffeeeeee"  PointerWheelChanged="GameHolder_PointerWheelChanged">
 
-        <Canvas x:Name="GameArea" />
-
-
-        <Border BorderThickness="10" VerticalAlignment="Bottom">
-            <TextBlock x:Name="Fps" Text="" />
-        </Border>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Border BorderThickness="10" >
@@ -30,6 +24,14 @@
                 <TextBlock x:Name="RightScore" Text="0" FontSize="100" />
             </Border>
         </StackPanel>
+
+        <Canvas x:Name="GameArea" />
+
+
+        <Border BorderThickness="10" VerticalAlignment="Bottom">
+            <TextBlock x:Name="Fps" Text="" />
+        </Border>
+
 
         <Border BorderThickness="20" 
             x:Name="Menu"

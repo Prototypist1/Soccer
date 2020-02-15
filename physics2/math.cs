@@ -13,11 +13,53 @@ namespace Physics2
 
         private const double CLOSE = .01;
 
+
+        internal static DoubleUpdatePositionVelocityEvent DoCollisionInfiniteMass(
+            PhysicsObject physicsObject,
+            IPhysicsObject physicsObjectInfiniteMass,
+            double radius1,
+            double time,
+            Vector normal,
+            Vector velocityVector,
+            Vector velocityVectorInfiniteMass)
+        {
+
+            var normalVelocity1 = normal.Dot(velocityVector);
+
+            var normalVelocity2 = normal.Dot(velocityVectorInfiniteMass);
+
+            var finalV1 = velocityVector
+                .NewAdded(normal.NewScaled(normalVelocity1).NewMinus())
+                .NewAdded(normal.NewScaled(normalVelocity1).NewMinus())
+                .NewAdded(normal.NewScaled(normalVelocity2))
+                .NewAdded(normal.NewScaled(normalVelocity2));
+
+            var force = physicsObject.Mass *((normalVelocity1 * 2) + (normalVelocity2 * 2));
+
+            return new DoubleUpdatePositionVelocityEvent(
+                            time,
+                            physicsObject,
+                            finalV1.x,
+                            finalV1.y,
+                            physicsObjectInfiniteMass,
+                            velocityVectorInfiniteMass.x,
+                            velocityVectorInfiniteMass.y,
+                            new MightBeCollision(new Collision(
+                                physicsObject.X + (time * physicsObject.Vx) + normal.NewScaled(-radius1).x,
+                                physicsObject.Y + (time * physicsObject.Vy) + normal.NewScaled(-radius1).y,
+                                normal.NewScaled(force).x,
+                                normal.NewScaled(force).y,
+                                false
+                            )));
+
+
+        }
+
         internal static DoubleUpdatePositionVelocityEvent DoCollision(
-            PhysicsObject physicsObject1, 
-            IPhysicsObject physicsObject2, 
-            double radius1, 
-            double time, 
+            PhysicsObject physicsObject1,
+            IPhysicsObject physicsObject2,
+            double radius1,
+            double time,
             Vector normal,
             Vector velocityVector1,
             Vector velocityVector2
@@ -178,15 +220,15 @@ namespace Physics2
             return vf != v;
         }
 
-        internal static bool TryCollisionBall(PhysicsObject self, 
+        internal static bool TryCollisionBallInfiniteMass(PhysicsObject self,
             IPhysicsObject collider,
             double particalX,
             double particalY,
             double particalVx,
             double particalVy,
-            Circle c1, 
-            Circle c2, 
-            double endTime, 
+            Circle c1,
+            Circle c2,
+            double endTime,
             out DoubleUpdatePositionVelocityEvent evnt)
         {
 
@@ -219,7 +261,56 @@ namespace Physics2
 
             if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
             {
-                evnt = DoCollision(self, collider, c1.Radius, time, GetNormal(self, particalX,particalY,particalVx,particalVy, time), self.Velocity, collider.Velocity);
+                evnt = DoCollisionInfiniteMass(self, collider, c1.Radius, time, GetNormal(self, particalX, particalY, particalVx, particalVy, time), self.Velocity, collider.Velocity);
+                return true;
+            }
+            evnt = default;
+            return false;
+        }
+
+
+        internal static bool TryCollisionBall(PhysicsObject self,
+            IPhysicsObject collider,
+            double particalX,
+            double particalY,
+            double particalVx,
+            double particalVy,
+            Circle c1,
+            Circle c2,
+            double endTime,
+            out DoubleUpdatePositionVelocityEvent evnt)
+        {
+
+            // how  are they moving relitive to us
+            double DVX = particalVx - self.Vx,
+                   DVY = particalVy - self.Vy;
+
+            var thisX0 = self.X;
+            var thisY0 = self.Y;
+            var thatX0 = particalX;
+            var thatY0 = particalY;
+
+            // how far they are from us
+            var DX = thatX0 - thisX0;
+            var DY = thatY0 - thisY0;
+
+            // if the objects are not moving towards each other dont bother
+            var V = -new Vector(DVX, DVY).Dot(new Vector(DX, DY).NewUnitized());
+            if (V <= 0)
+            {
+                evnt = default;
+                return false;
+            }
+
+            var R = c1.Radius + c2.Radius;
+
+            var A = (DVX * DVX) + (DVY * DVY);
+            var B = 2 * ((DX * DVX) + (DY * DVY));
+            var C = (DX * DX) + (DY * DY) - (R * R);
+
+            if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
+            {
+                evnt = DoCollision(self, collider, c1.Radius, time, GetNormal(self, particalX, particalY, particalVx, particalVy, time), self.Velocity, collider.Velocity);
                 return true;
             }
             evnt = default;
@@ -233,7 +324,7 @@ namespace Physics2
             double particalY,
             double particalVx,
             double particalVy
-            , Circle c1, 
+            , Circle c1,
             Circle c2, double endTime, out IEvent evnt)
         {
 
@@ -281,13 +372,13 @@ namespace Physics2
                 {
                     if (c == 0)
                     {
-                        res= 0 ;
+                        res = 0;
                         return true;
                     }
                     res = default;
                     return false;
                 }
-                res= -c / b ;
+                res = -c / b;
                 return true;
             }
 
@@ -313,12 +404,14 @@ namespace Physics2
         }
 
 
-        public static  IEnumerable<double> SolveQuadratic(double a, double b, double c)
+        public static IEnumerable<double> SolveQuadratic(double a, double b, double c)
         {
             if (a == 0)
             {
-                if (b == 0) {
-                    if (c == 0) {
+                if (b == 0)
+                {
+                    if (c == 0)
+                    {
                         return new double[] { 0 };
                     }
                     return new double[] { };
@@ -327,14 +420,14 @@ namespace Physics2
             }
 
             var sqrtpart = (b * b) - (4 * a * c);
-            
+
             if (sqrtpart > 0)
             {
                 return new[] { (-b + Math.Sqrt(sqrtpart)) / (2 * a), (-b - Math.Sqrt(sqrtpart)) / (2 * a) };
             }
             else if (sqrtpart < 0)
             {
-                
+
                 return new double[] { };
             }
             else
@@ -461,19 +554,20 @@ namespace Physics2
 
 
         //    ) { 
-        
-        
+
+
         //}
 
         internal static bool TryCollisionBallLine2(
-            PhysicsObject ball, 
-            PhysicsObject line, 
-            Circle circle, 
-            double length, 
-            double endTime, 
+            PhysicsObject ball,
+            PhysicsObject line,
+            Circle circle,
+            double length,
+            double endTime,
             Vector lineParallelStart,
             Vector DlineParallel,
-            out IEvent collision) {
+            out IEvent collision)
+        {
 
             //DlineParallel.NewScaled(1/ lineParallelStart.Length)
             var DDX = ball.Vx - (line.Vx);
@@ -495,7 +589,7 @@ namespace Physics2
 
             var A = (DDX * DPY) - (DDY * DPX);
 
-            var B = (DPY * DX)  + (DDX * PY) - (DDY * PX) - (DPX * DY);
+            var B = (DPY * DX) + (DDX * PY) - (DDY * PX) - (DPX * DY);
             var C = (DX * PY) - (DY * PX);
 
 
@@ -509,8 +603,10 @@ namespace Physics2
 
             times = times.Where(x => Math.Abs((x * x * A) + (x * B) + C) < .001).ToArray();
 
-            if (B != 0 && !times.Any()) {
-                if (Math.Abs(((-C / B) * (-C / B) * A)) < .001) {
+            if (B != 0 && !times.Any())
+            {
+                if (Math.Abs(((-C / B) * (-C / B) * A)) < .001)
+                {
                     var x = times.ToList();
                     x.Add(-C / B);
                     times = x.ToArray();
@@ -522,7 +618,7 @@ namespace Physics2
             //    var temp = times.First();
             //    var answer = temp * temp * A + temp * B + C;
             //    if (Math.Abs(answer) > 1) {
-                          
+
             //    }
             //}
 
@@ -541,9 +637,10 @@ namespace Physics2
             //    var db = 0;
             //}
 
-            times = times.Where(x=> x > 0 && x <= endTime && AreCloseAtTime(x) && AreMovingTogether(x)).ToArray();
+            times = times.Where(x => x > 0 && x <= endTime && AreCloseAtTime(x) && AreMovingTogether(x)).ToArray();
 
-            if (!times.Any()) {
+            if (!times.Any())
+            {
                 collision = default;
                 return false;
             }
@@ -575,7 +672,8 @@ namespace Physics2
                 return length / 2.0 > new Vector(DXtime, DYtime).Length;
             }
 
-            bool AreMovingTogether(double time) {
+            bool AreMovingTogether(double time)
+            {
                 var D = new Vector(DX + (DDX * time), DY + (DDY * time));
 
                 var endpoint = new Vector(PX, PY).NewAdded(new Vector(DPX, DPY).NewScaled(time));

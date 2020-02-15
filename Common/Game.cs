@@ -381,7 +381,7 @@ namespace Common
         {
             double startX = 400;
             double startY = 400;
-            var foot = new Player(1, startX, startY, true, Constants.PlayerRadius * 2, Constants.playerPadding);
+            var foot = new Player(10, startX, startY, true, Constants.PlayerRadius * 2, Constants.playerPadding);
 
             physicsEngine.Run(x => { x.AddPlayer(foot); return x; });
 
