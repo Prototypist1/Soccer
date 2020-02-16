@@ -55,6 +55,7 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private const int BodyA = 0x10;
         IGameView rge;
 
         private ConcurrentBag<PlayerInfo> localPlayers = new ConcurrentBag<PlayerInfo>();
@@ -70,7 +71,9 @@ namespace RemoteSoccer
 
             Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
 
-            zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, Constants.xMax/2.0, Constants.yMax/2.0);
+            zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight);
+
+                //new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, Constants.xMax/2.0, Constants.yMax/2.0);
 
             rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame);
 
@@ -187,18 +190,58 @@ namespace RemoteSoccer
         private async Task CreatePlayer(Windows.Gaming.Input.Gamepad gamepad)
         {
             var body = Guid.NewGuid();
+            var bodyNoLean = Guid.NewGuid();
             var foot = Guid.NewGuid();
 
-            var inputs = new ControllerInputes(lockCurser, body, foot, gamepad);
+            var inputs = new ControllerInputes(lockCurser, body, foot, gamepad,
+                () =>
+                {
+                    var color = GetColor();
+                    game.ChangeColor(new ColorChanged(foot, color[0], color[1], color[2], 0xff));
+                    game.ChangeColor(new ColorChanged(body, color[0], color[1], color[2], BodyA));
+                    game.ChangeColor(new ColorChanged(bodyNoLean, color[0], color[1], color[2], BodyA/2));
+                });
 
             await inputs.Init();
 
-            var newPlayer = new PlayerInfo(body,foot,inputs);
+            var newPlayer = new PlayerInfo(body, foot, inputs);
 
             localPlayers.Add(newPlayer);
 
             //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            var color = GetColor();
+            //}
 
+            //var name = "";
+
+
+            //if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerName, out var savedName))
+            //{
+            //    name = (string)savedName;
+            //}
+
+
+            game.CreatePlayer(
+                new CreatePlayer(
+                    foot,
+                    body,
+                    bodyNoLean,
+                    Constants.footLen * 2,
+                    Constants.PlayerRadius * 2,
+                    color[0],
+                    color[1],
+                    color[2],
+                    BodyA,
+                    color[0],
+                    color[1],
+                    color[2],
+                    0xff,
+                    "",
+                    Guid.NewGuid().ToString()));
+        }
+
+        private static byte[] GetColor()
+        {
             var color = new byte[3];
 
             //if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerColorR, out var r) &&
@@ -217,33 +260,8 @@ namespace RemoteSoccer
             {
                 random.NextBytes(color);
             }
-            //}
 
-            //var name = "";
-
-
-            //if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerName, out var savedName))
-            //{
-            //    name = (string)savedName;
-            //}
-
-
-            game.CreatePlayer(
-                new CreatePlayer(
-                    foot,
-                    body,
-                    Constants.footLen * 2,
-                    Constants.PlayerRadius * 2,
-                    color[0],
-                    color[1],
-                    color[2],
-                    0x10,
-                    color[0],
-                    color[1],
-                    color[2],
-                    0xff,
-                    "",
-                    Guid.NewGuid().ToString()));
+            return color;
         }
 
         private void GameHolder_PointerWheelChanged(object sender, PointerRoutedEventArgs e)

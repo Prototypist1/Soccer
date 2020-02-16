@@ -396,8 +396,12 @@ namespace Common
 
         public ObjectsCreated CreatePlayer(string connectionId, CreatePlayer createPlayer)
         {
-            double startX = 400;
-            double startY = 400;
+            var random = new Random();
+
+            
+
+            double startX = random.NextDouble()* Constants.xMax;
+            double startY = random.NextDouble() * Constants.yMax;
             var foot = new Player(10, startX, startY, true, Constants.PlayerRadius * 2, Constants.playerPadding);
 
             physicsEngine.Run(x => { x.AddPlayer(foot); return x; });
@@ -415,14 +419,12 @@ namespace Common
                 catch { }
             }
 
-            var leandId = Guid.NewGuid();
-
             var body = new Center(
                 startX,
                 startY,
                 foot,
                 createPlayer.BodyDiameter / 2.0,
-                leandId
+                createPlayer.BodyNoLean
                 );
 
             bool gotItBody = false;
@@ -456,7 +458,7 @@ namespace Common
                         body.X,
                         body.Y,
                         Constants.bodyZ,
-                        leandId,
+                        createPlayer.BodyNoLean,
                         createPlayer.BodyDiameter + (Constants.MaxLean*2),
                         createPlayer.BodyR,
                         createPlayer.BodyG,

@@ -48,5 +48,9 @@ namespace RemoteSoccer
         {
             times = v;
         }
+
+        public void SetBallId(Guid guid)
+        {
+        }
     }
 }

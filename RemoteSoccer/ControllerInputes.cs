@@ -15,13 +15,20 @@ namespace RemoteSoccer
         private readonly Guid body;
         private readonly Guid foot;
         public readonly Gamepad gamepad;
+        private readonly Action changeColor;
 
-        public ControllerInputes(IReadonlyRef<bool> lockCurser, Guid body, Guid foot, Gamepad gamepad)
+        public ControllerInputes(
+            IReadonlyRef<bool> lockCurser,
+            Guid body,
+            Guid foot,
+            Gamepad gamepad,
+            Action changeColor)
         {
             this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
             this.body = body;
             this.foot = foot;
             this.gamepad = gamepad;
+            this.changeColor = changeColor;
         }
 
         public Task Init()
@@ -29,12 +36,25 @@ namespace RemoteSoccer
             return Task.CompletedTask;
         }
 
+        bool lastA = false;
+
         public Task<PlayerInputs> Next()
         {
-            
             if (lockCurser.Thing)
             {
                 var snap = gamepad.GetCurrentReading();
+
+                if ((snap.Buttons & GamepadButtons.A) == GamepadButtons.A)
+                {
+                    if (!lastA)
+                    {
+                        changeColor();
+                    }
+                    lastA = true;
+                }
+                else {
+                    lastA = false;
+                }
 
                 return Task.FromResult(new PlayerInputs(snap.LeftThumbstickX, -snap.LeftThumbstickY, snap.RightThumbstickX, -snap.RightThumbstickY, foot, body,true));
             }

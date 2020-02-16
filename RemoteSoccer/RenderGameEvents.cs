@@ -111,7 +111,6 @@ namespace RemoteSoccer
 
         private readonly Ellipse ballWall;
 
-
         private Ellipse ball;
         private readonly LinkedList<MediaPlayer> players = new LinkedList<MediaPlayer>();
 
@@ -349,6 +348,7 @@ namespace RemoteSoccer
 
                     if (objectCreated is BallCreated) {
                         ball = ellipse;
+                        zoomer.SetBallId(objectCreated.Id);
                     }
 
 

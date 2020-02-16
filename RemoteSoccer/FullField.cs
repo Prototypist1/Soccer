@@ -1,5 +1,7 @@
 ﻿using Common;
+using Physics2;
 using System;
+using System.Linq;
 
 namespace RemoteSoccer
 {
@@ -21,7 +23,7 @@ namespace RemoteSoccer
             
         }
 
-        public double GetTimes() => Math.Min(this.viewFrameWidth / ((centerX * 2) + 200), this.viewFrameHeight / ((centerY * 2)+200));
+        public double GetTimes() => Math.Min(this.viewFrameWidth / ((centerX * 2) + Constants.footLen), this.viewFrameHeight / ((centerY * 2) + Constants.footLen));
 
         public (double, double, double, double) Update(Position[] positionsList)
         {
@@ -43,6 +45,70 @@ namespace RemoteSoccer
         public void SetTimes(double v)
         {
          //   times = v;
+        }
+
+        public void SetBallId(Guid guid)
+        {
+        }
+    }
+
+    class ShowAllPositions : IZoomer
+    {
+
+        private double viewFrameWidth;
+        private double viewFrameHeight;
+        private double centerX;
+        private double centerY;
+        private double times;
+        private Guid? ballId;
+
+        public ShowAllPositions(double viewFrameWidth, double viewFrameHeight)
+        {
+            this.viewFrameWidth = viewFrameWidth;
+            this.viewFrameHeight = viewFrameHeight;
+            this.times = 0;
+
+        }
+
+        public double GetTimes() => times;
+
+        public (double, double, double, double) Update(Position[] positionsList)
+        {
+            var pos = positionsList.Where(x=> x.Id != ballId ).Select(x => new Vector(x.X, x.Y)).ToList();
+            pos.Add(new Vector(Constants.footLen - Constants.playerPadding, Constants.footLen - Constants.playerPadding));
+            pos.Add(new Vector(Constants.xMax - ((Constants.footLen) - Constants.playerPadding), Constants.yMax - ((Constants.footLen) - Constants.playerPadding)));
+
+            var xMax = pos.Select(x => x.x).Max();
+            var xMin = pos.Select(x => x.x).Min();
+            var yMax = pos.Select(x => x.y).Max();
+            var yMin = pos.Select(x => x.y).Min();
+            centerX = (xMax + xMin) / 2.0; 
+            centerY = (yMax + yMin) / 2.0;
+
+            times = Math.Min(viewFrameWidth/(Math.Max(Constants.xMax * .75, (2* Constants.footLen) +  xMax - xMin)), viewFrameHeight / Math.Max(Constants.yMax*.75, (2 * Constants.footLen) + yMax - yMin));
+            
+            return (
+                centerX,
+                centerY,
+                (viewFrameWidth / 2.0) - (centerX * times),
+                (viewFrameHeight / 2.0) - (centerY * times));
+        }
+
+        public void UpdateWindow(double actualWidth, double actualHeight)
+        {
+            this.viewFrameWidth = actualWidth;
+            this.viewFrameHeight = actualHeight;
+        }
+
+
+        public void SetTimes(double v)
+        {
+            //   times = v;
+        }
+
+        public void SetBallId(Guid guid)
+        {
+            ballId = guid;
         }
     }
 }
