@@ -237,7 +237,7 @@ namespace RemoteSoccer
                     color[0],
                     color[1],
                     color[2],
-                    0x20,
+                    0x10,
                     color[0],
                     color[1],
                     color[2],

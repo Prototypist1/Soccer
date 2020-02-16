@@ -266,6 +266,11 @@ namespace RemoteSoccer
                         CreateOjectsView(objectCreated);
                     }
 
+                    foreach (var objectCreated in objectsCreated.BodiesNoLean)
+                    {
+                        CreateOjectsView(objectCreated);
+                    }
+
                     if (objectsCreated.Ball != null)
                     {
                         CreateOjectsView(objectsCreated.Ball);
@@ -434,7 +439,6 @@ namespace RemoteSoccer
             CoreDispatcherPriority.High,
             () =>
             {
-
 
                 var (playerX, playerY, xPlus, yPlus) = zoomer.Update(positions.PositionsList);
 

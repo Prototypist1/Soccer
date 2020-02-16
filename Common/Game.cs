@@ -24,6 +24,8 @@ namespace Common
 
         private readonly ConcurrentSet<FootCreated> feetCreaated = new ConcurrentSet<FootCreated>();
         private readonly ConcurrentSet<BodyCreated> bodiesCreated = new ConcurrentSet<BodyCreated>();
+        private readonly ConcurrentSet<BodyNoLeanCreated> bodyNoLeansCreated = new ConcurrentSet<BodyNoLeanCreated>();
+
         private readonly BallCreated ballCreated;
         private readonly ConcurrentSet<GoalCreated> goalsCreated = new ConcurrentSet<GoalCreated>();
 
@@ -266,6 +268,16 @@ namespace Common
                     element.A = colorChanged.A;
                 }
             }
+            foreach (var element in bodyNoLeansCreated)
+            {
+                if (element.Id == colorChanged.Id)
+                {
+                    element.G = colorChanged.G;
+                    element.R = colorChanged.R;
+                    element.B = colorChanged.B;
+                    element.A = colorChanged.A;
+                }
+            }
         }
 
         public UpdateScore Reset()
@@ -374,7 +386,12 @@ namespace Common
 
         public ObjectsCreated GetObjectsCreated()
         {
-            return new ObjectsCreated(feetCreaated.ToArray(), bodiesCreated.ToArray(), ballCreated, goalsCreated.ToArray());
+            return new ObjectsCreated(
+                feetCreaated.ToArray(), 
+                bodiesCreated.ToArray(), 
+                ballCreated, 
+                goalsCreated.ToArray(),
+                bodyNoLeansCreated.ToArray());
         }
 
         public ObjectsCreated CreatePlayer(string connectionId, CreatePlayer createPlayer)
@@ -398,11 +415,14 @@ namespace Common
                 catch { }
             }
 
+            var leandId = Guid.NewGuid();
+
             var body = new Center(
                 startX,
                 startY,
                 foot,
-                createPlayer.BodyDiameter / 2.0
+                createPlayer.BodyDiameter / 2.0,
+                leandId
                 );
 
             bool gotItBody = false;
@@ -432,6 +452,20 @@ namespace Common
             bodiesCreated.AddOrThrow(bodyCreated);
 
 
+            var bodyNoLeanCreated = new BodyNoLeanCreated(
+                        body.X,
+                        body.Y,
+                        Constants.bodyZ,
+                        leandId,
+                        createPlayer.BodyDiameter + (Constants.MaxLean*2),
+                        createPlayer.BodyR,
+                        createPlayer.BodyG,
+                        createPlayer.BodyB,
+                        (byte)((int)createPlayer.BodyA/2)
+                        );
+
+            bodyNoLeansCreated.AddOrThrow(bodyNoLeanCreated);
+
             var footCreated = new FootCreated(
                         foot.X,
                         foot.Y,
@@ -451,7 +485,12 @@ namespace Common
 
             Interlocked.Add(ref players, 1);
 
-            return new ObjectsCreated(new[] { footCreated }, new[] { bodyCreated }, null, new GoalCreated[] { });
+            return new ObjectsCreated(
+                new[] { footCreated }, 
+                new[] { bodyCreated }, 
+                null, 
+                new GoalCreated[] { },
+                new [] { bodyNoLeanCreated });
         }
 
         public bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
@@ -473,6 +512,13 @@ namespace Common
                     if (body != null)
                     {
                         bodiesCreated.RemoveOrThrow(body);
+                        objectRemoveds.Add(new ObjectRemoved(item.Id));
+                    }
+
+                    var bodyNoLean = bodyNoLeansCreated.SingleOrDefault(x => x.Id == item.Id);
+                    if (bodyNoLean != null)
+                    {
+                        bodyNoLeansCreated.RemoveOrThrow(bodyNoLean);
                         objectRemoveds.Add(new ObjectRemoved(item.Id));
                     }
                 }
@@ -645,10 +691,9 @@ namespace Common
 
                         if (input.Controller)
                         {
-                            var lean = 600;
-                            leanChangeX = (input.BodyX * lean) - body.leanX;
-                            leanChangeY = (input.BodyY * lean) - body.leanY;
-                            body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * lean, input.BodyY * lean);
+                            leanChangeX = (input.BodyX * Constants.MaxLean) - body.leanX;
+                            leanChangeY = (input.BodyY * Constants.MaxLean) - body.leanY;
+                            body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * Constants.MaxLean, input.BodyY * Constants.MaxLean);
                         }
                         else
                         {
@@ -667,7 +712,7 @@ namespace Common
                         ((body.vx - lastVx) + leanChangeX) * foot.Mass,
                         ((body.vy - lastVy) + leanChangeY) * foot.Mass);
 
-                    var max = Constants.footLen - Constants.PlayerRadius - Constants.playerPadding;
+                    var max = Constants.footLen - Constants.playerPadding;// - Constants.PlayerRadius;
 
 
                     if (target.Length > max)
@@ -705,7 +750,7 @@ namespace Common
             // old controller:
             if (input.Controller)
             {
-                return new Vector(input.FootX * (Constants.footLen - Constants.PlayerRadius), input.FootY * (Constants.footLen - Constants.PlayerRadius));
+                return new Vector(input.FootX * (Constants.footLen - Constants.playerPadding), input.FootY * (Constants.footLen - Constants.playerPadding));
             }
 
             if (input.Controller)
@@ -753,6 +798,15 @@ namespace Common
             foreach (var body in bodies)
             {
                 yield return new Position(body.Value.X, body.Value.Y, body.Key, body.Value.vx, body.Value.vy);
+            }
+            foreach (var body in bodies)
+            {
+                yield return new Position(
+                    body.Value.X - body.Value.leanX, 
+                    body.Value.Y - body.Value.leanY, 
+                    body.Value.LeanId, 
+                    body.Value.vx, 
+                    body.Value.vy);
             }
         }
     }

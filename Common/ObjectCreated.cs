@@ -68,6 +68,14 @@ namespace Common
 
     }
 
+
+    public class BodyNoLeanCreated : ObjectCreated
+    {
+        public BodyNoLeanCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
+        {
+        }
+    }
+
     public class GoalCreated : ObjectCreated
     {
         public GoalCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
@@ -83,16 +91,23 @@ namespace Common
     }
 
     public struct ObjectsCreated {
-        public ObjectsCreated(FootCreated[] feet, BodyCreated[] bodies, BallCreated ball, GoalCreated[] goals)
+        public ObjectsCreated(
+            FootCreated[] feet, 
+            BodyCreated[] bodies, 
+            BallCreated ball, 
+            GoalCreated[] goals,
+            BodyNoLeanCreated[] bodiesNoLean)
         {
             Feet = feet ?? throw new ArgumentNullException(nameof(feet));
             Bodies = bodies ?? throw new ArgumentNullException(nameof(bodies));
             Ball = ball;
             Goals = goals ?? throw new ArgumentNullException(nameof(goals));
+            BodiesNoLean = bodiesNoLean ?? throw new ArgumentNullException(nameof(bodiesNoLean));
         }
 
         public FootCreated[] Feet { get; set; }
         public BodyCreated[] Bodies { get; set; }
+        public BodyNoLeanCreated[] BodiesNoLean { get; set; }
         public BallCreated Ball { get; set; }
         public GoalCreated[] Goals { get; set; }
 

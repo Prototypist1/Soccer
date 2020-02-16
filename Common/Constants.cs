@@ -18,5 +18,7 @@
         public const int PlayerRadius = 750;// 500;//300;
         public const int BallRadius = 100;//250;//30;//
         public const double BallMass = 1;
+
+        public const double MaxLean = 1000;
     }
 }

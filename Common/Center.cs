@@ -15,13 +15,16 @@ namespace Common
 
         public double leanX=0, leanY=0;
 
+        public Guid LeanId { get; }
 
-        public Center(double x, double y, PhysicsObject foot, double radius)
+
+        public Center(double x, double y, PhysicsObject foot, double radius, Guid leanId)
         {
             Y = y;
             X = x;
             Foot = foot ?? throw new ArgumentNullException(nameof(foot));
             this.radius = radius;
+            LeanId = leanId;
         }
 
         public void ApplyForce(double fx, double fy)
