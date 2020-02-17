@@ -61,7 +61,7 @@ namespace RemoteSoccer
 
         public void LeaveGame(LeaveGame leaveGame)
         {
-            if (game.TryDisconnect(ConnectionId, out var objectRemoveds))
+            if (game.TryDisconnect(ConnectionId + "|" + leaveGame.SubId, out var objectRemoveds))
             {
                 gameView?.HandleObjectsRemoved(new ObjectsRemoved(objectRemoveds.ToArray()));
             }

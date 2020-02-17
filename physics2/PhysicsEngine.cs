@@ -172,6 +172,12 @@ namespace physics2
             players.Add(physicsObject);
         }
 
+
+        public void RemovePlayer(Player physicsObject)
+        {
+            players.Remove(physicsObject);
+        }
+
         public void AddGoal(Ball physicsObject, IGoalManager goalManger)
         {
             goals.Add((physicsObject, goalManger));

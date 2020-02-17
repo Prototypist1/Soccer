@@ -29,7 +29,21 @@ namespace Common
         private readonly BallCreated ballCreated;
         private readonly ConcurrentSet<GoalCreated> goalsCreated = new ConcurrentSet<GoalCreated>();
 
-        private readonly ConcurrentIndexed<string, List<ObjectCreated>> connectionObjects = new ConcurrentIndexed<string, List<ObjectCreated>>();
+        private class ConnectionStuff {
+            public List<ObjectCreated> objectsCreated;
+
+            public ConnectionStuff(List<ObjectCreated> objectsCreated, Guid body, Player foot)
+            {
+                this.objectsCreated = objectsCreated ?? throw new ArgumentNullException(nameof(objectsCreated));
+                Body = body;
+                Foot = foot;
+            }
+
+            public Guid Body { get; }
+            public Player Foot { get; }
+        }
+
+        private readonly ConcurrentIndexed<string, ConnectionStuff> connectionObjects = new ConcurrentIndexed<string, ConnectionStuff>();
 
         private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
         public DateTime LastInputUTC { get; private set; } = DateTime.Now;
@@ -480,9 +494,13 @@ namespace Common
                         createPlayer.FootA);
             feetCreaated.AddOrThrow(footCreated);
 
-            connectionObjects.AddOrThrow(connectionId, new List<ObjectCreated>(){
+            connectionObjects.AddOrThrow(connectionId,new ConnectionStuff( new List<ObjectCreated>(){
                 bodyCreated,
-                footCreated });
+                footCreated ,
+                bodyNoLeanCreated
+            },
+            createPlayer.Body,
+            foot));
 
 
             Interlocked.Add(ref players, 1);
@@ -500,8 +518,12 @@ namespace Common
             if (connectionObjects.TryRemove(connectionId, out var toRemoves))
             {
                 Interlocked.Add(ref players, -1);
+
+                bodies.TryRemove(toRemoves.Body, out var center);
+                physicsEngine.Run(x => { x.RemovePlayer(toRemoves.Foot); return x; });
+
                 objectRemoveds = new List<ObjectRemoved>();
-                foreach (var item in toRemoves)
+                foreach (var item in toRemoves.objectsCreated)
                 {
                     var foot = feetCreaated.SingleOrDefault(x => x.Id == item.Id);
                     if (foot != null)

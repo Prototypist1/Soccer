@@ -1,4 +1,5 @@
 ﻿using Common;
+using Prototypist.TaskChain;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
+using Windows.Gaming.Input;
 using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
@@ -42,12 +44,15 @@ namespace RemoteSoccer
         public readonly Guid foot;
         public readonly IInputs input;
 
-        public PlayerInfo(Guid body, Guid foot, IInputs input)
+        public PlayerInfo(Guid body, Guid foot, IInputs input, string localId)
         {
             this.body = body;
             this.foot = foot;
             this.input = input ?? throw new ArgumentNullException(nameof(input));
+            LocalId = localId;
         }
+
+        public string LocalId { get; }
     }
 
     /// <summary>
@@ -58,7 +63,7 @@ namespace RemoteSoccer
         private const int BodyA = 0x10;
         IGameView rge;
 
-        private ConcurrentBag<PlayerInfo> localPlayers = new ConcurrentBag<PlayerInfo>();
+        private ConcurrentSet<PlayerInfo> localPlayers = new ConcurrentSet<PlayerInfo>();
         
         private Ref<bool> lockCurser = new Ref<bool>(true);
         private IZoomer zoomer;
@@ -179,12 +184,34 @@ namespace RemoteSoccer
 
         private void Gamepad_GamepadRemoved(object sender, Windows.Gaming.Input.Gamepad e)
         {
-            throw new NotImplementedException();
+            RemovePlayer(e);
+        }
+
+        private void RemovePlayer(Gamepad e)
+        {
+            var playerInfo = localPlayers.SingleOrDefault(x => x.input is ControllerInputes controllerInputes && controllerInputes.gamepad == e);
+
+            var gotIt = false;
+            while (!gotIt)
+            {
+                try
+                {
+                    localPlayers.RemoveOrThrow(playerInfo);
+                    gotIt = true;
+                }
+                catch { 
+                }
+            }
+
+            if (playerInfo != null)
+            {
+                game.LeaveGame(new LeaveGame(playerInfo.LocalId));
+            }
         }
 
         private void Gamepad_GamepadAdded(object sender, Windows.Gaming.Input.Gamepad e)
         {
-            CreatePlayer(e);
+             CreatePlayer(e);
         }
 
         private async Task CreatePlayer(Windows.Gaming.Input.Gamepad gamepad)
@@ -204,9 +231,9 @@ namespace RemoteSoccer
 
             await inputs.Init();
 
-            var newPlayer = new PlayerInfo(body, foot, inputs);
+            var newPlayer = new PlayerInfo(body, foot, inputs, Guid.NewGuid().ToString());
 
-            localPlayers.Add(newPlayer);
+            localPlayers.AddOrThrow(newPlayer);
 
             //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
             var color = GetColor();
@@ -237,7 +264,8 @@ namespace RemoteSoccer
                     color[2],
                     0xff,
                     "",
-                    Guid.NewGuid().ToString()));
+                    newPlayer.LocalId
+                    ));
         }
 
         private static byte[] GetColor()

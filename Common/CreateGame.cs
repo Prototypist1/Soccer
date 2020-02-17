@@ -77,6 +77,12 @@ namespace Common
 
     public struct LeaveGame
     {
+        public LeaveGame(string subId)
+        {
+            SubId = subId ?? throw new ArgumentNullException(nameof(subId));
+        }
+
+        public string SubId { get; }
     }
 
 

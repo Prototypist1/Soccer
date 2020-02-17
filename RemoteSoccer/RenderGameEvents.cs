@@ -219,7 +219,10 @@ namespace RemoteSoccer
                 {
                     foreach (var objectRemoved in objectsRemoved.List)
                     {
-                        elements.Remove(objectRemoved.Id);
+                        if (elements.Remove(objectRemoved.Id, out var value))
+                        {
+                            this.gameArea.Children.Remove(value.element);
+                        }
                     }
                 });
         }
