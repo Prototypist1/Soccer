@@ -68,6 +68,7 @@ namespace RemoteSoccer
         private Ref<bool> lockCurser = new Ref<bool>(true);
         private IZoomer zoomer;
         private Ref<int> frame = new Ref<int>(0);
+        private FieldDimensions fieldDimensions = FieldDimensions.Default;
         //private IInputs inputs;
         public MainPage()
         {
@@ -76,11 +77,11 @@ namespace RemoteSoccer
 
             Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
 
-            zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight);
+            zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions);
 
                 //new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, Constants.xMax/2.0, Constants.yMax/2.0);
 
-            rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame);
+            rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame, fieldDimensions);
 
             if (lockCurser.Thing)
             {
@@ -153,7 +154,7 @@ namespace RemoteSoccer
             {
                 try
                 {
-                    game = new LocalGame();
+                    game = new LocalGame(fieldDimensions);
                     //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
                     game.OnDisconnect(OnDisconnect);
                     game.SetCallbacks(rge);

@@ -18,9 +18,12 @@ namespace Common
     {
         public string Id { get; set; }
 
-        public CreateOrJoinGame(string id)
+        public FieldDimensions FieldDimensions { get; set; }
+
+        public CreateOrJoinGame(string id, FieldDimensions FieldDimensions)
         {
             this.Id = id;
+            this.FieldDimensions = FieldDimensions;
         }
     }
 

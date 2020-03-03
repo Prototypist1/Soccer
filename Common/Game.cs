@@ -51,6 +51,7 @@ namespace Common
 
 
         private readonly GameStateTracker gameStateTracker;
+        private readonly FieldDimensions field;
 
         private class GameStateTracker
         {
@@ -302,7 +303,7 @@ namespace Common
             return new UpdateScore() { Left = gameStateTracker.leftScore, Right = gameStateTracker.rightScore };
         }
 
-        public Game(Action<UpdateScore> onUpdateScore)
+        public Game(Action<UpdateScore> onUpdateScore, FieldDimensions field)
         {
 
             if (onUpdateScore == null)
@@ -313,7 +314,7 @@ namespace Common
 
             ballId = Guid.NewGuid();
 
-            ball = new Ball(Constants.BallMass, Constants.xMax / 2, Constants.yMax / 2, true, new Circle(Constants.BallRadius));
+            ball = new Ball(Constants.BallMass, field.xMax / 2, field.yMax / 2, true, new Circle(Constants.BallRadius));
 
             ballCreated = new BallCreated(
                ball.X,
@@ -327,7 +328,7 @@ namespace Common
                255);
 
             var leftGoalId = Guid.NewGuid();
-            var leftGoal = new Ball(1, 0, Constants.yMax / 2.0, false, new Circle(Constants.footLen));
+            var leftGoal = new Ball(1, 0, field.yMax / 2.0, false, new Circle(Constants.footLen));
 
 
             try
@@ -350,7 +351,7 @@ namespace Common
 
             var rightGoalId = Guid.NewGuid();
 
-            var rightGoal = new Ball(1, Constants.xMax, Constants.yMax / 2.0, false, new Circle(Constants.footLen));
+            var rightGoal = new Ball(1, field.xMax, field.yMax / 2.0, false, new Circle(Constants.footLen));
 
             goalsCreated.AddOrThrow(new GoalCreated(
                rightGoal.X,
@@ -365,16 +366,16 @@ namespace Common
 
 
             var points = new[] {
-                (new Vector(0,0) ,new Vector(Constants.xMax-1,0)),
-                (new Vector(0,Constants.yMax-1 ) ,new Vector(0,0)),
-                (new Vector(Constants.xMax-1,Constants.yMax-1),new Vector(0,Constants.yMax-1)),
-                (new Vector(Constants.xMax-1,Constants.yMax-1),new Vector(Constants.xMax-1,0)),
+                (new Vector(0,0) ,new Vector(field.xMax-1,0)),
+                (new Vector(0,field.yMax-1 ) ,new Vector(0,0)),
+                (new Vector(field.xMax-1,field.yMax-1),new Vector(0,field.yMax-1)),
+                (new Vector(field.xMax-1,field.yMax-1),new Vector(field.xMax-1,0)),
             };
 
             gameStateTracker = new GameStateTracker(
                 ball.Reset,
-                Constants.xMax / 2.0,
-                Constants.yMax / 2.0
+                field.xMax / 2.0,
+                field.yMax / 2.0
             );
 
             var rightGoalManger = new GoalManager(gameStateTracker, onUpdateScore, true);
@@ -396,6 +397,7 @@ namespace Common
                 }
                 return x;
             });
+            this.field = field;
         }
 
         public ObjectsCreated GetObjectsCreated()
@@ -414,8 +416,8 @@ namespace Common
 
             
 
-            double startX = random.NextDouble()* Constants.xMax;
-            double startY = random.NextDouble() * Constants.yMax;
+            double startX = random.NextDouble()* field.xMax;
+            double startY = random.NextDouble() * field.yMax;
             var foot = new Player(10, startX, startY, true, Constants.PlayerRadius * 2, Constants.playerPadding);
 
             physicsEngine.Run(x => { x.AddPlayer(foot); return x; });

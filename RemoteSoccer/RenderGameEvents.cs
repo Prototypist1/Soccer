@@ -131,7 +131,8 @@ namespace RemoteSoccer
             TextBlock leftScore,
             TextBlock rightScore,
             IZoomer zoomer,
-            IReadonlyRef<int> frame)
+            IReadonlyRef<int> frame,
+            FieldDimensions fieldDimensions)
         {
             this.frame = frame;
             this.fps = fps;
@@ -168,8 +169,8 @@ namespace RemoteSoccer
 
             var field = new Rectangle()
             {
-                Width = Constants.xMax,
-                Height = Constants.yMax,
+                Width = fieldDimensions.xMax,
+                Height = fieldDimensions.yMax,
                 Fill = new SolidColorBrush(Color.FromArgb(0xff, 0xdd, 0xdd, 0xdd)),
             };
             Canvas.SetZIndex(field, -2);
@@ -179,12 +180,12 @@ namespace RemoteSoccer
             {
                 var lineBrush =
                     new SolidColorBrush(Color.FromArgb(0xff, 0xcc, 0xcc, 0xcc));
-                for (double i = 0; i <= Constants.yMax; i += Constants.yMax / 4)
+                for (double i = 0; i <= fieldDimensions.yMax; i += fieldDimensions.yMax / 4)
                 {
                     var line = new Line()
                     {
                         X1 = 0,
-                        X2 = Constants.xMax,
+                        X2 = fieldDimensions.xMax,
                         Y1 = i,
                         Y2 = i,
                         Stroke = lineBrush,
@@ -193,14 +194,14 @@ namespace RemoteSoccer
                     Canvas.SetZIndex(line, -1);
                     this.gameArea.Children.Add(line);
                 }
-                for (double i = 0; i <= Constants.xMax; i += Constants.yMax / 4)
+                for (double i = 0; i <= fieldDimensions.xMax; i += fieldDimensions.yMax / 4)
                 {
                     var line = new Line()
                     {
                         X1 = i,
                         X2 = i,
                         Y1 = 0,
-                        Y2 = Constants.yMax,
+                        Y2 = fieldDimensions.yMax,
                         Stroke = lineBrush,
                         StrokeThickness = 5,
                     };

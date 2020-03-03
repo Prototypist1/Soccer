@@ -19,8 +19,6 @@ namespace RemoteSoccer
             this.viewFrameHeight = viewFrameHeight;
             this.centerX = centerX;
             this.centerY = centerY;
-
-            
         }
 
         public double GetTimes() => Math.Min(this.viewFrameWidth / ((centerX * 2) + Constants.footLen), this.viewFrameHeight / ((centerY * 2) + Constants.footLen));
@@ -61,13 +59,14 @@ namespace RemoteSoccer
         private double centerY;
         private double times;
         private Guid? ballId;
+        private FieldDimensions fieldDimensions;
 
-        public ShowAllPositions(double viewFrameWidth, double viewFrameHeight)
+        public ShowAllPositions(double viewFrameWidth, double viewFrameHeight, FieldDimensions fieldDimensions)
         {
             this.viewFrameWidth = viewFrameWidth;
             this.viewFrameHeight = viewFrameHeight;
             this.times = 0;
-
+            this.fieldDimensions = fieldDimensions;
         }
 
         public double GetTimes() => times;
@@ -76,7 +75,7 @@ namespace RemoteSoccer
         {
             var pos = positionsList.Where(x=> x.Id != ballId ).Select(x => new Vector(x.X, x.Y)).ToList();
             pos.Add(new Vector(Constants.footLen - Constants.playerPadding, Constants.footLen - Constants.playerPadding));
-            pos.Add(new Vector(Constants.xMax - ((Constants.footLen) - Constants.playerPadding), Constants.yMax - ((Constants.footLen) - Constants.playerPadding)));
+            pos.Add(new Vector(fieldDimensions.xMax - ((Constants.footLen) - Constants.playerPadding), fieldDimensions.yMax - ((Constants.footLen) - Constants.playerPadding)));
 
             var xMax = pos.Select(x => x.x).Max();
             var xMin = pos.Select(x => x.x).Min();
@@ -85,7 +84,7 @@ namespace RemoteSoccer
             centerX = (xMax + xMin) / 2.0; 
             centerY = (yMax + yMin) / 2.0;
 
-            times = Math.Min(viewFrameWidth/(Math.Max(Constants.xMax * .75, (2* Constants.footLen) +  xMax - xMin)), viewFrameHeight / Math.Max(Constants.yMax*.75, (2 * Constants.footLen) + yMax - yMin));
+            times = Math.Min(viewFrameWidth/(Math.Max(fieldDimensions.xMax * .75, (2* Constants.footLen) +  xMax - xMin)), viewFrameHeight / Math.Max(fieldDimensions.yMax*.75, (2 * Constants.footLen) + yMax - yMin));
             
             return (
                 centerX,
@@ -101,9 +100,8 @@ namespace RemoteSoccer
         }
 
 
-        public void SetTimes(double v)
+        public void SetTimes(double _)
         {
-            //   times = v;
         }
 
         public void SetBallId(Guid guid)

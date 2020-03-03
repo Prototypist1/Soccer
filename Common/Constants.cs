@@ -12,9 +12,9 @@
 
         public const double playerPadding = 200;
 
+
+        
         public const double footLen = 3000;
-        public const double xMax = 16*2500;
-        public const double yMax = 9*2500;
         public const int PlayerRadius = 750;// 500;//300;
         public const int BallRadius = 100;//250;//30;//
         public const double BallMass = 1;

@@ -100,7 +100,7 @@ namespace RemoteSoccer
                             LoadingSpinner.IsActive = true;
                         });
                     var handler = await SingleSignalRHandler.GetOrThrow();
-                    var res = await handler.Send(new CreateOrJoinGame(name));
+                    var res = await handler.Send(new CreateOrJoinGame(name, FieldDimensions.Default));
                     if (res.Is1(out var gameCreated))
                     {
                         await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(

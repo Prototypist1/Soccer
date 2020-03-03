@@ -53,7 +53,7 @@ namespace Server
 
         public async Task CreateOrJoinGame(CreateOrJoinGame createOrJoinGame)
         {
-            var myGame = new Game(getOnUpdateScore(createOrJoinGame.Id));
+            var myGame = new Game(getOnUpdateScore(createOrJoinGame.Id), createOrJoinGame.FieldDimensions);
             var game = state.games.GetOrAdd(createOrJoinGame.Id, myGame);
 
             if (!state.connectionIdToGameName.TryAdd(Context.ConnectionId, createOrJoinGame.Id)) {
