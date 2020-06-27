@@ -6,8 +6,8 @@
         public double yMax;
 
         public static FieldDimensions Default = new FieldDimensions{
-                xMax = 16 * 2500,
-                yMax = 9 * 2500
+                xMax = 2 * 16 * 2500,
+                yMax = 2 * 9 * 2500
         };
     }
 }
