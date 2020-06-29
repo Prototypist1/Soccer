@@ -10,6 +10,7 @@ namespace physics2
         public bool Throwing = false;
 
         public int LastHadBall { get; internal set; } = -Constants.ThrowTimeout;
+        public Center Body { get; internal set; }
 
         public readonly double Padding;
         //private readonly double length;
@@ -33,8 +34,6 @@ namespace physics2
         //    {
         //        return new PointCloudPartical(X + Vx * step, Y + Vy * step, Vx, Vy, Scale);
         //    }
-
-        //}
 
         public Player(double mass, double x, double y, bool mobile, /*double length, */double padding) : base(mass, x, y, mobile)
         {

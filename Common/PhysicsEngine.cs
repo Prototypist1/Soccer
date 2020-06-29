@@ -114,10 +114,8 @@ namespace physics2
                     if (PhysicsMath.TryCollisionBall(
                         p1,
                         p2,
-                        p2.X,
-                        p2.Y,
-                        p2.Vx,
-                        p2.Vy,
+                        new CenterFoot(p1.Body,p1),
+                        new CenterFoot(p2.Body, p2),
                         new Circle(p1.Padding),
                         new Circle(p2.Padding),
                         timeLeft,
@@ -132,11 +130,9 @@ namespace physics2
                     if (goal.Item2.IsEnabled() && 
                         PhysicsMath.TryCollisionBall(
                             ball, 
+                            goal.Item1,
+                            ball,
                             goal.Item1, 
-                            goal.Item1.X, 
-                            goal.Item1.Y, 
-                            goal.Item1.Vx, 
-                            goal.Item1.Vy, 
                             ball.GetCircle(), 
                             goal.Item1.GetCircle(), timeLeft, out var @event))
                     {

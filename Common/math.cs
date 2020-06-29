@@ -55,7 +55,7 @@ namespace Physics2
         }
 
         internal static DoubleUpdatePositionVelocityEvent DoCollision(
-            PhysicsObject physicsObject1,
+            IPhysicsObject physicsObject1,
             IPhysicsObject physicsObject2,
             double radius1,
             double time,
@@ -206,10 +206,10 @@ namespace Physics2
             }
         }
 
-        private static Vector GetNormal(IPhysicsObject physicsObject1, double X, double Y, double Vx, double Vy, double time)
+        private static Vector GetNormal(IPhysicsObject physicsObject1, IPhysicsObject partical, double time)
         {
-            var dx = physicsObject1.X + (time * physicsObject1.Vx) - (X + (time * Vx));
-            var dy = physicsObject1.Y + (time * physicsObject1.Vy) - (Y + (time * Vy));
+            var dx = physicsObject1.X + (time * physicsObject1.Vx) - (partical.X + (time * partical.Vx));
+            var dy = physicsObject1.Y + (time * physicsObject1.Vy) - (partical.Y + (time * partical.Vy));
             var normal = new Vector(dx, dy).NewUnitized();
             return normal;
         }
@@ -219,53 +219,53 @@ namespace Physics2
             return vf != v;
         }
 
-        internal static bool TryCollisionBallInfiniteMass(PhysicsObject self,
-            IPhysicsObject collider,
-            double particalX,
-            double particalY,
-            double particalVx,
-            double particalVy,
-            Circle c1,
-            Circle c2,
-            double endTime,
-            out DoubleUpdatePositionVelocityEvent evnt)
-        {
+        //internal static bool TryCollisionBallInfiniteMass(PhysicsObject self,
+        //    IPhysicsObject collider,
+        //    double particalX,
+        //    double particalY,
+        //    double particalVx,
+        //    double particalVy,
+        //    Circle c1,
+        //    Circle c2,
+        //    double endTime,
+        //    out DoubleUpdatePositionVelocityEvent evnt)
+        //{
 
-            // how  are they moving relitive to us
-            double DVX = particalVx - self.Vx,
-                   DVY = particalVy - self.Vy;
+        //    // how  are they moving relitive to us
+        //    double DVX = particalVx - self.Vx,
+        //           DVY = particalVy - self.Vy;
 
-            var thisX0 = self.X;
-            var thisY0 = self.Y;
-            var thatX0 = particalX;
-            var thatY0 = particalY;
+        //    var thisX0 = self.X;
+        //    var thisY0 = self.Y;
+        //    var thatX0 = particalX;
+        //    var thatY0 = particalY;
 
-            // how far they are from us
-            var DX = thatX0 - thisX0;
-            var DY = thatY0 - thisY0;
+        //    // how far they are from us
+        //    var DX = thatX0 - thisX0;
+        //    var DY = thatY0 - thisY0;
 
-            // if the objects are not moving towards each other dont bother
-            var V = -new Vector(DVX, DVY).Dot(new Vector(DX, DY).NewUnitized());
-            if (V <= 0)
-            {
-                evnt = default;
-                return false;
-            }
+        //    // if the objects are not moving towards each other dont bother
+        //    var V = -new Vector(DVX, DVY).Dot(new Vector(DX, DY).NewUnitized());
+        //    if (V <= 0)
+        //    {
+        //        evnt = default;
+        //        return false;
+        //    }
 
-            var R = c1.Radius + c2.Radius;
+        //    var R = c1.Radius + c2.Radius;
 
-            var A = (DVX * DVX) + (DVY * DVY);
-            var B = 2 * ((DX * DVX) + (DY * DVY));
-            var C = (DX * DX) + (DY * DY) - (R * R);
+        //    var A = (DVX * DVX) + (DVY * DVY);
+        //    var B = 2 * ((DX * DVX) + (DY * DVY));
+        //    var C = (DX * DX) + (DY * DY) - (R * R);
 
-            if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
-            {
-                evnt = DoCollisionInfiniteMass(self, collider, c1.Radius, time, GetNormal(self, particalX, particalY, particalVx, particalVy, time), self.Velocity, collider.Velocity);
-                return true;
-            }
-            evnt = default;
-            return false;
-        }
+        //    if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
+        //    {
+        //        evnt = DoCollisionInfiniteMass(self, collider, c1.Radius, time, GetNormal(self, particalX, particalY, particalVx, particalVy, time), self.Velocity, collider.Velocity);
+        //        return true;
+        //    }
+        //    evnt = default;
+        //    return false;
+        //}
 
 
         internal static bool TryPickUpBall(Ball ball,
@@ -316,12 +316,11 @@ namespace Physics2
             return false;
         }
 
-        internal static bool TryCollisionBall(PhysicsObject self,
-            IPhysicsObject collider,
-            double particalX,
-            double particalY,
-            double particalVx,
-            double particalVy,
+        internal static bool TryCollisionBall(
+            IPhysicsObject collide1,
+            IPhysicsObject collide2,
+            IPhysicsObject applyForces1,
+            IPhysicsObject applyForces2,
             Circle c1,
             Circle c2,
             double endTime,
@@ -329,13 +328,13 @@ namespace Physics2
         {
 
             // how  are they moving relitive to us
-            double DVX = particalVx - self.Vx,
-                   DVY = particalVy - self.Vy;
+            double DVX = collide2.Vx - collide1.Vx,
+                   DVY = collide2.Vy - collide1.Vy;
 
-            var thisX0 = self.X;
-            var thisY0 = self.Y;
-            var thatX0 = particalX;
-            var thatY0 = particalY;
+            var thisX0 = collide1.X;
+            var thisY0 = collide1.Y;
+            var thatX0 = collide2.X;
+            var thatY0 = collide2.Y;
 
             // how far they are from us
             var DX = thatX0 - thisX0;
@@ -357,7 +356,7 @@ namespace Physics2
 
             if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
             {
-                evnt = DoCollision(self, collider, c1.Radius, time, GetNormal(self, particalX, particalY, particalVx, particalVy, time), self.Velocity, collider.Velocity);
+                evnt = DoCollision(applyForces1, applyForces2, c1.Radius, time, GetNormal(collide1, collide2, time), collide1.Velocity, collide2.Velocity);
                 return true;
             }
             evnt = default;
