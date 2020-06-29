@@ -1,4 +1,5 @@
-﻿using Physics2;
+﻿using Common;
+using Physics2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +16,19 @@ namespace physics2
 
         public readonly List<PhysicsObject> items = new List<PhysicsObject>();
 
+        public IEnumerable<(Player, Player)> PlayerPairs()
+        {
+            foreach (var p1 in players)
+            {
+                foreach (var p2 in players.Skip(players.IndexOf(p1)+1))
+                {
+                    yield return (p1, p2);
+                }
+            }
+        }
+
         // try to move forward by 1 time;
-        public Collision[] Simulate()
+        public Collision[] Simulate(int simulationFrame)
         {
             var collisions = new List<Collision>();
 
@@ -62,7 +74,7 @@ namespace physics2
                     //var parallelVector = player.GetParallelVector();
                     //for (var i = -1.0; i <= 1.0; i += 0.05)
                     //{
-                    if (ball.OwnerOrNull == null)
+                    if (ball.OwnerOrNull == null && player.LastHadBall + Constants.ThrowTimeout < simulationFrame)
                     {
                         if (PhysicsMath.TryPickUpBall(
                             ball,
@@ -96,13 +108,42 @@ namespace physics2
                     //    }
                     //}
                 }
+
+                foreach (var (p1, p2) in PlayerPairs())
+                {
+                    if (PhysicsMath.TryCollisionBall(
+                        p1,
+                        p2,
+                        p2.X,
+                        p2.Y,
+                        p2.Vx,
+                        p2.Vy,
+                        new Circle(p1.Padding),
+                        new Circle(p2.Padding),
+                        timeLeft,
+                        out var @event))
+                    {
+                        events.Add(@event);
+                    }
+                }
+
                 foreach (var goal in goals)
                 {
-                    if (goal.Item2.IsEnabled() && PhysicsMath.TryCollisionBall(ball, goal.Item1, goal.Item1.X, goal.Item1.Y, goal.Item1.Vx, goal.Item1.Vy, ball.GetCircle(), goal.Item1.GetCircle(), timeLeft, out var @event))
+                    if (goal.Item2.IsEnabled() && 
+                        PhysicsMath.TryCollisionBall(
+                            ball, 
+                            goal.Item1, 
+                            goal.Item1.X, 
+                            goal.Item1.Y, 
+                            goal.Item1.Vx, 
+                            goal.Item1.Vy, 
+                            ball.GetCircle(), 
+                            goal.Item1.GetCircle(), timeLeft, out var @event))
                     {
                         // man I hate goals
                         // we need to replace the event
-                        if (@event.res.IsIt(out var collision)) {
+                        if (@event.res.IsIt(out var collision))
+                        {
                             collision.IsGoal = true;
 
                             var radius = goal.Item1.GetCircle().Radius;

@@ -10,7 +10,7 @@ namespace Common
     {
         public double Y { get; private set; }
         public double X { get; private set; }
-        public PhysicsObject Foot { get; }
+        public Player Foot { get; }
         public double vx, vy, radius;
 
         public double leanX=0, leanY=0;
@@ -18,7 +18,7 @@ namespace Common
         public Guid LeanId { get; }
 
 
-        public Center(double x, double y, PhysicsObject foot, double radius, Guid leanId)
+        public Center(double x, double y, Player foot, double radius, Guid leanId)
         {
             Y = y;
             X = x;
@@ -44,11 +44,6 @@ namespace Common
 
             this.leanX = NextleanX;
             this.leanY = NextleanY;
-
-            var v = new Vector(vx, vy);
-
-            vx = v.x;
-            vy = v.y;
 
             X += vx;
             Y += vy;
@@ -80,7 +75,6 @@ namespace Common
                 }
             }
 
-            
             X = X - lastLeanX + NextleanX;
             Y = Y - lastLeanY + NextleanY;
 

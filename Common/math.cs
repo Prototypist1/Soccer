@@ -316,7 +316,6 @@ namespace Physics2
             return false;
         }
 
-
         internal static bool TryCollisionBall(PhysicsObject self,
             IPhysicsObject collider,
             double particalX,

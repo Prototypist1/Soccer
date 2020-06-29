@@ -344,7 +344,7 @@ namespace Common
                0xee,
                0xff));
             }
-            catch (Exception e)
+            catch (Exception)
             {
 
             }
@@ -381,22 +381,29 @@ namespace Common
             var rightGoalManger = new GoalManager(gameStateTracker, onUpdateScore, true);
             var leftGoalManger = new GoalManager(gameStateTracker, onUpdateScore, false);
 
-            physicsEngine.Run(x =>
+            try
             {
-                x.SetBall(ball);
-                x.AddGoal(leftGoal, leftGoalManger);
-                x.AddGoal(rightGoal, rightGoalManger);
-                foreach (var side in points)
+                physicsEngine.Run(x =>
                 {
-                    var line = new Line(side.Item1, side.Item2);
-                    var pos = side.Item1.NewAdded(side.Item2).NewScaled(.5);
-                    // the position on this is pretty wierd
-                    // pretty sure it is not used
-                    var linePhysicObject = new PhysicsObjectWithFixedLine(0, line, false);
-                    x.AddWall(linePhysicObject);
-                }
-                return x;
-            });
+                    x.SetBall(ball);
+                    x.AddGoal(leftGoal, leftGoalManger);
+                    x.AddGoal(rightGoal, rightGoalManger);
+                    foreach (var side in points)
+                    {
+                        var line = new Line(side.Item1, side.Item2);
+                        var pos = side.Item1.NewAdded(side.Item2).NewScaled(.5);
+                        // the position on this is pretty wierd
+                        // pretty sure it is not used
+                        var linePhysicObject = new PhysicsObjectWithFixedLine(0, line, false);
+                        x.AddWall(linePhysicObject);
+                    }
+                    return x;
+                });
+
+            }
+            catch (Exception e) {
+                var db = 0;
+            }
             this.field = field;
         }
 
@@ -418,9 +425,15 @@ namespace Common
 
             double startX = random.NextDouble()* field.xMax;
             double startY = random.NextDouble() * field.yMax;
-            var foot = new Player(10, startX, startY, true, Constants.PlayerRadius * 2, Constants.playerPadding);
+            var foot = new Player(10, startX, startY, true, /*Constants.PlayerRadius * 2,*/ Constants.PlayerRadius);
 
-            physicsEngine.Run(x => { x.AddPlayer(foot); return x; });
+            try
+            {
+                physicsEngine.Run(x => { x.AddPlayer(foot); return x; });
+            }
+            catch (Exception e) {
+                var db = 0;
+            }
 
             bool gotItFeet = false;
             while (!gotItFeet)
@@ -432,7 +445,9 @@ namespace Common
                     feet[createPlayer.Foot] = foot;
                     gotItFeet = true;
                 }
-                catch { }
+                catch {
+                    var db = 0;
+                }
             }
 
             var body = new Center(
@@ -453,7 +468,9 @@ namespace Common
                     bodies[createPlayer.Body] = body;
                     gotItBody = true;
                 }
-                catch { }
+                catch {
+                    var db = 0;
+                }
             }
 
             var bodyCreated = new BodyCreated(
@@ -494,6 +511,7 @@ namespace Common
                         createPlayer.FootG,
                         createPlayer.FootB,
                         createPlayer.FootA);
+
             feetCreaated.AddOrThrow(footCreated);
 
             connectionObjects.AddOrThrow(connectionId,new ConnectionStuff( new List<ObjectCreated>(){
@@ -586,29 +604,32 @@ namespace Common
             {
                 var countDownSate = gameStateTracker.UpdateGameState();
 
-                if (ball.Velocity.Length > 0)
-                {
-                    var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Velocity.Length * ball.Mass / 8000.0);
+                if (ball.OwnerOrNull == null) {
 
-                    ball.ApplyForce(
-                        friction.x,
-                        friction.y);
+                    if (ball.Velocity.Length > 0)
+                    {
+                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / 50.0);
 
-                }
+                        ball.ApplyForce(
+                            friction.x,
+                            friction.y);
 
-                if (ball.Velocity.Length > 1)
-                {
-                    var friction = ball.Velocity.NewUnitized().NewScaled(-1);
+                    }
 
-                    ball.ApplyForce(
-                        friction.x,
-                        friction.y);
-                }
-                else
-                {
-                    ball.ApplyForce(
-                        -ball.Velocity.x,
-                        -ball.Velocity.y);
+                    if (ball.Velocity.Length > 1)
+                    {
+                        var friction = ball.Velocity.NewUnitized().NewScaled(-1);
+
+                        ball.ApplyForce(
+                            friction.x,
+                            friction.y);
+                    }
+                    else
+                    {
+                        ball.ApplyForce(
+                            -ball.Velocity.x,
+                            -ball.Velocity.y);
+                    }
                 }
 
 
@@ -619,149 +640,209 @@ namespace Common
                 //ball.ApplyForce(
                 //    -Math.Sign(ball.Vx) *Math.Min(.02,Math.Abs(ball.Vx)),
                 //    -Math.Sign(ball.Vy) * Math.Min(.02,Math.Abs(ball.Vy)));
-
-                foreach (var center in bodies)
+                try
                 {
-                    var body = center.Value;
-                    var lastX = body.X;
-                    var lastY = body.Y;
 
-                    var lastVx = body.vx;
-                    var lastVy = body.vy;
-
-
-                    var foot = body.Foot;
-                    var target = new Vector(foot.X - lastX, foot.Y - lastY);
-
-                    var leanChangeX = 0.0;
-                    var leanChangeY = 0.0;
-
-
-                    if (inputSet.TryGetValue(center.Key, out var input))
+                    foreach (var center in bodies)
                     {
+                        var body = center.Value;
+                        var lastX = body.X;
+                        var lastY = body.Y;
+
+                        var lastVx = body.vx;
+                        var lastVy = body.vy;
 
 
-                        if (input.BodyX != 0 || input.BodyY != 0)
+                        var foot = body.Foot;
+                        var target = new Vector(foot.X - lastX, foot.Y - lastY);
+
+                        var leanChangeX = 0.0;
+                        var leanChangeY = 0.0;
+
+
+                        if (inputSet.TryGetValue(center.Key, out var input))
                         {
-                            // crush oppozing forces
-                            if (!input.Controller)
+
+                            foot.Throwing = input.Throwing;
+
+                            if (input.BodyX != 0 || input.BodyY != 0)
                             {
-                                var v = new Vector(body.vx, body.vy);
-                                var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY));
-                                var with = v.Dot(f) / f.Length;
-                                if (with <= 0)
+                                // crush oppozing forces
+                                if (!input.Controller)
                                 {
-                                    body.ApplyForce(-body.vx, -body.vy);
+                                    var v = new Vector(body.vx, body.vy);
+                                    var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY));
+                                    var with = v.Dot(f) / f.Length;
+                                    if (with <= 0)
+                                    {
+                                        body.ApplyForce(-body.vx, -body.vy);
+                                    }
+                                    else
+                                    {
+                                        var withVector = f.NewUnitized().NewScaled(with);
+                                        var notWith = v.NewAdded(withVector.NewScaled(-1));
+                                        var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
+
+
+                                        body.ApplyForce(-body.vx + withVector.x + notWithScald.x, -body.vy + withVector.y + notWithScald.y);
+                                    }
+
+
+                                    var damp = .98;
+
+                                    var R0 = EInverse(E(Math.Sqrt(Math.Pow(body.vx, 2) + Math.Pow(body.vy, 2))) + EnergyAdd);
+                                    var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
+                                    var b = 2 * ((Math.Sign(input.BodyX) * body.vx * damp) + (Math.Sign(input.BodyY) * body.vy * damp));
+                                    var c = Math.Pow(body.vx * damp, 2) + Math.Pow(body.vy * damp, 2) - Math.Pow(R0, 2);
+
+                                    var t = (-b + Math.Sqrt(Math.Pow(b, 2) - (4 * a * c))) / (2 * a);
+
+                                    body.ApplyForce(-(1 - damp) * body.vx, -(1 - damp) * body.vy);
+                                    body.ApplyForce(t * input.BodyX, t * input.BodyY);
                                 }
                                 else
                                 {
-                                    var withVector = f.NewUnitized().NewScaled(with);
-                                    var notWith = v.NewAdded(withVector.NewScaled(-1));
-                                    var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
 
 
-                                    body.ApplyForce(-body.vx + withVector.x + notWithScald.x, -body.vy + withVector.y + notWithScald.y);
+                                    // base velocity becomes the part of the velocity in the direction of the players movement
+                                    var v = new Vector(body.vx, body.vy);
+                                    var f = new Vector(input.BodyX, input.BodyY).NewUnitized();
+                                    var with = v.Dot(f);
+                                    var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
+
+                                    //
+                                    var finalE = E(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + EnergyAdd;
+                                    var inputAmount = new Vector(input.BodyX, input.BodyY).Length;
+                                    if (inputAmount < .1)
+                                    {
+                                        finalE = 0;
+                                    }
+                                    else if (inputAmount < 1)
+                                    {
+                                        finalE = Math.Min(finalE, (inputAmount - .1) * (inputAmount - .1) * EnergyAdd * 100);
+                                    }
+
+                                    var finalSpeed = EInverse(finalE);
+                                    var finalVelocity = f.NewScaled(finalSpeed);
+
+                                    // clear velocity and then set it
+                                    body.ApplyForce(-body.vx, -body.vy);
+                                    body.ApplyForce(finalVelocity.x, finalVelocity.y);
+
+
+
                                 }
 
-
-                                var damp = .98;
-
-                                var R0 = EInverse(E(Math.Sqrt(Math.Pow(body.vx, 2) + Math.Pow(body.vy, 2))) + EnergyAdd);
-                                var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
-                                var b = 2 * ((Math.Sign(input.BodyX) * body.vx * damp) + (Math.Sign(input.BodyY) * body.vy * damp));
-                                var c = Math.Pow(body.vx * damp, 2) + Math.Pow(body.vy * damp, 2) - Math.Pow(R0, 2);
-
-                                var t = (-b + Math.Sqrt(Math.Pow(b, 2) - (4 * a * c))) / (2 * a);
-
-                                body.ApplyForce(-(1 - damp) * body.vx, -(1 - damp) * body.vy);
-                                body.ApplyForce(t * input.BodyX, t * input.BodyY);
                             }
                             else
                             {
-
-
-                                // base velocity becomes the part of the velocity in the direction of the players movement
-                                var v = new Vector(body.vx, body.vy);
-                                var f = new Vector(input.BodyX, input.BodyY).NewUnitized();
-                                var with = v.Dot(f);
-                                var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
-
-                                //
-                                var finalE = E(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + EnergyAdd;
-                                var inputAmount = new Vector(input.BodyX, input.BodyY).Length;
-                                if (inputAmount < .1)
-                                {
-                                    finalE = 0;
-                                }
-                                else if (inputAmount < 1)
-                                {
-                                    finalE = Math.Min(finalE, (inputAmount - .1) * (inputAmount - .1) * EnergyAdd * 100);
-                                }
-
-                                var finalSpeed = EInverse(finalE);
-                                var finalVelocity = f.NewScaled(finalSpeed);
-
-                                // clear velocity and then set it
                                 body.ApplyForce(-body.vx, -body.vy);
-                                body.ApplyForce(finalVelocity.x, finalVelocity.y);
-
                             }
 
-                        }
-                        else
-                        {
-                            body.ApplyForce(-body.vx, -body.vy);
-                        }
+                            target = GetTarget(lastX, lastY, input, foot);
 
-                        target = GetTarget(lastX, lastY, input, foot);
-
-                        if (input.Controller)
-                        {
-                            leanChangeX = (input.BodyX * Constants.MaxLean) - body.leanX;
-                            leanChangeY = (input.BodyY * Constants.MaxLean) - body.leanY;
-                            body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * Constants.MaxLean, input.BodyY * Constants.MaxLean);
+                            if (input.Controller)
+                            {
+                                leanChangeX = (input.BodyX * Constants.MaxLean) - body.leanX;
+                                leanChangeY = (input.BodyY * Constants.MaxLean) - body.leanY;
+                                body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * Constants.MaxLean, input.BodyY * Constants.MaxLean);
+                            }
+                            else
+                            {
+                                body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
+                            }
                         }
                         else
                         {
                             body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
                         }
+
+
+
+                        // apply full force to get us to the bodies current pos
+                        foot.ApplyForce(
+                            ((body.vx - lastVx) + leanChangeX) * foot.Mass,
+                            ((body.vy - lastVy) + leanChangeY) * foot.Mass);
+
+                        var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
+
+
+                        if (target.Length > max)
+                        {
+                            target = target.NewScaled(max / target.Length);
+                        }
+
+                        var targetX = target.x + body.X;
+                        var targetY = target.y + body.Y;
+
+                        foot.ApplyForce(
+                            (targetX - (foot.X + foot.Vx)) * foot.Mass / (1.0),
+                            (targetY - (foot.Y + foot.Vy)) * foot.Mass / (1.0));
+
+                        if (foot == ball.OwnerOrNull)
+                        {
+                            // TODO this is broken! it includes lean!
+                            var throwV = ball.OwnerOrNull.Velocity.NewAdded(new Vector(-(body.vx + leanChangeX), -(body.vy + +leanChangeY)));
+
+                            if (ball.proposedThrow.Length > Constants.MimimunThrowingSpped)
+                            {
+                                if (throwV.Length > ball.proposedThrow.Length && throwV.Dot(ball.proposedThrow) > 0)
+                                {
+                                    ball.proposedThrow = throwV;
+                                }
+                                else if (throwV.Length * 2 < ball.proposedThrow.Length || throwV.Dot(ball.proposedThrow) < 0)
+                                {
+                                    // throw the ball!
+                                    ball.UpdateVelocity(ball.proposedThrow.x + body.vx + leanChangeX, ball.proposedThrow.y + body.vy + leanChangeY);
+                                    ball.proposedThrow = new Vector();
+                                    ball.OwnerOrNull.LastHadBall = simulationTime;
+                                    ball.OwnerOrNull = null;
+                                }
+                            }
+                            else if (throwV.Length > Constants.MimimunThrowingSpped)
+                            {
+                                ball.proposedThrow = throwV;
+                            }
+                        }
+
                     }
-                    else
+                }
+                catch (Exception e) {
+                    var db = 0;
+                }
+
+                if (ball.OwnerOrNull != null) {
+
+                    var dx = ball.OwnerOrNull.X - ball.X;
+                    var dy = ball.OwnerOrNull.Y - ball.Y;
+
+                    ball.UpdateVelocity(ball.OwnerOrNull.Vx + dx, ball.OwnerOrNull.Vy + dy);
+
+                    if (!ball.OwnerOrNull.Throwing)
                     {
-                        body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
+
+                        ball.proposedThrow = new Vector();
                     }
 
-
-
-                    // apply full force to get us to the bodies current pos
-                    foot.ApplyForce(
-                        ((body.vx - lastVx) + leanChangeX) * foot.Mass,
-                        ((body.vy - lastVy) + leanChangeY) * foot.Mass);
-
-                    var max = Constants.footLen - Constants.playerPadding;// - Constants.PlayerRadius;
-
-
-                    if (target.Length > max)
-                    {
-                        target = target.NewScaled(max / target.Length);
-                    }
-
-                    var targetX = target.x + body.X;
-                    var targetY = target.y + body.Y;
-
-                    foot.ApplyForce(
-                        (targetX - (foot.X + foot.Vx)) * foot.Mass / (1.0),
-                        (targetY - (foot.Y + foot.Vy)) * foot.Mass / (1.0));
 
                 }
 
                 simulationTime++;
+
+
                 Collision[] collisions = null;
-                physicsEngine.Run(x =>
+
+                try
                 {
-                    collisions = x.Simulate();
-                    return x;
-                });
+                    physicsEngine.Run(x =>
+                    {
+                        collisions = x.Simulate(simulationTime);
+                        return x;
+                    });
+                }
+                catch (Exception e) {
+                    var db = 0;
+                }
 
 
                 positions = new Positions(GetPosition().ToArray(), simulationTime, countDownSate, collisions);
@@ -776,7 +857,7 @@ namespace Common
             // old controller:
             if (input.Controller)
             {
-                return new Vector(input.FootX * (Constants.footLen - Constants.playerPadding), input.FootY * (Constants.footLen - Constants.playerPadding));
+                return new Vector(input.FootX * (Constants.footLen - Constants.PlayerRadius), input.FootY * (Constants.footLen - Constants.PlayerRadius));
             }
 
             if (input.Controller)

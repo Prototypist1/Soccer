@@ -1,4 +1,5 @@
-﻿using Physics2;
+﻿using Common;
+using Physics2;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,6 +8,9 @@ namespace physics2
     public class Player : PhysicsObject
     {
         public bool Throwing = false;
+
+        public int LastHadBall { get; internal set; } = -Constants.ThrowTimeout;
+
         public readonly double Padding;
         //private readonly double length;
         //public List<PointCloudPartical> particles ;

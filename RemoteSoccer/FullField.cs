@@ -74,8 +74,8 @@ namespace RemoteSoccer
         public (double, double, double, double) Update(Position[] positionsList)
         {
             var pos = positionsList.Where(x=> x.Id != ballId ).Select(x => new Vector(x.X, x.Y)).ToList();
-            pos.Add(new Vector(Constants.footLen - Constants.playerPadding, Constants.footLen - Constants.playerPadding));
-            pos.Add(new Vector(fieldDimensions.xMax - ((Constants.footLen) - Constants.playerPadding), fieldDimensions.yMax - ((Constants.footLen) - Constants.playerPadding)));
+            pos.Add(new Vector(Constants.footLen - Constants.PlayerRadius, Constants.footLen - Constants.PlayerRadius));
+            pos.Add(new Vector(fieldDimensions.xMax - ((Constants.footLen) - Constants.PlayerRadius), fieldDimensions.yMax - ((Constants.footLen) - Constants.PlayerRadius)));
 
             var xMax = pos.Select(x => x.x).Max();
             var xMin = pos.Select(x => x.x).Min();

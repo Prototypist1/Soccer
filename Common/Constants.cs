@@ -10,15 +10,17 @@
         public const int footZ = 3;
         public const int effectZ = 5;
 
-        public const double playerPadding = 200;
+        //public const double playerPadding = 200;
 
-
-        
         public const double footLen = 3000;
-        public const int PlayerRadius = 750;// 500;//300;
-        public const int BallRadius = 150;//250;//30;//
+        public const int PlayerRadius = 750;//750;// 500;//300;
+        public const int BallRadius = 650;//150;//250;//30;//
         public const double BallMass = 1;
 
-        public const double MaxLean = 1000;
+        public const double MaxLean = 1500;
+
+        public const double MimimunThrowingSpped = 100;
+
+        public const int ThrowTimeout = 10;
     }
 }

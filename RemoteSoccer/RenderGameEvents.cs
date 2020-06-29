@@ -1,5 +1,5 @@
 ﻿using Common;
-using Microsoft.Toolkit.Uwp.UI.Media;
+//using Microsoft.Toolkit.Uwp.UI.Media;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,87 +23,87 @@ namespace RemoteSoccer
 
     class RenderGameEvents : IGameView
     {
-
+        // this is just a shape
         private class ElementEntry
         {
-            private const int V = 0;
+            //private const int V = 0;
             public readonly Shape element;
-            private readonly Brush[] brushes;
+            //private readonly Brush[] brushes;
 
-            public ElementEntry(Shape element, Color color)
+            public ElementEntry(Shape element /*,Color color*/)
             {
                 this.element = element ?? throw new ArgumentNullException(nameof(element));
                 //this.brushes = GenerateBrushes(color);
             }
 
-            public Brush GetBrush(double width, double velocity)
-            {
-                return brushes[Math.Min(V - 1, (int)(V * velocity / width))];
-            }
+            //public Brush GetBrush(double width, double velocity)
+            //{
+            //    //return brushes[Math.Min(V - 1, (int)(V * velocity / width))];
+            //}
 
-            private Brush[] GenerateBrushes(Color color)
-            {
-                var darkColor = Color.FromArgb(color.A, (byte)(((int)color.R) / 2), (byte)(((int)color.G) / 2), (byte)(((int)color.B) / 2));
-                var deadColor = Color.FromArgb(0x00, darkColor.R, darkColor.G, darkColor.B);
+            //private Brush[] GenerateBrushes(Color color)
+            //{
+            //    var darkColor = Color.FromArgb(color.A, (byte)(((int)color.R) / 2), (byte)(((int)color.G) / 2), (byte)(((int)color.B) / 2));
+            //    var deadColor = Color.FromArgb(0x00, darkColor.R, darkColor.G, darkColor.B);
 
-                var brushes = new Brush[V];
+            //    var brushes = new Brush[V];
 
-                {
-                    var stops = new GradientStopCollection();
-                    stops.Add(new GradientStop()
-                    {
-                        Color = darkColor,
-                        Offset = 1,
-                    });
-                    stops.Add(new GradientStop()
-                    {
-                        Color = color,
-                        Offset = .8,
-                    });
-                    brushes[0] = new RadialGradientBrush(stops);
-                }
-                for (int i = 1; i < V; i++)
-                {
-                    var stops = new GradientStopCollection();
-                    stops.Add(new GradientStop()
-                    {
-                        Color = deadColor,
-                        Offset = 1,
-                    });
-                    var x = (i / 100.0);
-                    double partDark;
-                    double lightPart;
-                    if (x < .2)
-                    {
-                        partDark = x * (1 - (x * 5 / 2.0));
-                        lightPart = x * (x * 5 / 2.0);
-                    }
-                    else
-                    {
-                        partDark = .1;
-                        lightPart = .1 + (x - .2);
-                    }
-                    var normalPartDark = partDark / (partDark + lightPart);
-                    var notmalPartLight = lightPart / (partDark + lightPart);
+            //    {
+            //        var stops = new GradientStopCollection();
+            //        stops.Add(new GradientStop()
+            //        {
+            //            Color = darkColor,
+            //            Offset = 1,
+            //        });
+            //        stops.Add(new GradientStop()
+            //        {
+            //            Color = color,
+            //            Offset = .8,
+            //        });
+            //        brushes[0] = new RadialGradientBrush(stops);
+            //    }
+            //    for (int i = 1; i < V; i++)
+            //    {
+            //        var stops = new GradientStopCollection();
+            //        stops.Add(new GradientStop()
+            //        {
+            //            Color = deadColor,
+            //            Offset = 1,
+            //        });
+            //        var x = (i / 100.0);
+            //        double partDark;
+            //        double lightPart;
+            //        if (x < .2)
+            //        {
+            //            partDark = x * (1 - (x * 5 / 2.0));
+            //            lightPart = x * (x * 5 / 2.0);
+            //        }
+            //        else
+            //        {
+            //            partDark = .1;
+            //            lightPart = .1 + (x - .2);
+            //        }
+            //        var normalPartDark = partDark / (partDark + lightPart);
+            //        var notmalPartLight = lightPart / (partDark + lightPart);
 
-                    stops.Add(new GradientStop()
-                    {
-                        Color = Color.FromArgb(
-                            color.A,
-                            (byte)(int)((darkColor.R * normalPartDark) + (color.R * notmalPartLight)),
-                            (byte)(int)((darkColor.G * normalPartDark) + (color.G * notmalPartLight)),
-                            (byte)(int)((darkColor.B * normalPartDark) + (color.B * notmalPartLight))),
-                        Offset = 1 - x,
-                    });
-                    stops.Add(new GradientStop()
-                    {
-                        Color = color,
-                        Offset = Math.Max(0, .8 - x),
-                    });
-                    brushes[i] = new RadialGradientBrush(stops);
-                }
-                return brushes;
-            }
+            //        stops.Add(new GradientStop()
+            //        {
+            //            Color = Color.FromArgb(
+            //                color.A,
+            //                (byte)(int)((darkColor.R * normalPartDark) + (color.R * notmalPartLight)),
+            //                (byte)(int)((darkColor.G * normalPartDark) + (color.G * notmalPartLight)),
+            //                (byte)(int)((darkColor.B * normalPartDark) + (color.B * notmalPartLight))),
+            //            Offset = 1 - x,
+            //        });
+            //        stops.Add(new GradientStop()
+            //        {
+            //            Color = color,
+            //            Offset = Math.Max(0, .8 - x),
+            //        });
+            //        brushes[i] = new RadialGradientBrush(stops);
+            //    }
+            //    return brushes;
+            //}
         }
 
         private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
@@ -298,34 +298,34 @@ namespace RemoteSoccer
 
                 Shape shape;
 
-                if (objectCreated is FootCreated)
-                {
-                    var points = new PointCollection();
-                    points.Add(new Windows.Foundation.Point(0, 0));
-                    points.Add(new Windows.Foundation.Point(0, 0));
-                    points.Add(new Windows.Foundation.Point(0, 0));
-                    points.Add(new Windows.Foundation.Point(0, 0));
+                //if (objectCreated is FootCreated)
+                //{
+                //    var points = new PointCollection();
+                //    points.Add(new Windows.Foundation.Point(0, 0));
+                //    points.Add(new Windows.Foundation.Point(0, 0));
+                //    points.Add(new Windows.Foundation.Point(0, 0));
+                //    points.Add(new Windows.Foundation.Point(0, 0));
 
-                    var polygon = new Polygon()
-                    {
-                        Points = points,
-                        Fill = new SolidColorBrush(color),
-                        Stroke = new SolidColorBrush(color),//new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff)),
-                        StrokeThickness = 2*(Constants.playerPadding),
-                        StrokeLineJoin = PenLineJoin.Round
-                    };
-                    shape = polygon;
+                //    var polygon = new Polygon()
+                //    {
+                //        Points = points,
+                //        Fill = new SolidColorBrush(color),
+                //        Stroke = new SolidColorBrush(color),//new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff)),
+                //        StrokeThickness = 2*(Constants.playerPadding),
+                //        StrokeLineJoin = PenLineJoin.Round
+                //    };
+                //    shape = polygon;
 
-                    shape.TransformMatrix =
-                    // then we move to the right spot
-                    new System.Numerics.Matrix4x4(
-                        1, 0, 0, 0,
-                        0, 1, 0, 0,
-                        0, 0, 1, 0,
-                        (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
-                }
-                else
-                {
+                //    shape.TransformMatrix =
+                //    // then we move to the right spot
+                //    new System.Numerics.Matrix4x4(
+                //        1, 0, 0, 0,
+                //        0, 1, 0, 0,
+                //        0, 0, 1, 0,
+                //        (float)(objectCreated.X), (float)(objectCreated.Y), 0, 1);
+                //}
+                //else
+                //{
 
                     var ellipse = new Ellipse()
                     {
@@ -356,12 +356,12 @@ namespace RemoteSoccer
                     }
 
 
-                }
+                //}
 
                 Canvas.SetZIndex(shape, objectCreated.Z);
 
 
-                elements.Add(objectCreated.Id, new ElementEntry(shape, color));// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
+                elements.Add(objectCreated.Id, new ElementEntry(shape /*, color*/));// new ElementEntry(ellipse, objectCreated.X, objectCreated.Y, objectCreated.Diameter));
                 this.gameArea.Children.Add(shape);
 
                 if (objectCreated is BodyCreated foot)

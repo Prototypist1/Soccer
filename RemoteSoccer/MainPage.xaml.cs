@@ -38,7 +38,8 @@ namespace RemoteSoccer
         public T Thing => thing;
     }
 
-    class PlayerInfo {
+    class PlayerInfo
+    {
 
         public readonly Guid body;
         public readonly Guid foot;
@@ -64,7 +65,7 @@ namespace RemoteSoccer
         IGameView rge;
 
         private ConcurrentSet<PlayerInfo> localPlayers = new ConcurrentSet<PlayerInfo>();
-        
+
         private Ref<bool> lockCurser = new Ref<bool>(true);
         private IZoomer zoomer;
         private Ref<int> frame = new Ref<int>(0);
@@ -75,11 +76,11 @@ namespace RemoteSoccer
             this.InitializeComponent();
 
 
-            Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
+            //Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
 
             zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions);
 
-                //new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, Constants.xMax/2.0, Constants.yMax/2.0);
+            //new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, Constants.xMax/2.0, Constants.yMax/2.0);
 
             rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame, fieldDimensions);
 
@@ -117,10 +118,12 @@ namespace RemoteSoccer
 
             while (sending)
             {
+
                 foreach (var player in localPlayers)
                 {
                     yield return await player.input.Next();
                 }
+
                 frame.thing++;
 
                 while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
@@ -133,7 +136,7 @@ namespace RemoteSoccer
 
             }
             StoppedSending.SetResult(true);
-            
+
         }
 
 
@@ -200,7 +203,9 @@ namespace RemoteSoccer
                     localPlayers.RemoveOrThrow(playerInfo);
                     gotIt = true;
                 }
-                catch { 
+                catch
+                {
+                    var db = 0;
                 }
             }
 
@@ -212,7 +217,7 @@ namespace RemoteSoccer
 
         private void Gamepad_GamepadAdded(object sender, Windows.Gaming.Input.Gamepad e)
         {
-             CreatePlayer(e);
+            CreatePlayer(e);
         }
 
         private async Task CreatePlayer(Windows.Gaming.Input.Gamepad gamepad)
@@ -227,14 +232,26 @@ namespace RemoteSoccer
                     var color = GetColor();
                     game.ChangeColor(new ColorChanged(foot, color[0], color[1], color[2], 0xff));
                     game.ChangeColor(new ColorChanged(body, color[0], color[1], color[2], BodyA));
-                    game.ChangeColor(new ColorChanged(bodyNoLean, color[0], color[1], color[2], BodyA/2));
+                    game.ChangeColor(new ColorChanged(bodyNoLean, color[0], color[1], color[2], BodyA / 2));
                 });
 
             await inputs.Init();
 
             var newPlayer = new PlayerInfo(body, foot, inputs, Guid.NewGuid().ToString());
 
-            localPlayers.AddOrThrow(newPlayer);
+            var added = false;
+            while (!added)
+            {
+                try
+                {
+                    localPlayers.AddOrThrow(newPlayer);
+                    added = true;
+                }
+                catch (Exception e)
+                {
+                    var db = 0;
+                }
+            }
 
             //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
             var color = GetColor();
@@ -315,33 +332,33 @@ namespace RemoteSoccer
 
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleMenu();
-        }
+        //private void Button_Click(object sender, RoutedEventArgs e)
+        //{
+        //    ToggleMenu();
+        //}
 
-        private void ToggleMenu()
-        {
-            Menu.Visibility = (Windows.UI.Xaml.Visibility)(((int)Menu.Visibility + 1) % 2);
-            lockCurser.thing = !lockCurser.thing;
-            if (lockCurser.thing)
-            {
-                Window.Current.CoreWindow.PointerCursor = null;
-            }
-            else
-            {
-                Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
-            }
-        }
+        //private void ToggleMenu()
+        //{
+        //    Menu.Visibility = (Windows.UI.Xaml.Visibility)(((int)Menu.Visibility + 1) % 2);
+        //    lockCurser.thing = !lockCurser.thing;
+        //    if (lockCurser.thing)
+        //    {
+        //        Window.Current.CoreWindow.PointerCursor = null;
+        //    }
+        //    else
+        //    {
+        //        Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
+        //    }
+        //}
 
 
-        private void Menu_KeyUp(CoreWindow sender, KeyEventArgs e)
-        {
-            if (e.VirtualKey == VirtualKey.Escape)
-            {
-                ToggleMenu();
-            }
-        }
+        //private void Menu_KeyUp(CoreWindow sender, KeyEventArgs e)
+        //{
+        //    if (e.VirtualKey == VirtualKey.Escape)
+        //    {
+        //        ToggleMenu();
+        //    }
+        //}
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {

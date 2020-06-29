@@ -56,11 +56,11 @@ namespace RemoteSoccer
                     lastA = false;
                 }
 
-                return Task.FromResult(new PlayerInputs(snap.LeftThumbstickX, -snap.LeftThumbstickY, snap.RightThumbstickX, -snap.RightThumbstickY, foot, body,true));
+                return Task.FromResult(new PlayerInputs(snap.LeftThumbstickX, -snap.LeftThumbstickY, snap.RightThumbstickX, -snap.RightThumbstickY, foot, body,true, (snap.Buttons & GamepadButtons.RightShoulder)== GamepadButtons.RightShoulder));
             }
             else
             {
-                return Task.FromResult( new PlayerInputs(0, 0, 0, 0, foot, body,true));
+                return Task.FromResult( new PlayerInputs(0, 0, 0, 0, foot, body,true, false));
             }
         }
     }

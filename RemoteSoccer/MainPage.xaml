@@ -33,7 +33,7 @@
         </Border>
 
 
-        <Border BorderThickness="20" 
+        <!--<Border BorderThickness="20" 
             x:Name="Menu"
             Visibility="Collapsed"
             HorizontalAlignment="Left" 
@@ -43,13 +43,13 @@
                 ShadowOpacity=".5"
                 Color="#ff444444">
                 <StackPanel  Background="#ffeeeeee">
-                    <!--<StackPanel.Background>
+                    --><!--<StackPanel.Background>
                         <AcrylicBrush
                             BackgroundSource="Backdrop"
                             TintColor="#ffcccccc"
                             TintOpacity="0.4"
                             FallbackColor="#ffcccccc"/>
-                    </StackPanel.Background>-->
+                    </StackPanel.Background>--><!--
                     <Border BorderThickness="10" >
                         <TextBlock FontSize="35">Color</TextBlock>
                     </Border>
@@ -71,7 +71,7 @@
                     </Border>
                 </StackPanel>
             </controls:DropShadowPanel>
-        </Border>
+        </Border>-->
 
     </Grid>
 </Page>
