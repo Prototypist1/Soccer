@@ -470,24 +470,24 @@ namespace RemoteSoccer
                                     0, 1, 0, 0,
                                     0, 0, 1, 0,
                                     (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
-                                //// then we stretch
-                                //* new System.Numerics.Matrix4x4(
-                                //   (float)(1 + Stretch), 0, 0, 0,
-                                //    0, 1, 0, 0,
-                                //    0, 0, 1, 0,
-                                //    0, 0, 0, 1)
-                                //// slide it back a little bit
-                                //* new System.Numerics.Matrix4x4(
-                                //    1, 0, 0, 0,
-                                //    0, 1, 0, 0,
-                                //    0, 0, 1, 0,
-                                //    (float)(-v / 2.0), 0, 0, 1)
-                                //// then we rotate
-                                //* new System.Numerics.Matrix4x4(
-                                //    (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
-                                //    (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
-                                //    0, 0, 1, 0,
-                                //    0, 0, 0, 1)
+                                // then we stretch
+                                * new System.Numerics.Matrix4x4(
+                                   (float)(1 + Stretch), 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    0, 0, 0, 1)
+                                // slide it back a little bit
+                                * new System.Numerics.Matrix4x4(
+                                    1, 0, 0, 0,
+                                    0, 1, 0, 0,
+                                    0, 0, 1, 0,
+                                    (float)(-v / 2.0), 0, 0, 1)
+                                // then we rotate
+                                * new System.Numerics.Matrix4x4(
+                                    (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
+                                    (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
+                                    0, 0, 1, 0,
+                                    0, 0, 0, 1)
                                 // then we move to the right spot
                                 * new System.Numerics.Matrix4x4(
                                     1, 0, 0, 0,
