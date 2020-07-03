@@ -21,7 +21,7 @@
 
         public const double MimimunThrowingSpped = 100;
 
-        public const int ThrowTimeout = 10;
-        public const int MaxDeltaV = 100;
+        public const int ThrowTimeout = 5;
+        public const int MaxDeltaV = 40;
     }
 }

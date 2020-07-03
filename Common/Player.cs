@@ -32,7 +32,8 @@ namespace physics2
         public double personalVx, personalVy;
 
 
-        public double Mass => Body.Mass;
+        private double privateMass = 1;
+        public double Mass => Body.Mass + privateMass;
         public bool Mobile => Body.Mobile;
         public Vector Position => new Vector(X, Y);
         public double Speed => Math.Sqrt((Vx * Vx) + (Vy * Vy));
@@ -45,7 +46,9 @@ namespace physics2
 
         public void ApplyForce(double fx, double fy)
         {
-            Body.ApplyForce(fx, fy);
+            personalVx += (fx / 3.0) / privateMass;
+            personalVy += (fy / 3.0) / privateMass;
+            Body.ApplyForce(fx* 2.0 / 3.0, fy * 2.0 / 3.0);
         }
 
         public void Update(double step, double timeLeft)

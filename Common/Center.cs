@@ -18,7 +18,7 @@ namespace Common
             Y = y;
         }
 
-        public double Mass => 10;
+        public double Mass => 1;
         public bool Mobile => true;
 
         public Vector Position => new Vector(X, Y);
@@ -60,9 +60,9 @@ namespace Common
         public Player Foot { get; internal set; }
 
         public double personalVx, personalVy;
-        private double radius;
 
-        public double Mass => Outer.Mass;
+        private double privateMass = 1;
+        public double Mass => Outer.Mass + privateMass;
         public bool Mobile => Outer.Mobile;
         public Vector Position => new Vector(X, Y);
         public double Speed => Math.Sqrt((Vx * Vx) + (Vy * Vy));
@@ -79,23 +79,25 @@ namespace Common
 
         public readonly Guid id;
 
-        public Center(double x, double y, Player foot, double radius, Guid id)
+        public Center(double x, double y, Player foot,  Guid id)
         {
             Y = y;
             X = x;
             Foot = foot ?? throw new ArgumentNullException(nameof(foot));
-            this.radius = radius;
             this.id = id;
             //LeanId = leanId;
         }
 
         public void ApplyForce(double fx, double fy)
         {
-            Outer.ApplyForce(fx, fy);
+            personalVx += (fx/2.0) / privateMass;
+            personalVy += (fy/2.0) / privateMass;
+            Outer.ApplyForce(fx/2.0, fy / 2.0);
         }
 
         public void Update(double step, double timeLeft)
         {
+
             X += Vx * step;
             Y += Vy * step;
         }

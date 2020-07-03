@@ -429,7 +429,7 @@ namespace Common
                 startX,
                 startY,
                 foot,
-                createPlayer.BodyDiameter / 2.0,
+                //createPlayer.BodyDiameter / 2.0,
                 createPlayer.Body
                 );
 
@@ -746,6 +746,9 @@ namespace Common
 
                                     var vector = new Vector(finalVelocity.x - body.Outer.Vx, finalVelocity.y - body.Outer.Vy);
 
+                                    //body.Outer.Vx += vector.x / 2.0;
+                                    //body.Outer.Vy += vector.y / 2.0;
+
                                     if (vector.Length == 0)
                                     {
 
@@ -755,7 +758,8 @@ namespace Common
                                         body.Outer.Vx += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).x;
                                         body.Outer.Vy += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).y;
                                     }
-                                    else {
+                                    else
+                                    {
                                         body.Outer.Vx += vector.x;
                                         body.Outer.Vy += vector.y;
                                     }
@@ -765,6 +769,9 @@ namespace Common
                             else
                             {
                                 var vector = new Vector(- body.Outer.Vx, - body.Outer.Vy);
+
+                                //body.Outer.Vx += vector.x / 2.0;
+                                //body.Outer.Vy += vector.y / 2.0;
 
                                 if (vector.Length == 0)
                                 {
@@ -791,8 +798,10 @@ namespace Common
                                 var tx = (input.BodyX * Constants.MaxLean) + body.Outer.X;
                                 var ty = (input.BodyY * Constants.MaxLean) + body.Outer.Y;
 
-                                body.personalVx = tx - body.X;
-                                body.personalVy = ty - body.Y;
+                                var vector = new Vector(tx - body.personalVx, ty - body.personalVy);
+
+                                body.personalVx = (tx - body.X)/2.0;
+                                body.personalVy = (ty - body.Y)/2.0;
 
 
                                 //body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * Constants.MaxLean, input.BodyY * Constants.MaxLean);
@@ -823,8 +832,10 @@ namespace Common
                             var tx = (input.FootX * max) + body.X;
                             var ty = (input.FootY * max) + body.Y;
 
-                            foot.personalVx = tx - foot.X;
-                            foot.personalVy = ty - foot.Y;
+                            var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
+
+                            foot.personalVx = (tx - foot.X)/2.0;
+                            foot.personalVy = (ty - foot.Y)/ 2.0;
                         }
                         
 
@@ -938,10 +949,10 @@ namespace Common
         private int running = 0;
 
 
-        private const int EnergyAdd = 400;
+        private const int EnergyAdd =250000 ;//400;
         private const double SpeedScale = 1;
         private const double Add = 0;
-        private const double ToThe = 1.9;
+        private const double ToThe = 3;//1.9;
         private double E(double v) => Math.Pow(Math.Max(0, v - Add), ToThe) * SpeedScale;
         private double EInverse(double e) => Math.Pow(e / SpeedScale, 1 / ToThe) + Add;
 
