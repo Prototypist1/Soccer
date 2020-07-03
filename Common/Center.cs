@@ -77,13 +77,15 @@ namespace Common
 
         //public Guid LeanId { get; }
 
+        public readonly Guid id;
 
-        public Center(double x, double y, Player foot, double radius/*, Guid leanId*/)
+        public Center(double x, double y, Player foot, double radius, Guid id)
         {
             Y = y;
             X = x;
             Foot = foot ?? throw new ArgumentNullException(nameof(foot));
             this.radius = radius;
+            this.id = id;
             //LeanId = leanId;
         }
 

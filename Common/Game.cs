@@ -16,8 +16,8 @@ namespace Common
         private int players = 0;
 
         private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine());
-        private readonly ConcurrentSet<Player> feet = new ConcurrentSet<Player>();
-        private readonly ConcurrentIndexed<Guid, Center> bodies = new ConcurrentIndexed<Guid, Center>();
+        private readonly JumpBallConcurrent<Dictionary<Guid, Player>> feet = new JumpBallConcurrent<Dictionary<Guid, Player>>(new Dictionary<Guid, Player>());
+        private readonly JumpBallConcurrent<Dictionary<Guid, Center>> bodies = new JumpBallConcurrent<Dictionary<Guid, Center>>(new Dictionary<Guid, Center>());
         private readonly Guid ballId;
         private readonly Ball ball;
 
@@ -429,7 +429,8 @@ namespace Common
                 startX,
                 startY,
                 foot,
-                createPlayer.BodyDiameter / 2.0
+                createPlayer.BodyDiameter / 2.0,
+                createPlayer.Body
                 );
 
             foot.Body = body;
@@ -449,36 +450,40 @@ namespace Common
                 var db = 0;
             }
 
-            bool gotItFeet = false;
-            while (!gotItFeet)
-            {
-                try
-                {
-                    // this can throw if the list is being enumerated
-                    // so we just try keep trying in a loop
-                    feet.TryAdd(foot);
-                    gotItFeet = true;
-                }
-                catch {
-                    var db = 0;
-                }
-            }
+            feet.Run(x => { x[createPlayer.Foot] = foot; return x; });
+
+            //bool gotItFeet = false;
+            //while (!gotItFeet)
+            //{
+            //    try
+            //    {
+            //        // this can throw if the list is being enumerated
+            //        // so we just try keep trying in a loop
+            //        feet[createPlayer.Foot] = foot;
+            //        gotItFeet = true;
+            //    }
+            //    catch {
+            //        var db = 0;
+            //    }
+            //}
 
 
-            bool gotItBody = false;
-            while (!gotItBody)
-            {
-                try
-                {
-                    // this can throw if the list is being enumerated
-                    // so we just try keep trying in a loop
-                    bodies[createPlayer.Body] = body;
-                    gotItBody = true;
-                }
-                catch {
-                    var db = 0;
-                }
-            }
+            bodies.Run(x => { x[createPlayer.Body] = body; return x; });
+
+            //bool gotItBody = false;
+            //while (!gotItBody)
+            //{
+            //    try
+            //    {
+            //        // this can throw if the list is being enumerated
+            //        // so we just try keep trying in a loop
+            //        bodies[createPlayer.Body] = body;
+            //        gotItBody = true;
+            //    }
+            //    catch {
+            //        var db = 0;
+            //    }
+            //}
 
             var bodyCreated = new BodyCreated(
                         body.X,
@@ -546,7 +551,11 @@ namespace Common
             {
                 Interlocked.Add(ref players, -1);
 
-                bodies.TryRemove(toRemoves.Body, out var center);
+                bodies.Run(x => { x.Remove(toRemoves.Body); return x; });
+
+                //bodies.TryRemove(toRemoves.Body, out var center);
+                feet.Run(x => { x.Remove(toRemoves.Foot.id); return x; });
+                //feet.TryRemove(toRemoves.Foot.id, out var _);
                 physicsEngine.Run(x => { x.RemovePlayer(toRemoves.Foot); return x; });
 
                 objectRemoveds = new List<ObjectRemoved>();
@@ -649,8 +658,10 @@ namespace Common
                 //    -Math.Sign(ball.Vy) * Math.Min(.02,Math.Abs(ball.Vy)));
                 try
                 {
+                    KeyValuePair<Guid,Center>[] itterate= null;
+                    bodies.Run(x => { itterate = x.ToArray(); return x; });
 
-                    foreach (var center in bodies)
+                    foreach (var center in itterate)
                     {
                         var body = center.Value;
                         var lastX = body.X;
@@ -732,15 +743,43 @@ namespace Common
                                     var finalSpeed = EInverse(finalE);
                                     var finalVelocity = f.NewScaled(finalSpeed);
 
-                                    body.Outer.Vx = finalVelocity.x;
-                                    body.Outer.Vy = finalVelocity.y;
+
+                                    var vector = new Vector(finalVelocity.x - body.Outer.Vx, finalVelocity.y - body.Outer.Vy);
+
+                                    if (vector.Length == 0)
+                                    {
+
+                                    }
+                                    else if (vector.Length > Constants.MaxDeltaV)
+                                    {
+                                        body.Outer.Vx += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).x;
+                                        body.Outer.Vy += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).y;
+                                    }
+                                    else {
+                                        body.Outer.Vx += vector.x;
+                                        body.Outer.Vy += vector.y;
+                                    }
 
                                 }
                             }
                             else
                             {
-                                body.Outer.Vx = 0;
-                                body.Outer.Vy = 0;
+                                var vector = new Vector(- body.Outer.Vx, - body.Outer.Vy);
+
+                                if (vector.Length == 0)
+                                {
+
+                                }
+                                else if (vector.Length > Constants.MaxDeltaV)
+                                {
+                                    body.Outer.Vx += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).x;
+                                    body.Outer.Vy += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).y;
+                                }
+                                else
+                                {
+                                    body.Outer.Vx += vector.x;
+                                    body.Outer.Vy += vector.y;
+                                }
                             }
 
                             //target = GetTarget(lastX, lastY, input, foot);
@@ -917,27 +956,35 @@ namespace Common
             }
         }
 
-        private IEnumerable<Position> GetPosition()
+        private Position[] GetPosition()
         {
-            var list = new List<Position>();
-            list.Add(new Position(ball.X, ball.Y, ballId, ball.Vx, ball.Vy));
+            Player[] players = null;
+            Center[] centers = null;
+            feet.Run(x => { players = x.Values.ToArray(); return x; });
+            bodies.Run(x => { centers = x.Values.ToArray(); return x; });
 
-            foreach (var foot in feet)
+
+            var list = new Position[1+ players.Length + (centers.Length*2)];
+            var at = 0;
+            list[at]=new Position(ball.X, ball.Y, ballId, ball.Vx, ball.Vy);
+            at++;
+
+            foreach (var foot in players)
             {
-                list.Add( new Position(foot.X, foot.Y, foot., foot.Value.Vx, foot.Value.Vy));
+                list[at] = new Position(foot.X, foot.Y, foot.id, foot.Vx, foot.Vy);
+                at++;
             }
-            foreach (var body in bodies)
+            foreach (var body in centers)
             {
-                list.Add(new Position(body.Value.X, body.Value.Y, body.Key, body.Value.Vx, body.Value.Vy));
-            }
-            foreach (var body in bodies)
-            {
-                list.Add(new Position(
-                    body.Value.Outer.X, 
-                    body.Value.Outer.Y, 
-                    body.Value.Outer.Id, 
-                    body.Value.Vx, 
-                    body.Value.Vy));
+                list[at] = new Position(body.X, body.Y, body.id, body.Vx, body.Vy);
+                at++;
+                list[at] = new Position(
+                    body.Outer.X, 
+                    body.Outer.Y, 
+                    body.Outer.Id, 
+                    body.Vx, 
+                    body.Vy);
+                at++;
             }
             return list;
         }

@@ -64,7 +64,7 @@ namespace RemoteSoccer
         private const int BodyA = 0x10;
         IGameView rge;
 
-        private ConcurrentSet<PlayerInfo> localPlayers = new ConcurrentSet<PlayerInfo>();
+        private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
 
         private Ref<bool> lockCurser = new Ref<bool>(true);
         private IZoomer zoomer;
@@ -118,8 +118,10 @@ namespace RemoteSoccer
 
             while (sending)
             {
+                PlayerInfo[] players = null;
+                localPlayers.Run(x => { players = x.ToArray(); return x; }) ;
 
-                foreach (var player in localPlayers)
+                foreach (var player in players)
                 {
                     yield return await player.input.Next();
                 }
@@ -193,26 +195,15 @@ namespace RemoteSoccer
 
         private void RemovePlayer(Gamepad e)
         {
-            var playerInfo = localPlayers.SingleOrDefault(x => x.input is ControllerInputes controllerInputes && controllerInputes.gamepad == e);
-
-            var gotIt = false;
-            while (!gotIt)
-            {
-                try
+            localPlayers.Run(x => { 
+                var playerInfo= x.SingleOrDefault(x => x.input is ControllerInputes controllerInputes && controllerInputes.gamepad == e);
+                if (playerInfo != null)
                 {
-                    localPlayers.RemoveOrThrow(playerInfo);
-                    gotIt = true;
+                    x.Remove(playerInfo);
+                    game.LeaveGame(new LeaveGame(playerInfo.LocalId));
                 }
-                catch
-                {
-                    var db = 0;
-                }
-            }
-
-            if (playerInfo != null)
-            {
-                game.LeaveGame(new LeaveGame(playerInfo.LocalId));
-            }
+                return x;
+            });
         }
 
         private void Gamepad_GamepadAdded(object sender, Windows.Gaming.Input.Gamepad e)
@@ -244,7 +235,7 @@ namespace RemoteSoccer
             {
                 try
                 {
-                    localPlayers.AddOrThrow(newPlayer);
+                    localPlayers.Run(x => { x.Add(newPlayer); return x; });
                     added = true;
                 }
                 catch (Exception e)

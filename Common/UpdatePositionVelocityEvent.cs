@@ -1,7 +1,54 @@
 ﻿using physics2;
+using System;
 
 namespace Physics2
 {
+
+    internal readonly struct DropBallWrapper : IEvent
+    {
+        private readonly IEvent evnt;
+        private readonly Ball ball;
+        private readonly int simulationTime;
+
+        public DropBallWrapper(IEvent evnt, Ball ball, int simulationTime)
+        {
+            this.evnt = evnt ?? throw new ArgumentNullException(nameof(evnt));
+            this.ball = ball ?? throw new ArgumentNullException(nameof(ball));
+            this.simulationTime = simulationTime;
+        }
+
+        public double Time => evnt.Time;
+
+
+        public MightBeCollision Enact()
+        {
+            ball.OwnerOrNull.LastHadBall = simulationTime;
+            ball.OwnerOrNull = null;
+            return evnt.Enact();
+        }
+    }
+
+    internal readonly struct TakeBallWrapper : IEvent { 
+        private readonly DoubleUpdatePositionVelocityEvent evnt;
+        private readonly Ball ball;
+        private readonly Player player;
+
+        public TakeBallWrapper(DoubleUpdatePositionVelocityEvent evnt, Ball ball,Player player)
+        {
+            this.evnt = evnt;
+            this.ball = ball ?? throw new ArgumentNullException(nameof(ball));
+            this.player = player ?? throw new ArgumentNullException(nameof(player));
+        }
+
+        public double Time => evnt.Time;
+
+
+        public MightBeCollision Enact()
+        {
+            ball.OwnerOrNull = player;
+            return evnt.Enact();
+        }
+    }
 
     internal readonly struct DoubleUpdatePositionVelocityEvent : IEvent
     {

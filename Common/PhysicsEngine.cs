@@ -42,7 +42,14 @@ namespace physics2
                 {
                     if (PhysicsMath.TryNextCollisionBallLine(ball, parameter, ball.GetCircle(), parameter.GetLine(), timeLeft, out var @event))
                     {
-                        events.Add(@event);
+                        if (ball.OwnerOrNull != null)
+                        {
+                            events.Add(new DropBallWrapper(@event, ball, simulationFrame));
+                        }
+                        else
+                        {
+                            events.Add(@event);
+                        }
                     }
                 }
                 foreach (var player in players)
@@ -121,7 +128,17 @@ namespace physics2
                         timeLeft,
                         out var @event))
                     {
-                        events.Add(@event);
+                        if (ball.OwnerOrNull == p1)
+                        {
+                            events.Add(new TakeBallWrapper( @event,ball,p2));
+                        }
+                        else if (ball.OwnerOrNull == p2)
+                        {
+                            events.Add(new TakeBallWrapper(@event, ball, p1));
+                        }
+                        else { 
+                            events.Add(@event);
+                        }
                     }
                 }
 
