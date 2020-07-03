@@ -114,8 +114,8 @@ namespace physics2
                     if (PhysicsMath.TryCollisionBall(
                         p1,
                         p2,
-                        new CenterFoot(p1.Body,p1),
-                        new CenterFoot(p2.Body, p2),
+                        p1.Body.Outer,
+                        p2.Body.Outer,
                         new Circle(p1.Padding),
                         new Circle(p2.Padding),
                         timeLeft,
@@ -232,6 +232,14 @@ namespace physics2
             foreach (var player in players)
             {
                 yield return player;
+            }
+            foreach (var player in players)
+            {
+                yield return player.Body;
+            }
+            foreach (var player in players)
+            {
+                yield return player.Body.Outer;
             }
             foreach (var goal in goals)
             {

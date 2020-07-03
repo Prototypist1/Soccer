@@ -6,34 +6,34 @@ namespace Physics2
     internal readonly struct DoubleUpdatePositionVelocityEvent : IEvent
     {
         private readonly IPhysicsObject myPhysicsObject_1;
-        private readonly double vx_1;
-        private readonly double vy_1;
+        private readonly double fx_1;
+        private readonly double fy_1;
 
         private readonly IPhysicsObject myPhysicsObject_2;
-        private readonly double vx_2;
-        private readonly double vy_2;
+        private readonly double fx_2;
+        private readonly double fy_2;
 
         public readonly MightBeCollision res;
 
         public DoubleUpdatePositionVelocityEvent(
             double time,
             IPhysicsObject myPhysicsObject_1,
-            double vx_1,
-            double vy_1,
+            double fx_1,
+            double fy_1,
             IPhysicsObject myPhysicsObject_2,
-            double vx_2,
-            double vy_2,
+            double fx_2,
+            double fy_2,
             MightBeCollision res)
         {
             this.Time = time;
 
             this.myPhysicsObject_1 = myPhysicsObject_1;
-            this.vx_1 = vx_1;
-            this.vy_1 = vy_1;
+            this.fx_1 = fx_1;
+            this.fy_1 = fy_1;
 
             this.myPhysicsObject_2 = myPhysicsObject_2;
-            this.vx_2 = vx_2;
-            this.vy_2 = vy_2;
+            this.fx_2 = fx_2;
+            this.fy_2 = fy_2;
 
             this.res = res;
         }
@@ -42,8 +42,8 @@ namespace Physics2
 
         public MightBeCollision Enact()
         {
-            myPhysicsObject_1.UpdateVelocity(vx_1, vy_1);
-            myPhysicsObject_2.UpdateVelocity(vx_2, vy_2);
+            myPhysicsObject_1.ApplyForce(fx_1, fy_1);
+            myPhysicsObject_2.ApplyForce(fx_2, fy_2);
 
             return res;
         }

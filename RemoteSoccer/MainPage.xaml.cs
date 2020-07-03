@@ -223,7 +223,7 @@ namespace RemoteSoccer
         private async Task CreatePlayer(Windows.Gaming.Input.Gamepad gamepad)
         {
             var body = Guid.NewGuid();
-            var bodyNoLean = Guid.NewGuid();
+            var outer = Guid.NewGuid();
             var foot = Guid.NewGuid();
 
             var inputs = new ControllerInputes(lockCurser, body, foot, gamepad,
@@ -232,7 +232,7 @@ namespace RemoteSoccer
                     var color = GetColor();
                     game.ChangeColor(new ColorChanged(foot, color[0], color[1], color[2], 0xff));
                     game.ChangeColor(new ColorChanged(body, color[0], color[1], color[2], BodyA));
-                    game.ChangeColor(new ColorChanged(bodyNoLean, color[0], color[1], color[2], BodyA / 2));
+                    game.ChangeColor(new ColorChanged(outer, color[0], color[1], color[2], BodyA / 2));
                 });
 
             await inputs.Init();
@@ -270,7 +270,7 @@ namespace RemoteSoccer
                 new CreatePlayer(
                     foot,
                     body,
-                    bodyNoLean,
+                    outer,
                     Constants.footLen * 2,
                     Constants.PlayerRadius * 2,
                     color[0],

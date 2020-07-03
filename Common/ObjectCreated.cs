@@ -69,9 +69,9 @@ namespace Common
     }
 
 
-    public class BodyNoLeanCreated : ObjectCreated
+    public class OuterCreated : ObjectCreated
     {
-        public BodyNoLeanCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
+        public OuterCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a) : base(x, y, z, id, diameter, r, g, b, a)
         {
         }
     }
@@ -96,18 +96,18 @@ namespace Common
             BodyCreated[] bodies, 
             BallCreated ball, 
             GoalCreated[] goals,
-            BodyNoLeanCreated[] bodiesNoLean)
+            OuterCreated[] outers)
         {
             Feet = feet ?? throw new ArgumentNullException(nameof(feet));
             Bodies = bodies ?? throw new ArgumentNullException(nameof(bodies));
             Ball = ball;
             Goals = goals ?? throw new ArgumentNullException(nameof(goals));
-            BodiesNoLean = bodiesNoLean ?? throw new ArgumentNullException(nameof(bodiesNoLean));
+            Outers = outers ?? throw new ArgumentNullException(nameof(outers));
         }
 
         public FootCreated[] Feet { get; set; }
         public BodyCreated[] Bodies { get; set; }
-        public BodyNoLeanCreated[] BodiesNoLean { get; set; }
+        public OuterCreated[] Outers { get; set; }
         public BallCreated Ball { get; set; }
         public GoalCreated[] Goals { get; set; }
 

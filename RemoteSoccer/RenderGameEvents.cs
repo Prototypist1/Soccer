@@ -269,7 +269,7 @@ namespace RemoteSoccer
                         CreateOjectsView(objectCreated);
                     }
 
-                    foreach (var objectCreated in objectsCreated.BodiesNoLean)
+                    foreach (var objectCreated in objectsCreated.Outers)
                     {
                         CreateOjectsView(objectCreated);
                     }
