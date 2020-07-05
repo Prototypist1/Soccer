@@ -66,7 +66,7 @@ namespace RemoteSoccer
 
         private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
 
-        private Ref<bool> lockCurser = new Ref<bool>(true);
+        //private Ref<bool> lockCurser = new Ref<bool>(true);
         private IZoomer zoomer;
         private Ref<int> frame = new Ref<int>(0);
         private FieldDimensions fieldDimensions = FieldDimensions.Default;
@@ -84,14 +84,14 @@ namespace RemoteSoccer
 
             rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame, fieldDimensions);
 
-            if (lockCurser.Thing)
-            {
-                Window.Current.CoreWindow.PointerCursor = null;
-            }
-            else
-            {
-                Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
-            }
+            //if (lockCurser.Thing)
+            //{
+            //    Window.Current.CoreWindow.PointerCursor = null;
+            //}
+            //else
+            //{
+            //    Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
+            //}
 
         }
 
@@ -217,7 +217,7 @@ namespace RemoteSoccer
             var outer = Guid.NewGuid();
             var foot = Guid.NewGuid();
 
-            var inputs = new ControllerInputes(lockCurser, body, foot, gamepad,
+            var inputs = new ControllerInputes(/*lockCurser,*/ body, foot, gamepad,
                 () =>
                 {
                     var color = GetColor();

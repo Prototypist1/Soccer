@@ -38,17 +38,25 @@ namespace physics2
         public Vector Position => new Vector(X, Y);
         public double Speed => Math.Sqrt((Vx * Vx) + (Vy * Vy));
         public Vector Velocity => new Vector(Vx, Vy);
-        public double Y { get; private set; }
-        public double X { get; private set; }
+        public double Y { get; set; }
+        public double X { get; set; }
 
         public double Vx => personalVx + Body.Vx;
         public double Vy => personalVy + Body.Vy;
 
         public void ApplyForce(double fx, double fy)
         {
-            personalVx += (fx / 3.0) / privateMass;
-            personalVy += (fy / 3.0) / privateMass;
-            Body.ApplyForce(fx* 2.0 / 3.0, fy * 2.0 / 3.0);
+
+            //personalVx += fx / Mass;
+            //personalVy += fy / Mass;
+
+            var fxForMe = (fx * (privateMass / Mass));
+            var fyForMe = (fy * (privateMass / Mass));
+            var fxOther = fx - fxForMe;
+            var fyOther = fy - fyForMe;
+            personalVx += fxForMe / Mass;
+            personalVy += fyForMe / Mass;
+            Body.ApplyForce(fxOther * (Body.Mass / Mass), fyOther * (Body.Mass / Mass));
         }
 
         public void Update(double step, double timeLeft)

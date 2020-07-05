@@ -12,12 +12,12 @@
 
         //public const double playerPadding = 200;
 
-        public const double footLen = 3000;
+        public const double footLen = 4500;
         public const int PlayerRadius = 750;//750;// 500;//300;
         public const int BallRadius = 650;//150;//250;//30;//
         public const double BallMass = 1;
 
-        public const double MaxLean = 1500;
+        public const double MaxLean = 0;
 
         public const double MimimunThrowingSpped = 100;
 

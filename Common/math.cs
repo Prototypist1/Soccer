@@ -208,10 +208,9 @@ namespace Physics2
 
         private static Vector GetNormal(IPhysicsObject physicsObject1, IPhysicsObject partical, double time)
         {
-            var dx = physicsObject1.X + (time * physicsObject1.Vx) - (partical.X + (time * partical.Vx));
-            var dy = physicsObject1.Y + (time * physicsObject1.Vy) - (partical.Y + (time * partical.Vy));
-            var normal = new Vector(dx, dy).NewUnitized();
-            return normal;
+            var dx = (physicsObject1.X + (time * physicsObject1.Vx)) - (partical.X + (time * partical.Vx));
+            var dy = (physicsObject1.Y + (time * physicsObject1.Vy)) - (partical.Y + (time * partical.Vy));
+            return new Vector(dx, dy).NewUnitized();
         }
 
         private static bool IsGood(double vf, double v)
@@ -483,7 +482,12 @@ namespace Physics2
         }
 
 
-        internal static bool TryNextCollisionBallLine(PhysicsObject self, PhysicsObject line, Circle circle, Line lineShape, double endTime, out IEvent collision)
+        internal static bool TryNextCollisionBallLine(
+            IPhysicsObject self, 
+            PhysicsObject line,
+            IPhysicsObject applyForces1,
+            IPhysicsObject applyLine,
+            Circle circle, Line lineShape, double endTime, out IEvent collision)
         {
 
             var normalDistance = new Vector(self.X, self.Y).Dot(lineShape.NormalUnit.NewUnitized());//myPhysicsObject.X
@@ -500,9 +504,9 @@ namespace Physics2
                     line.Position.NewAdded(line.Velocity.NewScaled(time)).Dot(lineShape.DirectionUnit);
 
 
-                    if (time < endTime && Math.Abs(directionDistance) < lineShape.Length * .5)
+                    if (time <= endTime && Math.Abs(directionDistance) < lineShape.Length * .5)
                     {
-                        collision = DoCollision(self, line, circle.Radius, time, lineShape.NormalUnit, self.Velocity, line.Velocity);
+                        collision = DoCollision(applyForces1, applyLine, circle.Radius, time, lineShape.NormalUnit, self.Velocity, line.Velocity);
                         return true;
                     }
                     else

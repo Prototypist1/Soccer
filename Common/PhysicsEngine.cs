@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using static Common.Game;
 
 namespace physics2
 {
@@ -16,11 +17,19 @@ namespace physics2
 
         public readonly List<PhysicsObject> items = new List<PhysicsObject>();
 
+        private readonly GameStateTracker gameStateTracker;
+
+        //
+        public PhysicsEngine(GameStateTracker gameStateTracker)
+        {
+            this.gameStateTracker = gameStateTracker;
+        }
+
         public IEnumerable<(Player, Player)> PlayerPairs()
         {
             foreach (var p1 in players)
             {
-                foreach (var p2 in players.Skip(players.IndexOf(p1)+1))
+                foreach (var p2 in players.Skip(players.IndexOf(p1) + 1))
                 {
                     yield return (p1, p2);
                 }
@@ -38,58 +47,35 @@ namespace physics2
             while (timeLeft > 0)
             {
 
-                foreach (var parameter in parameters)
+                if (ball.OwnerOrNull == null)
                 {
-                    if (PhysicsMath.TryNextCollisionBallLine(ball, parameter, ball.GetCircle(), parameter.GetLine(), timeLeft, out var @event))
+                    foreach (var parameter in parameters)
                     {
-                        if (ball.OwnerOrNull != null)
+                        if (PhysicsMath.TryNextCollisionBallLine(ball, parameter,ball,parameter, ball.GetCircle(), parameter.GetLine(), timeLeft, out var @event))
                         {
-                            events.Add(new DropBallWrapper(@event, ball, simulationFrame));
-                        }
-                        else
-                        {
+                            //if (ball.OwnerOrNull != null)
+                            //{
+                            //    events.Add(new DropBallWrapper(@event, ball, simulationFrame));
+                            //}
+                            //else
+                            //{
                             events.Add(@event);
+                            //}
                         }
                     }
                 }
+
                 foreach (var player in players)
                 {
-                    //{
-                    //foreach (var partical in player.line)
-                    //{
-                    //    if (PhysicsMath.TryCollisionPointCloudParticle(ball, player, partical.X, partical.Y, partical.Vx(timeLeft), partical.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
-                    //    {
-                    //        events.Add(@event);
-                    //    }
-                    //}
-                    //}
-
-                    //if (PhysicsMath.TryCollisionBallLine2(
-                    //    ball,
-                    //    player,
-                    //    ball.GetCircle(),
-                    //    player.GetLength(),
-                    //    timeLeft,
-                    //    new Vector(player.start.X, player.start.Y),
-                    //    new Vector(player.start.Tx, player.start.Ty).NewAdded(new Vector(player.start.X, player.start.Y).NewMinus()).NewScaled(1 / timeLeft),
-                    //    out var @event
-                    //    ))
-                    //{
-                    //    events.Add(@event);
-                    //}
-
-                    //var parallelVector = player.GetParallelVector();
-                    //for (var i = -1.0; i <= 1.0; i += 0.05)
-                    //{
                     if (ball.OwnerOrNull == null && player.LastHadBall + Constants.ThrowTimeout < simulationFrame)
                     {
                         if (PhysicsMath.TryPickUpBall(
                             ball,
                             player,
-                            player.X,      //(parallelVector.x * i) +
-                            player.Y,      //(parallelVector.y * i) +
-                            player.Vx,     // + ((player.start.Tx - player.start.X) * i * (1 / timeLeft)),
-                            player.Vy,     // + ((player.start.Ty - player.start.Y) * i * (1 / timeLeft)),
+                            player.X,
+                            player.Y,
+                            player.Vx,
+                            player.Vy,
                             ball.GetCircle(),
                             new Circle(player.Padding),
                             timeLeft,
@@ -98,22 +84,23 @@ namespace physics2
                             events.Add(@event);
                         }
                     }
-                    //}
 
-                    //{
-                    //    var start = player.start;
-                    //    if (PhysicsMath.TryCollisionBall(ball, player, start.X, start.Y, start.Vx(timeLeft), start.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
-                    //    {
-                    //        events.Add(@event);
-                    //    }
-                    //}
-                    //{
-                    //    var end = player.end;
-                    //    if (PhysicsMath.TryCollisionBall(ball, player, end.X, end.Y, end.Vx(timeLeft), end.Vy(timeLeft), ball.GetCircle(), new Circle(player.Padding), timeLeft, out var @event))
-                    //    {
-                    //        events.Add(@event);
-                    //    }
-                    //}
+
+                    foreach (var parameter in parameters)
+                    {
+                        if (PhysicsMath.TryNextCollisionBallLine(
+                            player,
+                            parameter,
+                            player.Body.Outer,
+                            parameter,
+                            new Circle(player.Padding),
+                            parameter.GetLine(), 
+                            timeLeft, 
+                            out var @event2))
+                        {
+                            events.Add(@event2);
+                        }
+                    }
                 }
 
                 foreach (var (p1, p2) in PlayerPairs())
@@ -130,13 +117,34 @@ namespace physics2
                     {
                         if (ball.OwnerOrNull == p1)
                         {
-                            events.Add(new TakeBallWrapper( @event,ball,p2));
+                            events.Add(new TakeBallWrapper(@event, ball, p2));
                         }
                         else if (ball.OwnerOrNull == p2)
                         {
                             events.Add(new TakeBallWrapper(@event, ball, p1));
                         }
-                        else { 
+                        else
+                        {
+                            events.Add(@event);
+                        }
+                    }
+                }
+
+                if (gameStateTracker.TryGetBallWall(out var ballWall))
+                {
+                    var ballWallPhysicObject = new PhysicsObject(1, ballWall.x, ballWall.y, false);
+                    foreach (var player in players)
+                    {
+                        if (PhysicsMath.TryCollisionBall(
+                            player,
+                            ballWallPhysicObject,
+                            player.Body.Outer,
+                            ballWallPhysicObject,
+                            new Circle(player.Padding),
+                            new Circle(ballWall.radius),
+                            timeLeft,
+                            out var @event))
+                        {
                             events.Add(@event);
                         }
                     }
@@ -144,13 +152,13 @@ namespace physics2
 
                 foreach (var goal in goals)
                 {
-                    if (goal.Item2.IsEnabled() && 
+                    if (goal.Item2.IsEnabled() &&
                         PhysicsMath.TryCollisionBall(
-                            ball, 
+                            ball,
                             goal.Item1,
                             ball,
-                            goal.Item1, 
-                            ball.GetCircle(), 
+                            goal.Item1,
+                            ball.GetCircle(),
                             goal.Item1.GetCircle(), timeLeft, out var @event))
                     {
                         // man I hate goals
@@ -176,6 +184,10 @@ namespace physics2
                         }
                     }
                 }
+
+                //if (events.Any(x => x.Time <= 0)) {
+                //    var db = 0;
+                //}
 
                 events = events
                     .Where(x => x.Time > 0)

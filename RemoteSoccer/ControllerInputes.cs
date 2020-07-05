@@ -10,7 +10,7 @@ namespace RemoteSoccer
     class ControllerInputes : IInputs
     {
 
-        private readonly IReadonlyRef<bool> lockCurser;
+        //private readonly IReadonlyRef<bool> lockCurser;
 
         private readonly Guid body;
         private readonly Guid foot;
@@ -18,13 +18,13 @@ namespace RemoteSoccer
         private readonly Action changeColor;
 
         public ControllerInputes(
-            IReadonlyRef<bool> lockCurser,
+            //IReadonlyRef<bool> lockCurser,
             Guid body,
             Guid foot,
             Gamepad gamepad,
             Action changeColor)
         {
-            this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
+            //this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
             this.body = body;
             this.foot = foot;
             this.gamepad = gamepad;
@@ -40,8 +40,8 @@ namespace RemoteSoccer
 
         public Task<PlayerInputs> Next()
         {
-            if (lockCurser.Thing)
-            {
+            //if (lockCurser.Thing)
+            //{
                 var snap = gamepad.GetCurrentReading();
 
                 if ((snap.Buttons & GamepadButtons.A) == GamepadButtons.A)
@@ -57,11 +57,11 @@ namespace RemoteSoccer
                 }
 
                 return Task.FromResult(new PlayerInputs(snap.LeftThumbstickX, -snap.LeftThumbstickY, snap.RightThumbstickX, -snap.RightThumbstickY, foot, body,true, (snap.Buttons & GamepadButtons.RightShoulder)== GamepadButtons.RightShoulder));
-            }
-            else
-            {
-                return Task.FromResult( new PlayerInputs(0, 0, 0, 0, foot, body,true, false));
-            }
+            //}
+            //else
+            //{
+            //    return Task.FromResult( new PlayerInputs(0, 0, 0, 0, foot, body,true, false));
+            //}
         }
     }
 

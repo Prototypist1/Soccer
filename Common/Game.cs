@@ -15,7 +15,7 @@ namespace Common
     {
         private int players = 0;
 
-        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine());
+        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine;
         private readonly JumpBallConcurrent<Dictionary<Guid, Player>> feet = new JumpBallConcurrent<Dictionary<Guid, Player>>(new Dictionary<Guid, Player>());
         private readonly JumpBallConcurrent<Dictionary<Guid, Center>> bodies = new JumpBallConcurrent<Dictionary<Guid, Center>>(new Dictionary<Guid, Center>());
         private readonly Guid ballId;
@@ -52,7 +52,7 @@ namespace Common
         private readonly GameStateTracker gameStateTracker;
         private readonly FieldDimensions field;
 
-        private class GameStateTracker
+        public class GameStateTracker
         {
             public int leftScore = 0, rightScore = 0;
             private readonly Action resetBallAction;
@@ -299,6 +299,7 @@ namespace Common
             gameStateTracker.Scored();
             gameStateTracker.leftScore = 0;
             gameStateTracker.rightScore = 0;
+            ball.OwnerOrNull = null;
             return new UpdateScore() { Left = gameStateTracker.leftScore, Right = gameStateTracker.rightScore };
         }
 
@@ -376,6 +377,7 @@ namespace Common
                 field.xMax / 2.0,
                 field.yMax / 2.0
             );
+            physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(gameStateTracker));// 
 
             var rightGoalManger = new GoalManager(gameStateTracker, onUpdateScore, true);
             var leftGoalManger = new GoalManager(gameStateTracker, onUpdateScore, false);
@@ -452,38 +454,8 @@ namespace Common
 
             feet.Run(x => { x[createPlayer.Foot] = foot; return x; });
 
-            //bool gotItFeet = false;
-            //while (!gotItFeet)
-            //{
-            //    try
-            //    {
-            //        // this can throw if the list is being enumerated
-            //        // so we just try keep trying in a loop
-            //        feet[createPlayer.Foot] = foot;
-            //        gotItFeet = true;
-            //    }
-            //    catch {
-            //        var db = 0;
-            //    }
-            //}
-
 
             bodies.Run(x => { x[createPlayer.Body] = body; return x; });
-
-            //bool gotItBody = false;
-            //while (!gotItBody)
-            //{
-            //    try
-            //    {
-            //        // this can throw if the list is being enumerated
-            //        // so we just try keep trying in a loop
-            //        bodies[createPlayer.Body] = body;
-            //        gotItBody = true;
-            //    }
-            //    catch {
-            //        var db = 0;
-            //    }
-            //}
 
             var bodyCreated = new BodyCreated(
                         body.X,
@@ -553,9 +525,7 @@ namespace Common
 
                 bodies.Run(x => { x.Remove(toRemoves.Body); return x; });
 
-                //bodies.TryRemove(toRemoves.Body, out var center);
                 feet.Run(x => { x.Remove(toRemoves.Foot.id); return x; });
-                //feet.TryRemove(toRemoves.Foot.id, out var _);
                 physicsEngine.Run(x => { x.RemovePlayer(toRemoves.Foot); return x; });
 
                 objectRemoveds = new List<ObjectRemoved>();
@@ -672,11 +642,8 @@ namespace Common
 
 
                         var foot = body.Foot;
-                        //var target = new Vector(foot.X - lastX, foot.Y - lastY);
 
-                        //var leanChangeX = 0.0;
-                        //var leanChangeY = 0.0;
-
+                        var outer = body.Outer;
 
                         if (inputSet.TryGetValue(center.Key, out var input))
                         {
@@ -748,50 +715,48 @@ namespace Common
 
                                     var vector = new Vector(finalVelocity.x - body.Outer.Vx, finalVelocity.y - body.Outer.Vy);
 
-                                    //body.Outer.Vx += vector.x / 2.0;
-                                    //body.Outer.Vy += vector.y / 2.0;
+                                    body.Outer.Vx += vector.x / 2.0;
+                                    body.Outer.Vy += vector.y / 2.0;
 
-                                    if (vector.Length == 0)
-                                    {
+                                    //if (vector.Length == 0)
+                                    //{
 
-                                    }
-                                    else if (vector.Length > Constants.MaxDeltaV)
-                                    {
-                                        body.Outer.Vx += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).x;
-                                        body.Outer.Vy += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).y;
-                                    }
-                                    else
-                                    {
-                                        body.Outer.Vx += vector.x;
-                                        body.Outer.Vy += vector.y;
-                                    }
+                                    //}
+                                    //else if (vector.Length > Constants.MaxDeltaV)
+                                    //{
+                                    //    body.Outer.Vx += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).x;
+                                    //    body.Outer.Vy += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).y;
+                                    //}
+                                    //else
+                                    //{
+                                    //    body.Outer.Vx += vector.x;
+                                    //    body.Outer.Vy += vector.y;
+                                    //}
 
                                 }
                             }
                             else
                             {
-                                var vector = new Vector(- body.Outer.Vx, - body.Outer.Vy);
+                                var vector = new Vector(-outer.Vx, -outer.Vy);
 
-                                //body.Outer.Vx += vector.x / 2.0;
-                                //body.Outer.Vy += vector.y / 2.0;
+                                body.Outer.Vx += vector.x / 2.0;
+                                body.Outer.Vy += vector.y / 2.0;
 
-                                if (vector.Length == 0)
-                                {
+                                //if (vector.Length == 0)
+                                //{
 
-                                }
-                                else if (vector.Length > Constants.MaxDeltaV)
-                                {
-                                    body.Outer.Vx += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).x;
-                                    body.Outer.Vy += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).y;
-                                }
-                                else
-                                {
-                                    body.Outer.Vx += vector.x;
-                                    body.Outer.Vy += vector.y;
-                                }
+                                //}
+                                //else if (vector.Length > Constants.MaxDeltaV)
+                                //{
+                                //    outer.Vx += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).x;
+                                //    outer.Vy += vector.NewUnitized().NewScaled(Constants.MaxDeltaV).y;
+                                //}
+                                //else
+                                //{
+                                //    outer.Vx += vector.x;
+                                //    outer.Vy += vector.y;
+                                //}
                             }
-
-                            //target = GetTarget(lastX, lastY, input, foot);
 
                             if (input.Controller)
                             {
@@ -804,29 +769,29 @@ namespace Common
 
                                 body.personalVx = (tx - body.X)/2.0;
                                 body.personalVy = (ty - body.Y)/2.0;
-
-
-                                //body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, input.BodyX * Constants.MaxLean, input.BodyY * Constants.MaxLean);
                             }
-                            //else
-                            //{
-                            //    body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
-                            //}
                         }
-                        //else
-                        //{
-                        //    body.Update(gameStateTracker.TryGetBallWall(out var tup), tup, 0, 0);
-                        //}
 
-                        // apply full force to get us to the bodies current pos
+                        if (gameStateTracker.TryGetBallWall(out var ballWall)) {
+                            var dis = new Vector( outer.X - ballWall.x, outer.Y - ballWall.y);
+                            if (dis.Length == 0) {
+                                dis = new Vector(1, 0);
+                            }
+                            if (dis.Length < ballWall.radius + Constants.footLen) {
+                                var t = dis.NewUnitized().NewScaled(ballWall.radius + Constants.footLen).NewAdded(new Vector(ballWall.x,ballWall.y));
 
-                        //{
+                                var vector = new Vector(t.x - outer.X, t.y - outer.Y);
 
+                                outer.X += vector.x;
+                                outer.Y += vector.y;
 
-                        //    foot.ApplyForce(
-                        //        ((body.Vx - lastVx)) * foot.Mass,
-                        //        ((body.Vy - lastVy)) * foot.Mass);
-                        //}
+                                body.X += vector.x;
+                                body.Y += vector.y;
+
+                                foot.X += vector.x;
+                                foot.Y += vector.y;
+                            }
+                        }
 
                         var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
                         
@@ -839,20 +804,6 @@ namespace Common
                             foot.personalVx = (tx - foot.X)/2.0;
                             foot.personalVy = (ty - foot.Y)/ 2.0;
                         }
-
-
-
-                        //if (target.Length > max)
-                        //{
-                        //    target = target.NewScaled(max / target.Length);
-                        //}
-
-                        //var targetX = target.x + body.X;
-                        //var targetY = target.y + body.Y;
-
-                        //foot.ApplyForce(
-                        //    (targetX - (foot.X + foot.Vx)) * foot.Mass / (1.0),
-                        //    (targetY - (foot.Y + foot.Vy)) * foot.Mass / (1.0));
 
                         if (foot == ball.OwnerOrNull)
                         {
@@ -892,6 +843,8 @@ namespace Common
                                 ball.proposedThrow = new Vector();
                             }
                         }
+
+
                     }
                 }
                 catch (Exception e) {
@@ -922,28 +875,6 @@ namespace Common
             lastPositions.next.SetResult(next);
             lastPositions = next;
         }
-
-        //private static Vector GetTarget(double lastX, double lastY, PlayerInputs input, PhysicsObject foot)
-        //{
-        //    // old controller:
-        //    if (input.Controller)
-        //    {
-        //        return new Vector(input.FootX * (Constants.footLen - Constants.PlayerRadius), input.FootY * (Constants.footLen - Constants.PlayerRadius));
-        //    }
-
-        //    if (input.Controller)
-        //    {
-        //        var inputVector = new Vector(input.FootX, input.FootY);
-        //        if (inputVector.Length < .1)
-        //        {
-        //            return new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY);
-        //        }
-        //        var realInput = inputVector.NewUnitized().NewScaled(-.1).NewAdded(inputVector).NewScaled(1 / .9);
-
-        //        return new Vector(foot.X + (realInput.x * Math.Abs(realInput.x) * Math.Abs(realInput.x) * 200) - lastX, foot.Y + (realInput.y * Math.Abs(realInput.y) * Math.Abs(realInput.y) * 200) - lastY);
-        //    }
-        //    return new Vector(foot.X + input.FootX - lastX, foot.Y + input.FootY - lastY); ;
-        //}
 
         private int running = 0;
 

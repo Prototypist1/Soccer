@@ -33,17 +33,17 @@ namespace Common
 
         public double X
         {
-            get; private set;
+            get;  set;
         }
 
         public double Y
         {
-            get; private set;
+            get;  set;
         }
 
         public void ApplyForce(double fx, double fy)
         {
-            Vx += fx / Mass;
+            Vx += fx / Mass ;
             Vy += fy / Mass;
         }
 
@@ -67,8 +67,8 @@ namespace Common
         public Vector Position => new Vector(X, Y);
         public double Speed => Math.Sqrt((Vx * Vx) + (Vy * Vy));
         public Vector Velocity => new Vector(Vx, Vy);
-        public double Y { get; private set; }
-        public double X { get; private set; }
+        public double Y { get; set; }
+        public double X { get; set; }
 
         public double Vx => personalVx + Outer.Vx;
         public double Vy => personalVy + Outer.Vy;
@@ -90,9 +90,13 @@ namespace Common
 
         public void ApplyForce(double fx, double fy)
         {
-            personalVx += (fx/2.0) / privateMass;
-            personalVy += (fy/2.0) / privateMass;
-            Outer.ApplyForce(fx/2.0, fy / 2.0);
+            var fxForMe = fx * (privateMass / Mass);
+            var fyForMe = fy * (privateMass / Mass);
+            var fxOther = fx - fxForMe;
+            var fyOther = fy - fyForMe;
+            personalVx += fxForMe / Mass;
+            personalVy += fyForMe / Mass;
+            Outer.ApplyForce(fxOther * (Outer.Mass / Mass ), fyOther * (Outer.Mass / Mass));
         }
 
         public void Update(double step, double timeLeft)
