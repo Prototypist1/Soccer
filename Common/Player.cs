@@ -32,7 +32,7 @@ namespace physics2
         public double personalVx, personalVy;
 
 
-        private double privateMass = 1;
+        private double privateMass = 0;
         public double Mass => Body.Mass + privateMass;
         public bool Mobile => Body.Mobile;
         public Vector Position => new Vector(X, Y);
@@ -50,13 +50,14 @@ namespace physics2
             //personalVx += fx / Mass;
             //personalVy += fy / Mass;
 
-            var fxForMe = (fx * (privateMass / Mass));
-            var fyForMe = (fy * (privateMass / Mass));
-            var fxOther = fx - fxForMe;
-            var fyOther = fy - fyForMe;
-            personalVx += fxForMe / Mass;
-            personalVy += fyForMe / Mass;
-            Body.ApplyForce(fxOther * (Body.Mass / Mass), fyOther * (Body.Mass / Mass));
+            //var fxForMe = (fx * (privateMass / Mass));
+            //var fyForMe = (fy * (privateMass / Mass));
+            //var fxOther = fx - fxForMe;
+            //var fyOther = fy - fyForMe;
+            //personalVx += fxForMe / Mass;
+            //personalVy += fyForMe / Mass;
+            //Body.ApplyForce(fxOther * (Body.Mass / Mass), fyOther * (Body.Mass / Mass));
+            Body.ApplyForce(fx, fy);
         }
 
         public void Update(double step, double timeLeft)

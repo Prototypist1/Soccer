@@ -7,18 +7,10 @@ namespace Common
 {
 
 
-    public class Outer : IPhysicsObject, IUpdatePosition
+    public class ExternalForce : IPhysicsObject, IUpdatePosition
     {
-        public Guid Id { get; }
-
-        public Outer(double x, double y, Guid id)
-        {
-            Id = id;
-            X = x;
-            Y = y;
-        }
-
         public double Mass => 1;
+
         public bool Mobile => true;
 
         public Vector Position => new Vector(X, Y);
@@ -27,9 +19,54 @@ namespace Common
 
         public Vector Velocity => new Vector(Vx, Vy);
 
-        public double Vx { get;  set; }
+        public double Vx { get; set; }
 
-        public double Vy { get;  set; }
+        public double Vy { get; set; }
+
+        public double X { get; set; }
+
+        public double Y { get; set; }
+
+        public void ApplyForce(double fx, double fy)
+        {
+            Vx += fx / Mass;
+            Vy += fy / Mass;
+        }
+
+        public void Update(double step, double timeLeft)
+        {
+            X += Vx * step;
+            Y += Vy * step;
+        }
+    }
+
+    public class Outer : IPhysicsObject, IUpdatePosition
+    {
+        public readonly ExternalForce externalForce;
+        public Guid Id { get; }
+
+        public Outer(double x, double y, Guid id, ExternalForce externalForce)
+        {
+            Id = id;
+            this.externalForce = externalForce ?? throw new ArgumentNullException(nameof(externalForce));
+            X = x;
+            Y = y;
+        }
+
+        public double Mass => externalForce.Mass;
+        public bool Mobile => true;
+
+        public Vector Position => new Vector(X, Y);
+
+        public double Speed => Velocity.Length;
+
+        public Vector Velocity => new Vector(Vx, Vy);
+
+        public double privateVx = 0;
+        public double privateVy = 0;
+        public double Vx => privateVx + externalForce.Vx;
+
+        public double Vy => privateVy + externalForce.Vy;
 
         public double X
         {
@@ -43,8 +80,7 @@ namespace Common
 
         public void ApplyForce(double fx, double fy)
         {
-            Vx += fx / Mass ;
-            Vy += fy / Mass;
+            externalForce.ApplyForce(fx, fy);
         }
 
         public void Update(double step, double timeLeft)
@@ -61,7 +97,7 @@ namespace Common
 
         public double personalVx, personalVy;
 
-        private double privateMass = 1;
+        private double privateMass = 0;
         public double Mass => Outer.Mass + privateMass;
         public bool Mobile => Outer.Mobile;
         public Vector Position => new Vector(X, Y);
@@ -90,13 +126,14 @@ namespace Common
 
         public void ApplyForce(double fx, double fy)
         {
-            var fxForMe = fx * (privateMass / Mass);
-            var fyForMe = fy * (privateMass / Mass);
-            var fxOther = fx - fxForMe;
-            var fyOther = fy - fyForMe;
-            personalVx += fxForMe / Mass;
-            personalVy += fyForMe / Mass;
-            Outer.ApplyForce(fxOther * (Outer.Mass / Mass ), fyOther * (Outer.Mass / Mass));
+            //var fxForMe = fx * (privateMass / Mass);
+            //var fyForMe = fy * (privateMass / Mass);
+            //var fxOther = fx - fxForMe;
+            //var fyOther = fy - fyForMe;
+            //personalVx += fxForMe / Mass;
+            //personalVy += fyForMe / Mass;
+            //Outer.ApplyForce(fxOther * (Outer.Mass / Mass ), fyOther * (Outer.Mass / Mass));
+            Outer.ApplyForce(fx, fy);
         }
 
         public void Update(double step, double timeLeft)

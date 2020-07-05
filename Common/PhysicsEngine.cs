@@ -51,6 +51,29 @@ namespace physics2
                 {
                     foreach (var parameter in parameters)
                     {
+                        PhysicsMath.TryPushBallLine(ball, ball, ball.GetCircle(), parameter.GetLine());
+                    }
+                }
+
+                foreach (var player in players)
+                {
+                    foreach (var parameter in parameters)
+                    {
+                        PhysicsMath.TryPushBallLine(player, player.Body.Outer, new Circle(player.Padding), parameter.GetLine());
+                    }
+                }
+
+                if (gameStateTracker.TryGetBallWall(out var ballwall)) {
+                    foreach (var player in players)
+                    {
+                        PhysicsMath.TryPushBallWall(player, player.Body.Outer, new Circle(player.Padding), ballwall.x, ballwall.y, ballwall.radius);
+                    }
+                }
+
+                if (ball.OwnerOrNull == null)
+                {
+                    foreach (var parameter in parameters)
+                    {
                         if (PhysicsMath.TryNextCollisionBallLine(ball, parameter,ball,parameter, ball.GetCircle(), parameter.GetLine(), timeLeft, out var @event))
                         {
                             //if (ball.OwnerOrNull != null)
@@ -105,11 +128,11 @@ namespace physics2
 
                 foreach (var (p1, p2) in PlayerPairs())
                 {
-                    if (PhysicsMath.TryCollisionBall(
+                    if (PhysicsMath.TryCollisionBall2(
                         p1,
                         p2,
-                        p1.Body.Outer,
-                        p2.Body.Outer,
+                        p1.Body.Outer.externalForce,
+                        p2.Body.Outer.externalForce,
                         new Circle(p1.Padding),
                         new Circle(p2.Padding),
                         timeLeft,
@@ -138,7 +161,7 @@ namespace physics2
                         if (PhysicsMath.TryCollisionBall(
                             player,
                             ballWallPhysicObject,
-                            player.Body.Outer,
+                            player.Body.Outer.externalForce,
                             ballWallPhysicObject,
                             new Circle(player.Padding),
                             new Circle(ballWall.radius),
@@ -185,7 +208,8 @@ namespace physics2
                     }
                 }
 
-                //if (events.Any(x => x.Time <= 0)) {
+                //if (events.Any(x => x.Time <= 0))
+                //{
                 //    var db = 0;
                 //}
 
@@ -269,6 +293,10 @@ namespace physics2
             foreach (var player in players)
             {
                 yield return player.Body.Outer;
+            }
+            foreach (var player in players)
+            {
+                yield return player.Body.Outer.externalForce;
             }
             foreach (var goal in goals)
             {

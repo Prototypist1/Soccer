@@ -78,9 +78,9 @@ namespace RemoteSoccer
 
             //Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
 
-            zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions);
+            //zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions);
 
-            //new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, Constants.xMax/2.0, Constants.yMax/2.0);
+            zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax/2.0, fieldDimensions.yMax/2.0);
 
             rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame, fieldDimensions);
 
