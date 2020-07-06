@@ -600,7 +600,7 @@ namespace Common
 
                     if (ball.Velocity.Length > 0)
                     {
-                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / 50.0);
+                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / 30.0);
 
                         ball.ApplyForce(
                             friction.x,
@@ -653,8 +653,8 @@ namespace Common
 
                         var externalForces = center.Value.Outer.externalForce;
 
-                        externalForces.Vy = externalForces.Vy * .85;
-                        externalForces.Vx = externalForces.Vx * .85;
+                        externalForces.Vy = externalForces.Vy * .8;
+                        externalForces.Vx = externalForces.Vx * .8;
 
                         if (inputSet.TryGetValue(center.Key, out var input))
                         {
@@ -772,15 +772,13 @@ namespace Common
 
                             if (input.Controller)
                             {
-
-
                                 var tx = (input.BodyX * Constants.MaxLean) + body.Outer.X;
                                 var ty = (input.BodyY * Constants.MaxLean) + body.Outer.Y;
 
                                 var vector = new Vector(tx - body.personalVx, ty - body.personalVy);
 
-                                body.personalVx = (tx - body.X)/2.0;
-                                body.personalVy = (ty - body.Y)/2.0;
+                                body.personalVx = (tx - body.X);// /2.0;
+                                body.personalVy = (ty - body.Y);// /2.0;
                             }
                         }
 
@@ -813,8 +811,8 @@ namespace Common
 
                             var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
 
-                            foot.personalVx = (tx - foot.X)/2.0;
-                            foot.personalVy = (ty - foot.Y)/ 2.0;
+                            foot.personalVx = (tx - foot.X);// /2.0;
+                            foot.personalVy = (ty - foot.Y);// / 2.0;
                         }
 
                         if (foot == ball.OwnerOrNull)
@@ -891,10 +889,10 @@ namespace Common
         private int running = 0;
 
 
-        private const int EnergyAdd =250000 ;//400;
-        private const double SpeedScale = 1;
+        private const int EnergyAdd = 100_000;//250_000 ;//400;
+        private const double SpeedScale = .5;
         private const double Add = 0;
-        private const double ToThe = 3;//1.9;
+        private const double ToThe = 3.5;//1.9;
         private double E(double v) => Math.Pow(Math.Max(0, v - Add), ToThe) * SpeedScale;
         private double EInverse(double e) => Math.Pow(e / SpeedScale, 1 / ToThe) + Add;
 

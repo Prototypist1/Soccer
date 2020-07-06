@@ -128,7 +128,7 @@ namespace RemoteSoccer
 
                 frame.thing++;
 
-                while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
+                while ((1000.0 * frame.thing / 120.0) > sw.ElapsedMilliseconds)
                 {
                 }
 
@@ -164,9 +164,6 @@ namespace RemoteSoccer
                     game.OnDisconnect(OnDisconnect);
                     game.SetCallbacks(rge);
                     //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
-
-
-
 
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
                     {

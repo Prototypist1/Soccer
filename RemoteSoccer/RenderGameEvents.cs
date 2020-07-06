@@ -783,6 +783,5 @@ namespace RemoteSoccer
                 var dontWait = HandlePositions(item);
             }
         }
-
     }
 }
