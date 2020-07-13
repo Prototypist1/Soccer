@@ -821,37 +821,63 @@ namespace Common
                             var dx = foot.X - ball.X;
                             var dy = foot.Y - ball.Y;
 
-                            ball.UpdateVelocity(ball.OwnerOrNull.Vx + dx, ball.OwnerOrNull.Vy + dy);
-
-
-                            if (foot.Throwing)
+                            if (!foot.Throwing)
                             {
-                                var throwV = new Vector(foot.Vx - body.Vx, foot.Vy - body.Vy);
 
-                                if (ball.proposedThrow.Length > Constants.MimimunThrowingSpped)
+                                ball.UpdateVelocity(ball.OwnerOrNull.Vx + dx, ball.OwnerOrNull.Vy + dy);
+                            }
+                            else {
+
+                                if (ball.Velocity.Length > Constants.MimimunThrowingSpped && ball.Velocity.Dot(ball.OwnerOrNull.Velocity) < 0)
                                 {
-                                    if (throwV.Length > ball.proposedThrow.Length && throwV.Dot(ball.proposedThrow) > 0)
+
+                                    ball.OwnerOrNull.LastHadBall = simulationTime;
+                                    ball.OwnerOrNull = null;
+                                }
+                                else
+                                {
+
+                                    var ballV = Math.Max(1, ball.Velocity.Length);
+                                    var ownerV = Math.Max(1, ball.OwnerOrNull.Velocity.Length);
+                                    ball.UpdateVelocity(
+                                        ((ball.Vx * ballV) + (ball.OwnerOrNull.Vx * ownerV)) / (ballV + ownerV),
+                                        ((ball.Vy * ballV) + (ball.OwnerOrNull.Vy * ownerV)) / (ballV + ownerV));
+                                    if (Math.Sqrt((dx * dx) + (dy * dy)) > ball.GetCircle().Radius + ball.OwnerOrNull.Padding)
                                     {
-                                        ball.proposedThrow = throwV;
-                                    }
-                                    else if (throwV.Length * 2 < ball.proposedThrow.Length || throwV.Dot(ball.proposedThrow) < 0)
-                                    {
-                                        // throw the ball!
-                                        ball.UpdateVelocity(ball.proposedThrow.x + body.Vx, ball.proposedThrow.y + body.Vy);
-                                        ball.proposedThrow = new Vector();
                                         ball.OwnerOrNull.LastHadBall = simulationTime;
                                         ball.OwnerOrNull = null;
                                     }
                                 }
-                                else if (throwV.Length > Constants.MimimunThrowingSpped)
-                                {
-                                    ball.proposedThrow = throwV;
-                                }
                             }
-                            else
-                            {
-                                ball.proposedThrow = new Vector();
-                            }
+
+                            //if (foot.Throwing)
+                            //{
+                            //    var throwV = new Vector(foot.Vx - body.Vx, foot.Vy - body.Vy);
+
+                            //    if (ball.proposedThrow.Length > Constants.MimimunThrowingSpped)
+                            //    {
+                            //        if (throwV.Length > ball.proposedThrow.Length && throwV.Dot(ball.proposedThrow) > 0)
+                            //        {
+                            //            ball.proposedThrow = throwV;
+                            //        }
+                            //        else if (throwV.Length * 2 < ball.proposedThrow.Length || throwV.Dot(ball.proposedThrow) < 0)
+                            //        {
+                            //            // throw the ball!
+                            //            ball.UpdateVelocity(ball.proposedThrow.x + body.Vx, ball.proposedThrow.y + body.Vy);
+                            //            ball.proposedThrow = new Vector();
+                            //            ball.OwnerOrNull.LastHadBall = simulationTime;
+                            //            ball.OwnerOrNull = null;
+                            //        }
+                            //    }
+                            //    else if (throwV.Length > Constants.MimimunThrowingSpped)
+                            //    {
+                            //        ball.proposedThrow = throwV;
+                            //    }
+                            //}
+                            //else
+                            //{
+                            //    ball.proposedThrow = new Vector();
+                            //}
                         }
 
 

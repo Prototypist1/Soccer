@@ -19,7 +19,7 @@
 
         public const double MaxLean = 0;
 
-        public const double MimimunThrowingSpped = 100;
+        public const double MimimunThrowingSpped = 10;
 
         public const int ThrowTimeout = 5;
         public const int MaxDeltaV = 40;
