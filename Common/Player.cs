@@ -24,6 +24,7 @@ namespace physics2
         }
 
         public bool Throwing = false;
+        public bool ForceThrow = false;
 
         public int LastHadBall { get; internal set; } = -Constants.ThrowTimeout;
         public Center Body { get; internal set; }

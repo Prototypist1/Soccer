@@ -66,7 +66,7 @@ namespace RemoteSoccer
 
         private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
 
-        //private Ref<bool> lockCurser = new Ref<bool>(true);
+        private Ref<bool> lockCurser = new Ref<bool>(true);
         private IZoomer zoomer;
         private Ref<int> frame = new Ref<int>(0);
         private FieldDimensions fieldDimensions = FieldDimensions.Default;
@@ -173,6 +173,8 @@ namespace RemoteSoccer
                     Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
                     Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
 
+                    //await CreatePlayer();
+
                     var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
 
                     game.StreamInputs(MainLoop());
@@ -206,6 +208,65 @@ namespace RemoteSoccer
         private void Gamepad_GamepadAdded(object sender, Windows.Gaming.Input.Gamepad e)
         {
             CreatePlayer(e);
+        }
+
+        private async Task CreatePlayer()
+        {
+            var body = Guid.NewGuid();
+            var outer = Guid.NewGuid();
+            var foot = Guid.NewGuid();
+
+            var inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
+
+            await inputs.Init();
+
+            var newPlayer = new PlayerInfo(body, foot, inputs, Guid.NewGuid().ToString());
+
+            var added = false;
+            while (!added)
+            {
+                try
+                {
+                    localPlayers.Run(x => { x.Add(newPlayer); return x; });
+                    added = true;
+                }
+                catch (Exception e)
+                {
+                    var db = 0;
+                }
+            }
+
+            //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            var color = GetColor();
+            //}
+
+            //var name = "";
+
+
+            //if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerName, out var savedName))
+            //{
+            //    name = (string)savedName;
+            //}
+
+
+            game.CreatePlayer(
+                new CreatePlayer(
+                    foot,
+                    body,
+                    outer,
+                    Constants.footLen * 2,
+                    Constants.PlayerRadius * 2,
+                    color[0],
+                    color[1],
+                    color[2],
+                    BodyA,
+                    color[0],
+                    color[1],
+                    color[2],
+                    0xff,
+                    "",
+                    newPlayer.LocalId
+                    ));
         }
 
         private async Task CreatePlayer(Windows.Gaming.Input.Gamepad gamepad)

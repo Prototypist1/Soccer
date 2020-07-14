@@ -19,7 +19,9 @@
 
         public const double MaxLean = 0;
 
-        public const double MimimunThrowingSpped = 10;
+        public const double MimimunThrowingSpped = 50;
+
+        public const double MinPlayerCollisionForce = 300;
 
         public const int ThrowTimeout = 5;
         public const int MaxDeltaV = 40;

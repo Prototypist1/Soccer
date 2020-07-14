@@ -1,4 +1,5 @@
-﻿using physics2;
+﻿using Common;
+using physics2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -338,6 +339,11 @@ namespace Physics2
                     //var o2v = normal.NewScaled(vf2).NewAdded(normal.NewScaled(-v2)).NewAdded(physicsObject2.Velocity);
 
                     var f = (vf2 - v2) * m2;
+
+                    //if (Math.Abs(f) < Constants.MinPlayerCollisionForce) {
+                    f += Constants.MinPlayerCollisionForce * Math.Sign(f);
+                    //}
+
                     //var vf1 = v1 - (f / m1);
                     //var o1v = normal.NewScaled(vf1).NewAdded(normal.NewScaled(-v1)).NewAdded(physicsObject1.Velocity);
 
