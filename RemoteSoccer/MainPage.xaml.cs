@@ -76,7 +76,7 @@ namespace RemoteSoccer
             this.InitializeComponent();
 
 
-            //Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
+            Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
 
             //zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions);
 
@@ -84,14 +84,14 @@ namespace RemoteSoccer
 
             rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame, fieldDimensions);
 
-            //if (lockCurser.Thing)
-            //{
-            //    Window.Current.CoreWindow.PointerCursor = null;
-            //}
-            //else
-            //{
-            //    Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
-            //}
+            if (lockCurser.Thing)
+            {
+                Window.Current.CoreWindow.PointerCursor = null;
+            }
+            else
+            {
+                Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
+            }
 
         }
 
@@ -173,7 +173,7 @@ namespace RemoteSoccer
                     Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
                     Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
 
-                    //await CreatePlayer();
+                    await CreatePlayer();
 
                     var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
 
@@ -390,24 +390,30 @@ namespace RemoteSoccer
         //{
         //    Menu.Visibility = (Windows.UI.Xaml.Visibility)(((int)Menu.Visibility + 1) % 2);
         //    lockCurser.thing = !lockCurser.thing;
-        //    if (lockCurser.thing)
-        //    {
-        //        Window.Current.CoreWindow.PointerCursor = null;
-        //    }
-        //    else
-        //    {
-        //        Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
-        //    }
+            
         //}
 
+        private void ToggleCurser() {
+            lockCurser.thing = !lockCurser.Thing;
+            if (lockCurser.thing)
+            {
+                Window.Current.CoreWindow.PointerCursor = null;
+            }
+            else
+            {
+                Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
+            }
+        }
 
-        //private void Menu_KeyUp(CoreWindow sender, KeyEventArgs e)
-        //{
-        //    if (e.VirtualKey == VirtualKey.Escape)
-        //    {
-        //        ToggleMenu();
-        //    }
-        //}
+
+        private void Menu_KeyUp(CoreWindow sender, KeyEventArgs e)
+        {
+            if (e.VirtualKey == VirtualKey.Escape)
+            {
+                //ToggleMenu();
+                ToggleCurser();
+            }
+        }
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {

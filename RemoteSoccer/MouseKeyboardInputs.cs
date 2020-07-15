@@ -34,9 +34,24 @@ namespace RemoteSoccer
                 {
                     var pointer = CoreWindow.GetForCurrentThread().PointerPosition;
 
+
+                    CoreWindow.GetForCurrentThread().PointerPressed += MouseKeyboardInputs_PointerPressed;
+                    CoreWindow.GetForCurrentThread().PointerReleased += MouseKeyboardInputs_PointerReleased;
+
                     lastX = pointer.X;
                     lastY = pointer.Y;
                 });
+        }
+
+        bool mouseDown = false;
+
+        private void MouseKeyboardInputs_PointerReleased(CoreWindow sender, PointerEventArgs args)
+        {
+            mouseDown = false;
+        }
+        private void MouseKeyboardInputs_PointerPressed(CoreWindow sender, PointerEventArgs args)
+        {
+            mouseDown = true;
         }
 
         public async Task<PlayerInputs> Next()
@@ -64,6 +79,7 @@ namespace RemoteSoccer
                                     (coreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
                                     (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
 
+
                                 var point = CoreWindow.GetForCurrentThread().PointerPosition;
                                 footX = (point.X - lastX);// * .75;
                                 footY = (point.Y - lastY);// * .75;
@@ -71,9 +87,10 @@ namespace RemoteSoccer
                                 point = new Point(lastX, lastY);
                                 coreWindow.PointerPosition = point;
 
+
                                 lastX = point.X;
                                 lastY = point.Y;
-                                res = new PlayerInputs(footX, footY, bodyX, bodyY, foot, body, false, coreWindow.GetKeyState(VirtualKey.Space).HasFlag(CoreVirtualKeyStates.Down));
+                                res = new PlayerInputs(footX, footY, bodyX, bodyY, foot, body, false, mouseDown);
 
                             }
                             else

@@ -680,13 +680,13 @@ namespace Common
                                 // crush oppozing forces
                                 if (!input.Controller)
                                 {
-                                    var v = new Vector(body.Outer.privateVx, body.Outer.privateVy);
+                                    var v = new Vector(outer.privateVx, outer.privateVy);
                                     var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY));
                                     var with = v.Dot(f) / f.Length;
                                     if (with <= 0)
                                     {
-                                        body.Outer.privateVx = 0;
-                                        body.Outer.privateVy = 0;
+                                        outer.privateVx = 0;
+                                        outer.privateVy = 0;
                                     }
                                     else
                                     {
@@ -694,29 +694,31 @@ namespace Common
                                         var notWith = v.NewAdded(withVector.NewScaled(-1));
                                         var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
 
-                                        body.Outer.privateVx += -body.Outer.privateVx + withVector.x + notWithScald.x;
-                                        body.Outer.privateVy += -body.Outer.privateVy + withVector.y + notWithScald.y;
-                                        //body.Outer.ApplyForce(-body.Outer.privateVx + withVector.x + notWithScald.x, -body.Outer.privateVy + withVector.y + notWithScald.y);
+                                        outer.privateVx = withVector.x + notWithScald.x;
+                                        outer.privateVy = withVector.y + notWithScald.y;
+                                        //outer.ApplyForce(-outer.privateVx + withVector.x + notWithScald.x, -outer.privateVy + withVector.y + notWithScald.y);
                                     }
 
 
-                                    var damp = 1.0;//.98;
+                                    var damp = .98;
 
 
                                     var engeryAdd = foot == ball.OwnerOrNull ? EnergyAdd / 2.0 : EnergyAdd;
 
-                                    var R0 = EInverse(E(Math.Sqrt(Math.Pow(body.Outer.privateVx, 2) + Math.Pow(body.Outer.privateVy, 2))) + engeryAdd);
+                                    var R0 = EInverse(E(Math.Sqrt(Math.Pow(outer.privateVx, 2) + Math.Pow(outer.privateVy, 2))) + engeryAdd);
                                     var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
-                                    var b = 2 * ((Math.Sign(input.BodyX) * body.Outer.privateVx * damp) + (Math.Sign(input.BodyY) * body.Outer.privateVy * damp));
-                                    var c = Math.Pow(body.Outer.privateVx * damp, 2) + Math.Pow(body.Outer.privateVy * damp, 2) - Math.Pow(R0, 2);
+                                    var b = 2 * ((Math.Sign(input.BodyX) * outer.privateVx * damp) + (Math.Sign(input.BodyY) * outer.privateVy * damp));
+                                    var c = Math.Pow(outer.privateVx * damp, 2) + Math.Pow(outer.privateVy * damp, 2) - Math.Pow(R0, 2);
 
                                     var t = (-b + Math.Sqrt(Math.Pow(b, 2) - (4 * a * c))) / (2 * a);
 
-                                    //body.Outer.ApplyForce(-(1 - damp) * body.Outer.privateVx, -(1 - damp) * body.Outer.privateVy);
-                                    //body.Outer.ApplyForce(t * input.BodyX, t * input.BodyY);
+                                    // outer.privateVx - (1 + damp) * outer.privateVx
 
-                                    body.Outer.privateVx = t * input.BodyX;// / 2.0;
-                                    body.Outer.privateVy = t * input.BodyY;// / 2.0;
+                                    //outer.ApplyForce(-(1 - damp) * outer.privateVx, -(1 - damp) * outer.privateVy);
+                                    //outer.ApplyForce(t * input.BodyX, t * input.BodyY);
+
+                                    outer.privateVx = (damp * outer.privateVx) + (t * input.BodyX);// / 2.0;
+                                    outer.privateVy = (damp * outer.privateVy) + (t * input.BodyY);// / 2.0;
                                 }
                                 else
                                 {
@@ -825,7 +827,8 @@ namespace Common
                         //}
 
                         var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
-                        
+
+                        if (input.Controller)
                         {
                             var tx = (input.FootX * max) + body.X;
                             var ty = (input.FootY * max) + body.Y;
@@ -834,6 +837,35 @@ namespace Common
 
                             foot.personalVx = (tx - foot.X);// /2.0;
                             foot.personalVy = (ty - foot.Y);// / 2.0;
+                        }
+                        else {
+
+                            var tx = (input.FootX*10) + foot.X;
+                            var ty = (input.FootY * 10) + foot.Y;
+
+
+                            var dx = tx - body.X;
+                            var dy = ty - body.Y;
+
+                            var d = new Vector(dx, dy);
+
+                            if (d.Length > max) {
+                                d = d.NewUnitized().NewScaled(max);
+                            }
+
+                            var validTx = d.x + body.X;
+                            var validTy = d.y + body.Y;
+
+                            var vx = validTx - foot.X;
+                            var vy = validTy - foot.Y;
+
+                            //var tx = (input.FootX * max) + body.X;
+                            //var ty = (input.FootY * max) + body.Y;
+
+                            //var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
+
+                            foot.personalVx = vx;//(tx - foot.X);// /2.0;
+                            foot.personalVy = vy;//(ty - foot.Y);// / 2.0;
                         }
 
                         if (foot == ball.OwnerOrNull)
