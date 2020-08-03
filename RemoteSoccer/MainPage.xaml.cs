@@ -159,8 +159,8 @@ namespace RemoteSoccer
             {
                 try
                 {
-                    game = new LocalGame(fieldDimensions);
-                    //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
+                    //game = new LocalGame(fieldDimensions);
+                    game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
                     game.OnDisconnect(OnDisconnect);
                     game.SetCallbacks(rge);
                     //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
