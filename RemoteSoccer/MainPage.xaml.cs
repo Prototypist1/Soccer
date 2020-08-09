@@ -210,11 +210,15 @@ namespace RemoteSoccer
             CreatePlayer(e);
         }
 
+        // these do not really work with multiple players
+        Guid foot;
+        Guid body;
+
         private async Task CreatePlayer()
         {
-            var body = Guid.NewGuid();
+            body = Guid.NewGuid();
             var outer = Guid.NewGuid();
-            var foot = Guid.NewGuid();
+            foot = Guid.NewGuid();
 
             var inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
 
@@ -368,30 +372,29 @@ namespace RemoteSoccer
 
         private void ColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
         {
-            //var color = ColorPicker.Color;
+            var color = ColorPicker.Color;
 
 
-            //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-            //localSettings.Values[LocalSettingsKeys.PlayerColorR] = color.R;
-            //localSettings.Values[LocalSettingsKeys.PlayerColorG] = color.G;
-            //localSettings.Values[LocalSettingsKeys.PlayerColorB] = color.B;
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            localSettings.Values[LocalSettingsKeys.PlayerColorR] = color.R;
+            localSettings.Values[LocalSettingsKeys.PlayerColorG] = color.G;
+            localSettings.Values[LocalSettingsKeys.PlayerColorB] = color.B;
 
-            //game.ChangeColor(new ColorChanged(foot, color.R, color.G, color.B, 0xff));
-            //game.ChangeColor(new ColorChanged(body, color.R, color.G, color.B, 0x20));
+            game.ChangeColor(new ColorChanged(foot, color.R, color.G, color.B, 0xff));
+            game.ChangeColor(new ColorChanged(body, color.R, color.G, color.B, 0x20));
 
         }
 
-        //private void Button_Click(object sender, RoutedEventArgs e)
-        //{
-        //    ToggleMenu();
-        //}
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleMenu();
+        }
 
-        //private void ToggleMenu()
-        //{
-        //    Menu.Visibility = (Windows.UI.Xaml.Visibility)(((int)Menu.Visibility + 1) % 2);
-        //    lockCurser.thing = !lockCurser.thing;
-            
-        //}
+        private void ToggleMenu()
+        {
+            Menu.Visibility = (Windows.UI.Xaml.Visibility)(((int)Menu.Visibility + 1) % 2);
+            ToggleCurser();
+        }
 
         private void ToggleCurser() {
             lockCurser.thing = !lockCurser.Thing;
@@ -410,19 +413,18 @@ namespace RemoteSoccer
         {
             if (e.VirtualKey == VirtualKey.Escape)
             {
-                //ToggleMenu();
-                ToggleCurser();
+                ToggleMenu();
             }
         }
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            //var name = Namer.Text;
+            var name = Namer.Text;
 
-            //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-            //localSettings.Values[LocalSettingsKeys.PlayerName] = name;
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            localSettings.Values[LocalSettingsKeys.PlayerName] = name;
 
-            //game.NameChanged(new NameChanged(body, name));
+            game.NameChanged(new NameChanged(body, name));
         }
 
         public async Task StopSendingInputs()

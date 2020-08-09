@@ -126,6 +126,7 @@ namespace RemoteSoccer
         private Random random = new Random();
         private readonly IReadonlyRef<int> frame;
 
+
         public RenderGameEvents(
             Canvas gameArea,
             TextBlock fps,
@@ -373,7 +374,7 @@ namespace RemoteSoccer
                     var text = new TextBlock()
                     {
                         Text = foot.Name,
-                        FontSize = 200,
+                        FontSize = 1600,
                         Foreground = new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff))
                     };
 
@@ -402,12 +403,11 @@ namespace RemoteSoccer
             }
         }
 
-
-        double framesRecieved = 0;
         private Stopwatch stopWatch = new Stopwatch();
 
         private long droppedFrames = 0;
         private long framesInGroup = 0;
+        private long framesRecived = 0;
         private long longestGap = 0;
         private long lastHandlePositions = 0;
         private int currentFrame = 0;
@@ -416,9 +416,8 @@ namespace RemoteSoccer
 
         public async Task HandlePositions(Positions positions)
         {
-
-            framesRecieved++;
             framesInGroup++;
+            framesRecived++;
 
             collisions.Add(positions.Collisions);
 
@@ -755,6 +754,7 @@ namespace RemoteSoccer
                             $"frame lag: {frame.Thing - positions.Frame}{Environment.NewLine}" +
                             $"frames: {framesInGroup * 3}{Environment.NewLine}" +
                             $"dropped: {droppedFrames * 3}{Environment.NewLine}" +
+                            $"send - recieved: {frame.Thing - framesRecived}{Environment.NewLine}" +
                             $"Escape: Show options";
                         framesInGroup = 0;
                         longestGap = 0;

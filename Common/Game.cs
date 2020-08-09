@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -44,7 +45,9 @@ namespace Common
 
         private readonly ConcurrentIndexed<string, ConnectionStuff> connectionObjects = new ConcurrentIndexed<string, ConnectionStuff>();
 
-        private ConcurrentLinkedList<PlayerInputs> playersInputs = new ConcurrentLinkedList<PlayerInputs>();
+        private ConcurrentBag<PlayerInputs> playersInputs = new
+            ConcurrentBag<PlayerInputs>();
+            //ConcurrentLinkedList<PlayerInputs>();
         public DateTime LastInputUTC { get; private set; } = DateTime.Now;
 
 
@@ -328,7 +331,7 @@ namespace Common
                255);
 
             var leftGoalId = Guid.NewGuid();
-            var leftGoal = new Ball(1, 0, field.yMax / 2.0, false, new Circle(Constants.footLen));
+            var leftGoal = new Ball(1, 0, field.yMax / 2.0, false, new Circle(Constants.goalLen));
 
 
             try
@@ -338,7 +341,7 @@ namespace Common
                leftGoal.Y,
                Constants.goalZ,
                leftGoalId,
-               Constants.footLen * 2,
+               Constants.goalLen * 2,
                0xee,
                0xee,
                0xee,
@@ -351,14 +354,14 @@ namespace Common
 
             var rightGoalId = Guid.NewGuid();
 
-            var rightGoal = new Ball(1, field.xMax, field.yMax / 2.0, false, new Circle(Constants.footLen));
+            var rightGoal = new Ball(1, field.xMax, field.yMax / 2.0, false, new Circle(Constants.goalLen));
 
             goalsCreated.AddOrThrow(new GoalCreated(
                rightGoal.X,
                rightGoal.Y,
                Constants.goalZ,
                rightGoalId,
-               Constants.footLen * 2,
+               Constants.goalLen * 2,
                0xee,
                0xee,
                0xee,
@@ -565,52 +568,57 @@ namespace Common
         }
 
         private int simulationTime = 0;
+        private PlayerInputs[] nextTime = new PlayerInputs[] { };
         private void Apply()
         {
             Positions positions = default;
 
-            var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentLinkedList<PlayerInputs>());
+            var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentBag<PlayerInputs>());
 
             var frames = new List<Dictionary<Guid, PlayerInputs>>();
 
-            foreach (var input in myPlayersInputs)
+            foreach (var list in new IEnumerable<PlayerInputs>[] { nextTime, myPlayersInputs })
             {
-                foreach (var frame in frames)
+                foreach (var input in list)
                 {
-                    if (!frame.ContainsKey(input.BodyId))
+                    foreach (var frame in frames)
                     {
-                        frame.Add(input.BodyId, input);
-                        goto done;
+                        if (!frame.ContainsKey(input.BodyId))
+                        {
+                            frame.Add(input.BodyId, input);
+                            goto done;
+                        }
                     }
-                }
 
-                frames.Add(new Dictionary<Guid, PlayerInputs> {
+                    frames.Add(new Dictionary<Guid, PlayerInputs> {
                     { input.BodyId,input}
                 });
 
-            done:;
+                done:;
+                }
             }
 
-
-            foreach (var inputSet in frames)
+            nextTime = frames.Where(x => x.Count < connectionObjects.Count).SelectMany(x=>x.Values).ToArray();
+            var thisTime = frames.Where(x => x.Count >= connectionObjects.Count).ToArray();
+            foreach (var inputSet in thisTime)
             {
                 var countDownSate = gameStateTracker.UpdateGameState();
 
                 if (ball.OwnerOrNull == null) {
 
+                    //if (ball.Velocity.Length > 0)
+                    //{
+                    //    var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length* ball.Velocity.Length * ball.Mass / (150.0*150.0));
+
+                    //    ball.ApplyForce(
+                    //        friction.x,
+                    //        friction.y);
+
+                    //}
+
                     if (ball.Velocity.Length > 0)
                     {
-                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length* ball.Velocity.Length * ball.Mass / (150.0*150.0));
-
-                        ball.ApplyForce(
-                            friction.x,
-                            friction.y);
-
-                    }
-
-                    if (ball.Velocity.Length > 0)
-                    {
-                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / 150.0);
+                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / 100.0);
 
                         ball.ApplyForce(
                             friction.x,
@@ -947,7 +955,11 @@ namespace Common
                                         ball.OwnerOrNull = null;
                                         foot.ForceThrow = false;
                                     }
-                                    else
+                                    else if (ball.proposedThrow.Length ==0) 
+                                    {
+                                        ball.proposedThrow = new Vector(ball.Vx, ball.Vy);
+                                    }
+                                    else 
                                     {
                                         ball.proposedThrow = new Vector(
                                                 ((ball.Vx * ballV) + (ball.proposedThrow.x * ownerV)) / (ballV + ownerV),
@@ -994,15 +1006,19 @@ namespace Common
 
                 positions = new Positions(GetPosition().ToArray(), simulationTime, countDownSate, collisions);
             }
-            var next = new Node(positions);
-            lastPositions.next.SetResult(next);
-            lastPositions = next;
+
+            if (thisTime.Any())
+            {
+                var next = new Node(positions);
+                lastPositions.next.SetResult(next);
+                lastPositions = next;
+            }
         }
 
         private int running = 0;
 
 
-        private const int EnergyAdd = 100_000;//250_000 ;//400;
+        private const int EnergyAdd = 150_000;//250_000 ;//400;
         private const double SpeedScale = .5;
         private const double Add = 0;
         private const double ToThe = 3.5;//1.9;
@@ -1013,7 +1029,7 @@ namespace Common
         {
             //var lastLast = LastInputUTC;
             playersInputs.Add(playerInputs);
-            while (playersInputs.Count >= players && Interlocked.CompareExchange(ref running, 1, 0) == 0)
+            if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
                 Apply();
                 running = 0;

@@ -12,6 +12,8 @@
 
         //public const double playerPadding = 200;
 
+
+        public const double goalLen = 6000;
         public const double footLen = 4500;
         public const int PlayerRadius = 750;//750;// 500;//300;
         public const int BallRadius = 650;//150;//250;//30;//
