@@ -187,6 +187,15 @@ namespace RemoteSoccer
 
         }
 
+
+        private async IAsyncEnumerable<PlayerInputs> InterseptInputs(IAsyncEnumerable<PlayerInputs> x)
+        {
+            await foreach(var item in x)
+            {
+                yield return item;
+            }
+        }
+
         private void Gamepad_GamepadRemoved(object sender, Windows.Gaming.Input.Gamepad e)
         {
             RemovePlayer(e);

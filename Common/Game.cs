@@ -17,6 +17,9 @@ namespace Common
         private int players = 0;
 
         private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine;
+
+        // maybe lock feed and bodies at the same time?
+        // a signal jumpball
         private readonly JumpBallConcurrent<Dictionary<Guid, Player>> feet = new JumpBallConcurrent<Dictionary<Guid, Player>>(new Dictionary<Guid, Player>());
         private readonly JumpBallConcurrent<Dictionary<Guid, Center>> bodies = new JumpBallConcurrent<Dictionary<Guid, Center>>(new Dictionary<Guid, Center>());
         private readonly Guid ballId;
@@ -42,6 +45,7 @@ namespace Common
             public Guid Body { get; }
             public Player Foot { get; }
         }
+
 
         private readonly ConcurrentIndexed<string, ConnectionStuff> connectionObjects = new ConcurrentIndexed<string, ConnectionStuff>();
 
@@ -618,7 +622,7 @@ namespace Common
 
                     if (ball.Velocity.Length > 0)
                     {
-                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / 100.0);
+                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / 75.0);
 
                         ball.ApplyForce(
                             friction.x,
@@ -1034,6 +1038,51 @@ namespace Common
                 Apply();
                 running = 0;
             }
+        }
+
+        public void SetPositionsAndClearInputes(Position[] positions) {
+
+            bodies.Run(x =>
+            {
+                var outerLookUp = x.ToDictionary(y => y.Value.Outer.Id, y => y.Value.Outer);
+
+                foreach (var position in positions)
+                {
+                    if (outerLookUp.TryGetValue(position.Id, out var outer))
+                    {
+                        outer.X = position.X;
+                        outer.Y = position.Y;
+                        outer.privateVx = position.Vx;
+                        outer.privateVy = position.Vy;
+                    }
+                }
+
+                foreach (var position in positions)
+                {
+                    if (x.TryGetValue(position.Id, out var body))
+                    {
+                        body.X = position.X;
+                        body.Y = position.Y;
+                        body.personalVx = position.Vx - body.Outer.privateVx;
+                        body.personalVy = position.Vy - body.Outer.privateVy;
+                    }
+                }
+                return x;
+            });
+            feet.Run(x =>
+            {
+                foreach (var position in positions)
+                {
+                    if (x.TryGetValue(position.Id, out var foot)) {
+                        foot.X = position.X;
+                        foot.Y = position.Y;
+                        foot.personalVx = position.Vx - foot.Body.Vx;
+                        foot.personalVy = position.Vy - foot.Body.Vy;
+                    }
+                }
+                return x;
+            });
+            playersInputs = new ConcurrentBag<PlayerInputs>();
         }
 
         private Position[] GetPosition()

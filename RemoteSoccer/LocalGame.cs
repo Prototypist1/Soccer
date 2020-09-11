@@ -54,6 +54,10 @@ namespace RemoteSoccer
             gameView = null;
         }
 
+        public void OverwritePositions(Positions positions) {
+            game.SetPositionsAndClearInputes(positions.PositionsList);
+        }
+
         public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
         {
             return game.GetReader();
@@ -75,6 +79,10 @@ namespace RemoteSoccer
         public void SetCallbacks(IGameView gameView)
         {
             this.gameView = gameView;
+        }
+        public void PlayerInputs(PlayerInputs playerInputs) {
+
+            game.PlayerInputs(playerInputs);
         }
 
         public async void StreamInputs(IAsyncEnumerable<PlayerInputs> inputs)

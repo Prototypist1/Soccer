@@ -160,6 +160,7 @@
     <Compile Include="RenderGameEvents.cs" />
     <Compile Include="Scaler.cs" />
     <Compile Include="SignalRHandler.cs" />
+    <Compile Include="TranslatingGameView.cs" />
     <Compile Include="Zoomer.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -227,6 +228,12 @@
     </PackageReference>
     <PackageReference Include="Prototypist.TaskChain">
       <Version>1.0.8</Version>
+    </PackageReference>
+    <PackageReference Include="System.Interactive">
+      <Version>4.1.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.Interactive.Async">
+      <Version>4.1.1</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
