@@ -429,7 +429,7 @@ namespace Common
         {
             var random = new Random();
 
-            double startX = random.NextDouble()* field.xMax;
+            double startX = random.NextDouble() * field.xMax;
             double startY = random.NextDouble() * field.yMax;
 
             var foot = new Player(startX, startY, Constants.PlayerRadius, createPlayer.Foot);

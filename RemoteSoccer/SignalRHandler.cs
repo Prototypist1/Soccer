@@ -251,6 +251,9 @@ namespace RemoteSoccer
                 connection.On< UpdateScore>(nameof(UpdateScore), gameView.HandleUpdateScore);
                 connection.On< ColorChanged>(nameof(ColorChanged), gameView.HandleColorChanged);
                 connection.On< NameChanged>(nameof(NameChanged), gameView.HandleNameChanged);
+                connection.Closed += (x) => { 
+                    return Task.CompletedTask; 
+                };
             }
 
             public async void Send(string game,

@@ -74,7 +74,7 @@ namespace RemoteSoccer
                         x.R,
                         x.G,
                         x.B,
-                        x.A,
+                        (byte)(x.A/2),
                         "") };
                 }
                 return new BodyCreated[] { };
@@ -94,7 +94,7 @@ namespace RemoteSoccer
                         x.R,
                         x.G,
                         x.B,
-                        x.A) };
+                        (byte)(x.A/2)) };
                 }
                 return new FootCreated[] { };
 
@@ -126,11 +126,16 @@ namespace RemoteSoccer
         {
         }
 
+        public async IAsyncEnumerable<Positions> Filter(IAsyncEnumerable<Positions> positionss) {
 
-        private async IAsyncEnumerable<Positions> Filter(IAsyncEnumerable<Positions> positionss) {
-            await foreach (var positions in positionss)
-            {
-                    var list = positions.PositionsList.SelectMany(x =>
+
+                await foreach (var positions in positionss)
+                {
+                var list = new Position[] { };
+                try
+                {
+
+                    list = positions.PositionsList.SelectMany(x =>
                     {
                         if (TryTransfom(x.Id, out var id))
                         {
@@ -139,6 +144,10 @@ namespace RemoteSoccer
                         return new Position[] { };
 
                     }).ToArray();
+                }
+                catch (Exception e) {
+                    var db = 0;
+                }
 
                     if (list.Any())
                     {
@@ -146,7 +155,7 @@ namespace RemoteSoccer
                         // CountDownState should not be here 
                         yield return new Positions(list, positions.Frame, positions.CountDownState, new physics2.Collision[] { });
                     }
-            }
+                }
         }
 
         public Task SpoolPositions(IAsyncEnumerable<Positions> positionss)

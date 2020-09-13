@@ -784,9 +784,15 @@ namespace RemoteSoccer
         public async Task SpoolPositions(IAsyncEnumerable<Positions> positionss)
         {
             stopWatch.Start();
-            await foreach (var item in positionss)
+            try
             {
-                var dontWait = HandlePositions(item);
+                await foreach (var item in positionss)
+                {
+                    var dontWait = HandlePositions(item);
+                }
+            }
+            catch (Exception e) { 
+                var db = 0;
             }
         }
     }

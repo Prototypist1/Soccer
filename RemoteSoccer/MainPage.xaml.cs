@@ -170,16 +170,17 @@ namespace RemoteSoccer
                     game.SetCallbacks(rge);
                     //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
 
-                    foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
-                    {
-                        await CreatePlayer(gamePad);
-                    }
+                    //foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
+                    //{
+                    //    await CreatePlayer(gamePad);
+                    //}
 
-                    Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
-                    Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
+                    //Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
+                    //Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
 
                     await CreatePlayer();
 
+                    // why is this not part of set callbacks??
                     var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
 
                     game.StreamInputs(MainLoop());
