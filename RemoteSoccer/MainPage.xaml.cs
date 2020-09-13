@@ -155,12 +155,17 @@ namespace RemoteSoccer
 
             var gameName = (string)e.Parameter;
 
+
+  
+
             Task.Run(async () =>
             {
                 try
                 {
                     //game = new LocalGame(fieldDimensions);
-                    game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
+
+                    game = new RemoteWithPreviewGame(foot, outer,body, gameName, await SingleSignalRHandler.GetOrThrow(), fieldDimensions);
+                    //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
                     game.OnDisconnect(OnDisconnect);
                     game.SetCallbacks(rge);
                     //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
@@ -220,14 +225,12 @@ namespace RemoteSoccer
         }
 
         // these do not really work with multiple players
-        Guid foot;
-        Guid body;
+        readonly Guid body = Guid.NewGuid();
+        readonly Guid outer = Guid.NewGuid();
+        readonly Guid foot = Guid.NewGuid();
 
         private async Task CreatePlayer()
         {
-            body = Guid.NewGuid();
-            var outer = Guid.NewGuid();
-            foot = Guid.NewGuid();
 
             var inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
 

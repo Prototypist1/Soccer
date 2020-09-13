@@ -3,17 +3,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Interactive;
 using System.Threading.Tasks;
 
 namespace RemoteSoccer
 {
     class RemoteWithPreviewGame : IGame
     {
+        Guid foot, outer, body;
         private readonly LocalGame localGame;
         private readonly RemoteGame remoteGame;
 
-        public string GameName { get; }
+        public RemoteWithPreviewGame(Guid foot, Guid outer, Guid body, string gameName, SingleSignalRHandler.SignalRHandler handler, FieldDimensions fieldDimensions)
+        {
+            this.foot = foot;
+            this.outer = outer;
+            this.body = body;
+            this.localGame = new LocalGame(fieldDimensions);
+            this.remoteGame = new RemoteGame(gameName, handler);
+        }
+
+        public string GameName => localGame.GameName;
 
         public void ChangeColor(ColorChanged colorChanged)
         {
@@ -29,32 +38,13 @@ namespace RemoteSoccer
 
         public void CreatePlayer(CreatePlayer createPlayer)
         {
-            //if (TryTransfom(createPlayer.Foot, out var _))
-            //{
-            //    localGame.CreatePlayer(new CreatePlayer (
-            //        localFoot,
-            //        localBody,
-            //        localOuter,
-            //        createPlayer.BodyDiameter,
-            //        createPlayer.FootDiameter,
-            //        createPlayer.BodyR,
-            //        createPlayer.BodyG,
-            //        createPlayer.BodyB,
-            //        createPlayer.BodyA,
-            //        createPlayer.FootR,
-            //        createPlayer.FootG,
-            //        createPlayer.FootB,
-            //        createPlayer.FootA,"",
-            //        createPlayer.SubId));
-            //}
-
             localGame.CreatePlayer(createPlayer);
             remoteGame.CreatePlayer(createPlayer);
         }
 
         public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
         {
-            return localGame.JoinChannel(joinChannel).Merge(remoteGame.JoinChannel(joinChannel));
+            return remoteGame.JoinChannel(joinChannel);//AsyncEnumerableEx.Merge(localGame.JoinChannel(joinChannel), remoteGame.JoinChannel(joinChannel));
         }
 
         public void LeaveGame(LeaveGame leaveGame)
@@ -83,7 +73,7 @@ namespace RemoteSoccer
 
         public void SetCallbacks(IGameView gameView)
         {
-            localGame.SetCallbacks(new TranslatingGameView( gameView));
+            localGame.SetCallbacks(new TranslatingGameView( gameView, foot, outer, body));
             remoteGame.SetCallbacks(gameView);
         }
 
@@ -97,7 +87,8 @@ namespace RemoteSoccer
 
         public void StreamInputs(IAsyncEnumerable<PlayerInputs> inputs)
         {
-            remoteGame.StreamInputs(PassThrough(inputs));
+            //PassThrough()
+            remoteGame.StreamInputs(inputs);
         }
     }
 

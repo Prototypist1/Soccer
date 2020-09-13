@@ -1,14 +1,14 @@
 ﻿using Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace RemoteSoccer
 {
     internal class TranslatingGameView : IGameView
     {
-        private IGameView gameView;
-
+        private readonly IGameView gameView;
 
         private readonly Guid localFoot, localOuter, localBody, foot, outer, body;
 
@@ -34,45 +34,124 @@ namespace RemoteSoccer
         }
 
 
-        public TranslatingGameView(IGameView gameView)
-        {
+        public TranslatingGameView(IGameView gameView, Guid foot, Guid outer, Guid body) {
             this.gameView = gameView;
+            this.localFoot = Guid.NewGuid();
+            this.localOuter = Guid.NewGuid();
+            this.localBody = Guid.NewGuid();
+            this.foot = foot;
+            this.outer = outer;
+            this.body = body;
         }
 
         public void HandleColorChanged(ColorChanged colorChanged)
         {
-            throw new NotImplementedException();
-            gameView.HandleColorChanged(colorChanged);
+            if (TryTransfom(colorChanged.Id, out var id)) {
+                gameView.HandleColorChanged(new ColorChanged (id,colorChanged.R, colorChanged.G, colorChanged.B, colorChanged.A));
+            }
         }
 
         public void HandleNameChanged(NameChanged nameChanged)
         {
-            throw new NotImplementedException();
-            gameView.HandleNameChanged(nameChanged);
+            if (TryTransfom(nameChanged.Id, out var id))
+            {
+                gameView.HandleNameChanged(new NameChanged(id, nameChanged.Name));
+            }
         }
 
         public void HandleObjectsCreated(ObjectsCreated objectsCreated)
         {
-            throw new NotImplementedException();
-            gameView.HandleObjectsCreated(objectsCreated);
+            var bodies = objectsCreated.Bodies.SelectMany(x =>
+            {
+                if (TryTransfom(x.Id, out var id))
+                {
+                    return new BodyCreated[] { new BodyCreated(
+                        x.X,
+                        x.Y,
+                        x.Z,
+                        id,
+                        x.Diameter,
+                        x.R,
+                        x.G,
+                        x.B,
+                        x.A,
+                        "") };
+                }
+                return new BodyCreated[] { };
+
+            }).ToArray();
+
+            var feet = objectsCreated.Feet.SelectMany(x =>
+            {
+                if (TryTransfom(x.Id, out var id))
+                {
+                    return new FootCreated[] { new FootCreated(
+                        x.X,
+                        x.Y,
+                        x.Z,
+                        id,
+                        x.Diameter,
+                        x.R,
+                        x.G,
+                        x.B,
+                        x.A) };
+                }
+                return new FootCreated[] { };
+
+            }).ToArray();
+
+            if (bodies.Any() || feet.Any())
+            {
+                gameView.HandleObjectsCreated(new ObjectsCreated(feet,bodies,null,new GoalCreated[] { }, new OuterCreated[] { }));
+            }
         }
 
         public void HandleObjectsRemoved(ObjectsRemoved objectsRemoved)
         {
-            throw new NotImplementedException();
-            gameView.HandleObjectsRemoved(objectsRemoved);
+            var list = objectsRemoved.List.SelectMany(x =>
+            {
+                if (TryTransfom(x.Id, out var id)) { 
+                    return new ObjectRemoved[] { new ObjectRemoved(id) }; 
+                }
+                return new ObjectRemoved[] { };
+
+            }).ToArray();
+
+            if (list.Any()) {
+                gameView.HandleObjectsRemoved(new ObjectsRemoved(list));
+            }
         }
 
         public void HandleUpdateScore(UpdateScore updateScore)
         {
-            throw new NotImplementedException();
-            gameView.HandleUpdateScore(updateScore);
+        }
+
+
+        private async IAsyncEnumerable<Positions> Filter(IAsyncEnumerable<Positions> positionss) {
+            await foreach (var positions in positionss)
+            {
+                    var list = positions.PositionsList.SelectMany(x =>
+                    {
+                        if (TryTransfom(x.Id, out var id))
+                        {
+                            return new Position[] { new Position(x.X, x.Y, id, x.Vx, x.Vy) };
+                        }
+                        return new Position[] { };
+
+                    }).ToArray();
+
+                    if (list.Any())
+                    {
+                        // TODO
+                        // CountDownState should not be here 
+                        yield return new Positions(list, positions.Frame, positions.CountDownState, new physics2.Collision[] { });
+                    }
+            }
         }
 
         public Task SpoolPositions(IAsyncEnumerable<Positions> positionss)
         {
-            throw new NotImplementedException();
-            return gameView.SpoolPositions(positionss);
+             return gameView.SpoolPositions(Filter(positionss));
         }
     }
 }

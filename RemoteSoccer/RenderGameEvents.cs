@@ -444,321 +444,327 @@ namespace RemoteSoccer
                 CoreDispatcherPriority.High,
                 () => {
 
-                    var (playerX, playerY, xPlus, yPlus) = zoomer.Update(positions.PositionsList);
-
-                    foreach (var position in positions.PositionsList)
+                    try
                     {
 
-                        if (elements.TryGetValue(position.Id, out var element))
+                        var (playerX, playerY, xPlus, yPlus) = zoomer.Update(positions.PositionsList);
+
+                        foreach (var position in positions.PositionsList)
                         {
 
-
-                            if (element.element is Ellipse)
-                            {
-                                var v = Math.Sqrt((position.Vx * position.Vx) + (position.Vy * position.Vy));
-
-
-                                var Stretch = v / element.element.Width;
-
-
-                                if (v != 0)
-                                {
-                                    element.element.TransformMatrix =
-                                    // first we center
-                                    new Matrix4x4(
-                                        1, 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
-                                    // then we stretch
-                                    * new Matrix4x4(
-                                       (float)(1 + Stretch), 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        0, 0, 0, 1)
-                                    // slide it back a little bit
-                                    * new Matrix4x4(
-                                        1, 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        (float)(-v / 2.0), 0, 0, 1)
-                                    // then we rotate
-                                    * new Matrix4x4(
-                                        (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
-                                        (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
-                                        0, 0, 1, 0,
-                                        0, 0, 0, 1)
-                                    // then we move to the right spot
-                                    * new Matrix4x4(
-                                        1, 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        (float)position.X, (float)position.Y, 0, 1);
-                                }
-                                else
-                                {
-
-                                    element.element.TransformMatrix =
-                                    // first we center
-                                    new Matrix4x4(
-                                        1, 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
-                                    *
-                                    // then we move to the right spot
-                                    new Matrix4x4(
-                                        1, 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        (float)position.X, (float)position.Y, 0, 1);
-                                }
-                            }
-                            else if (element.element is Polygon polygon)
+                            if (elements.TryGetValue(position.Id, out var element))
                             {
 
-                                var points = new PointCollection();
-                                var skip = polygon.Points.Count > 2 ? 1 : 0;
-                                double p1 = .98, p2 = 1 - p1;
 
-                                for (int i = skip; i < (polygon.Points.Count / 2); i++)
+                                if (element.element is Ellipse)
                                 {
-                                    var point = polygon.Points[i];
-                                    var pair = polygon.Points[(polygon.Points.Count - 1) - i];
+                                    var v = Math.Sqrt((position.Vx * position.Vx) + (position.Vy * position.Vy));
 
-                                    points.Add(new Windows.Foundation.Point(((point.X * p1) + (pair.X * p2)) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
+
+                                    var Stretch = v / element.element.Width;
+
+
+                                    if (v != 0)
+                                    {
+                                        element.element.TransformMatrix =
+                                        // first we center
+                                        new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
+                                        // then we stretch
+                                        * new Matrix4x4(
+                                           (float)(1 + Stretch), 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            0, 0, 0, 1)
+                                        // slide it back a little bit
+                                        * new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)(-v / 2.0), 0, 0, 1)
+                                        // then we rotate
+                                        * new Matrix4x4(
+                                            (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
+                                            (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
+                                            0, 0, 1, 0,
+                                            0, 0, 0, 1)
+                                        // then we move to the right spot
+                                        * new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)position.X, (float)position.Y, 0, 1);
+                                    }
+                                    else
+                                    {
+
+                                        element.element.TransformMatrix =
+                                        // first we center
+                                        new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
+                                        *
+                                        // then we move to the right spot
+                                        new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)position.X, (float)position.Y, 0, 1);
+                                    }
+                                }
+                                else if (element.element is Polygon polygon)
+                                {
+
+                                    var points = new PointCollection();
+                                    var skip = polygon.Points.Count > 2 ? 1 : 0;
+                                    double p1 = .98, p2 = 1 - p1;
+
+                                    for (int i = skip; i < (polygon.Points.Count / 2); i++)
+                                    {
+                                        var point = polygon.Points[i];
+                                        var pair = polygon.Points[(polygon.Points.Count - 1) - i];
+
+                                        points.Add(new Windows.Foundation.Point(((point.X * p1) + (pair.X * p2)) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
+                                    }
+
+                                    // duplicate code
+                                    // serach for {3E1769BA-B690-4440-87BE-C74113D0D5EC}
+                                    var vv = new Physics2.Vector(position.Vx * 4, position.Vy * 4);
+
+                                    if (vv.Length > Constants.PlayerRadius)
+                                    {
+                                        vv = vv.NewScaled(Constants.PlayerRadius / vv.Length);
+                                    }
+
+                                    points.Add(new Windows.Foundation.Point(vv.y, -vv.x));
+                                    points.Add(new Windows.Foundation.Point(-vv.y, vv.x));
+
+                                    for (int i = (polygon.Points.Count / 2); i < polygon.Points.Count - skip; i++)
+                                    {
+                                        var point = polygon.Points[i];
+                                        var pair = polygon.Points[(polygon.Points.Count - 1) - i];
+
+                                        points.Add(new Windows.Foundation.Point((point.X * p1 + pair.X * p2) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
+                                    }
+
+                                    polygon.Points = points;
+
+                                    polygon.TransformMatrix =
+                                        // then we move to the right spot
+                                        new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)(position.X), (float)(position.Y), 0, 1);
                                 }
 
-                                // duplicate code
-                                // serach for {3E1769BA-B690-4440-87BE-C74113D0D5EC}
-                                var vv = new Physics2.Vector(position.Vx *4, position.Vy*4 );
 
-                                if (vv.Length > Constants.PlayerRadius)
+
+                                if (element != null && texts.TryGetValue(position.Id, out var text))
                                 {
-                                    vv = vv.NewScaled(Constants.PlayerRadius / vv.Length);
+                                    text.TransformMatrix =
+                                        // first we center
+                                        new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)(-text.ActualWidth / 2.0), (float)(-text.ActualHeight / 2.0), 0, 1)
+                                        *
+                                        // then we move to the right spot
+                                        new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)(position.X), (float)(position.Y), 0, 1);
                                 }
-
-                                points.Add(new Windows.Foundation.Point(vv.y, -vv.x));
-                                points.Add(new Windows.Foundation.Point(-vv.y, vv.x));
-
-                                for (int i = (polygon.Points.Count / 2); i < polygon.Points.Count - skip; i++)
-                                {
-                                    var point = polygon.Points[i];
-                                    var pair = polygon.Points[(polygon.Points.Count - 1) - i];
-
-                                    points.Add(new Windows.Foundation.Point((point.X * p1 + pair.X * p2) - position.Vx, (point.Y * p1 + pair.Y * p2) - position.Vy));
-                                }
-
-                                polygon.Points = points;
-
-                                polygon.TransformMatrix =
-                                    // then we move to the right spot
-                                    new Matrix4x4(
-                                        1, 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        (float)(position.X), (float)(position.Y), 0, 1);
-                            }
-
-
-
-                            if (element != null && texts.TryGetValue(position.Id, out var text))
-                            {
-                                text.TransformMatrix =
-                                    // first we center
-                                    new Matrix4x4(
-                                        1, 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        (float)(-text.ActualWidth / 2.0), (float)(-text.ActualHeight / 2.0), 0, 1)
-                                    *
-                                    // then we move to the right spot
-                                    new Matrix4x4(
-                                        1, 0, 0, 0,
-                                        0, 1, 0, 0,
-                                        0, 0, 1, 0,
-                                        (float)(position.X), (float)(position.Y), 0, 1);
                             }
                         }
-                    }
 
 
-                    var now = DateTime.Now;
-                    foreach (var child in this.gameArea.Children.ToList())
-                    {
-                        if (child is Line line && lineTimes.TryGetValue(line, out var time) && now - time > TimeSpan.FromMilliseconds(800))
+                        var now = DateTime.Now;
+                        foreach (var child in this.gameArea.Children.ToList())
                         {
-                            this.gameArea.Children.Remove(line);
-                            lineTimes.Remove(line);
-                        }
-                    }
-
-                    while (collisions.TryGetFirst(out var myCollisions))
-                    {
-                        collisions.RemoveStart();
-                        if (myCollisions != null)
-                        {
-                            foreach (var collision in myCollisions)
+                            if (child is Line line && lineTimes.TryGetValue(line, out var time) && now - time > TimeSpan.FromMilliseconds(800))
                             {
+                                this.gameArea.Children.Remove(line);
+                                lineTimes.Remove(line);
+                            }
+                        }
 
-                                var force = Math.Sqrt(collision.Fx * collision.Fx + collision.Fy * collision.Fy);
-
-                                if (force < 20 && !collision.IsGoal)
+                        while (collisions.TryGetFirst(out var myCollisions))
+                        {
+                            collisions.RemoveStart();
+                            if (myCollisions != null)
+                            {
+                                foreach (var collision in myCollisions)
                                 {
-                                    continue;
-                                }
 
-                                if (!collision.IsGoal)
-                                {
-                                    var item = players.First.Value;
-                                    players.RemoveFirst();
-                                    players.AddLast(item);
+                                    var force = Math.Sqrt(collision.Fx * collision.Fx + collision.Fy * collision.Fy);
 
-                                    var dx = collision.X - playerX;
-                                    var dy = collision.Y - playerY;
-                                    var d = Math.Sqrt((dx * dx) + (dy * dy));
-
-                                    Task.Run(() =>
+                                    if (force < 20 && !collision.IsGoal)
                                     {
-                                        item.Volume = Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
-                                        item.AudioBalance = dx / d;
-                                        item.Play();
-                                    });
-                                }
-                                else
-                                {
+                                        continue;
+                                    }
 
-                                    var dx = collision.X - playerX;
-                                    var dy = collision.Y - playerY;
-                                    var d = Math.Sqrt((dx * dx) + (dy * dy));
-                                    Task.Run(() =>
+                                    if (!collision.IsGoal)
                                     {
-                                        bell.Volume = Math.Min(1, .05 + (5.0 / (Math.Max(1, Math.Log(d)))));
-                                        bell.AudioBalance = dx / d;
-                                        bell.Play();
-                                    });
-                                }
+                                        var item = players.First.Value;
+                                        players.RemoveFirst();
+                                        players.AddLast(item);
 
-                                if (collision.IsGoal)
-                                {
+                                        var dx = collision.X - playerX;
+                                        var dy = collision.Y - playerY;
+                                        var d = Math.Sqrt((dx * dx) + (dy * dy));
 
-                                    var line = new Line
-                                    {
-
-                                        X1 = collision.Fx,
-                                        Y1 = collision.Fy,
-                                        X2 = -collision.Fx,
-                                        Y2 = -collision.Fy,
-                                        StrokeThickness = 20,
-                                        Stroke = new SolidColorBrush(Colors.White),
-                                        Opacity = 1,
-                                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(800), },
-                                        Scale = new Vector3(.2f, .2f, 1f),
-                                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(600) },
-                                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
-
-                                    };
-                                    lineTimes.Add(line, now);
-                                    this.gameArea.Children.Add(line);
-                                    line.Opacity = 0f;
-                                    line.Scale = new Vector3(2, 2, 1);
-                                    Canvas.SetZIndex(line, Constants.footZ);
-                                }
-                                else
-                                {
-
-                                    var scale = 5;
-
-
-                                    var line1 = new Line
-                                    {
-
-                                        X1 = -(collision.Fy * scale) * 2,
-                                        Y1 = (collision.Fx * scale) * 2,
-                                        X2 = -(scale * collision.Fy / 1.2),
-                                        Y2 = (scale * collision.Fx / 1.2),
-                                        StrokeThickness = Math.Max(10, Math.Min(collision.Fx / 5, 50)),
-                                        Stroke = new SolidColorBrush(Colors.White),
-                                        Opacity = 1,
-                                        OpacityTransition = new ScalarTransition()
+                                        Task.Run(() =>
                                         {
-                                            Duration = TimeSpan.FromMilliseconds(400)
-                                            ,
-
-                                        },
-                                        Scale = new Vector3(.4f, .4f, 1f),
-                                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
-                                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
-
-                                    };
-                                    lineTimes.Add(line1, now);
-                                    this.gameArea.Children.Add(line1);
-                                    line1.Opacity = 0f;
-                                    line1.Scale = new Vector3(2, 2, 1);
-                                    Canvas.SetZIndex(line1, Constants.footZ);
-
-                                    var line2 = new Line
+                                            item.Volume = Math.Min(1, (new Physics2.Vector(collision.Fx, collision.Fy).Length * new Physics2.Vector(collision.Fx, collision.Fy).Length / (400 * Math.Max(1, Math.Log(d)))));
+                                            item.AudioBalance = dx / d;
+                                            item.Play();
+                                        });
+                                    }
+                                    else
                                     {
 
-                                        X1 = (collision.Fy * (scale)) * 2,
-                                        Y1 = -(collision.Fx * (scale)) * 2,
-                                        X2 = (scale * collision.Fy / 1.2),
-                                        Y2 = -(scale * collision.Fx / 1.2),
-                                        StrokeThickness = Math.Max(10, Math.Min(collision.Fx / 5, 50)),
-                                        Stroke = new SolidColorBrush(Colors.White),
-                                        Opacity = 1,
-                                        OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
-                                        Scale = new Vector3(.4f, .4f, 1f),
-                                        ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) }, // I wish I could ease-out (that is the one that declerates)
-                                        Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
-                                    };
-                                    lineTimes.Add(line2, now);
-                                    this.gameArea.Children.Add(line2);
-                                    line2.Opacity = 0f;
-                                    line2.Scale = new Vector3(2, 2, 1);
-                                    Canvas.SetZIndex(line2, Constants.footZ);
-                                }
+                                        var dx = collision.X - playerX;
+                                        var dy = collision.Y - playerY;
+                                        var d = Math.Sqrt((dx * dx) + (dy * dy));
+                                        Task.Run(() =>
+                                        {
+                                            bell.Volume = Math.Min(1, .05 + (5.0 / (Math.Max(1, Math.Log(d)))));
+                                            bell.AudioBalance = dx / d;
+                                            bell.Play();
+                                        });
+                                    }
 
+                                    if (collision.IsGoal)
+                                    {
+
+                                        var line = new Line
+                                        {
+
+                                            X1 = collision.Fx,
+                                            Y1 = collision.Fy,
+                                            X2 = -collision.Fx,
+                                            Y2 = -collision.Fy,
+                                            StrokeThickness = 20,
+                                            Stroke = new SolidColorBrush(Colors.White),
+                                            Opacity = 1,
+                                            OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(800), },
+                                            Scale = new Vector3(.2f, .2f, 1f),
+                                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(600) },
+                                            Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+
+                                        };
+                                        lineTimes.Add(line, now);
+                                        this.gameArea.Children.Add(line);
+                                        line.Opacity = 0f;
+                                        line.Scale = new Vector3(2, 2, 1);
+                                        Canvas.SetZIndex(line, Constants.footZ);
+                                    }
+                                    else
+                                    {
+
+                                        var scale = 5;
+
+
+                                        var line1 = new Line
+                                        {
+
+                                            X1 = -(collision.Fy * scale) * 2,
+                                            Y1 = (collision.Fx * scale) * 2,
+                                            X2 = -(scale * collision.Fy / 1.2),
+                                            Y2 = (scale * collision.Fx / 1.2),
+                                            StrokeThickness = Math.Max(10, Math.Min(collision.Fx / 5, 50)),
+                                            Stroke = new SolidColorBrush(Colors.White),
+                                            Opacity = 1,
+                                            OpacityTransition = new ScalarTransition()
+                                            {
+                                                Duration = TimeSpan.FromMilliseconds(400)
+                                                ,
+
+                                            },
+                                            Scale = new Vector3(.4f, .4f, 1f),
+                                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) },
+                                            Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+
+                                        };
+                                        lineTimes.Add(line1, now);
+                                        this.gameArea.Children.Add(line1);
+                                        line1.Opacity = 0f;
+                                        line1.Scale = new Vector3(2, 2, 1);
+                                        Canvas.SetZIndex(line1, Constants.footZ);
+
+                                        var line2 = new Line
+                                        {
+
+                                            X1 = (collision.Fy * (scale)) * 2,
+                                            Y1 = -(collision.Fx * (scale)) * 2,
+                                            X2 = (scale * collision.Fy / 1.2),
+                                            Y2 = -(scale * collision.Fx / 1.2),
+                                            StrokeThickness = Math.Max(10, Math.Min(collision.Fx / 5, 50)),
+                                            Stroke = new SolidColorBrush(Colors.White),
+                                            Opacity = 1,
+                                            OpacityTransition = new ScalarTransition() { Duration = TimeSpan.FromMilliseconds(400), },
+                                            Scale = new Vector3(.4f, .4f, 1f),
+                                            ScaleTransition = new Vector3Transition() { Duration = TimeSpan.FromMilliseconds(100) }, // I wish I could ease-out (that is the one that declerates)
+                                            Translation = new Vector3((float)collision.X, (float)collision.Y, 0)
+                                        };
+                                        lineTimes.Add(line2, now);
+                                        this.gameArea.Children.Add(line2);
+                                        line2.Opacity = 0f;
+                                        line2.Scale = new Vector3(2, 2, 1);
+                                        Canvas.SetZIndex(line2, Constants.footZ);
+                                    }
+
+                                }
                             }
                         }
-                    }
+
+                        Canvas.SetLeft(ballWall, positions.CountDownState.X - positions.CountDownState.Radius);
+                        Canvas.SetTop(ballWall, positions.CountDownState.Y - positions.CountDownState.Radius);
 
 
-                    Canvas.SetLeft(ballWall, positions.CountDownState.X - positions.CountDownState.Radius);
-                    Canvas.SetTop(ballWall, positions.CountDownState.Y - positions.CountDownState.Radius);
+                        ballWall.Visibility = positions.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
 
-
-                    ballWall.Visibility = positions.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
-
-                    if (positions.CountDownState.Countdown)
-                    {
-                        ballWall.Width = positions.CountDownState.Radius * 2;
-                        ballWall.Height = positions.CountDownState.Radius * 2;
-                        ballWall.StrokeThickness = positions.CountDownState.StrokeThickness;
-                        if (ball != null)
+                        if (positions.CountDownState.Countdown)
                         {
-                            ball.Opacity = positions.CountDownState.BallOpacity;
+                            ballWall.Width = positions.CountDownState.Radius * 2;
+                            ballWall.Height = positions.CountDownState.Radius * 2;
+                            ballWall.StrokeThickness = positions.CountDownState.StrokeThickness;
+                            if (ball != null)
+                            {
+                                ball.Opacity = positions.CountDownState.BallOpacity;
+                            }
+                        }
+
+                        this.gameArea.TransformMatrix = new Matrix4x4(
+                            (float)(zoomer.GetTimes()), 0, 0, 0,
+                            0, (float)(zoomer.GetTimes()), 0, 0,
+                            0, 0, 1, 0,
+                            (float)xPlus, (float)yPlus, 0, 1);
+
+                        if (frame.Thing % 20 == 0 && stopWatch != null)
+                        {
+                            fps.Text = $"time to draw: {(stopWatch.ElapsedTicks - ticks) / (double)TimeSpan.TicksPerMillisecond:f2}{Environment.NewLine}" +
+                                $"longest gap: {longestGap}{Environment.NewLine}" +
+                                $"frame lag: {frame.Thing - positions.Frame}{Environment.NewLine}" +
+                                $"frames: {framesInGroup * 3}{Environment.NewLine}" +
+                                $"dropped: {droppedFrames * 3}{Environment.NewLine}" +
+                                $"send - recieved: {frame.Thing - framesRecived}{Environment.NewLine}" +
+                                $"Escape: Show options";
+                            framesInGroup = 0;
+                            longestGap = 0;
+                            droppedFrames = 0;
                         }
                     }
-
-                    this.gameArea.TransformMatrix = new Matrix4x4(
-                        (float)(zoomer.GetTimes()), 0, 0, 0,
-                        0, (float)(zoomer.GetTimes()), 0, 0,
-                        0, 0, 1, 0,
-                        (float)xPlus, (float)yPlus, 0, 1);
-
-                    if (frame.Thing % 20 == 0 && stopWatch != null)
-                    {
-                        fps.Text = $"time to draw: {(stopWatch.ElapsedTicks - ticks) / (double)TimeSpan.TicksPerMillisecond:f2}{Environment.NewLine}" +
-                            $"longest gap: {longestGap}{Environment.NewLine}" +
-                            $"frame lag: {frame.Thing - positions.Frame}{Environment.NewLine}" +
-                            $"frames: {framesInGroup * 3}{Environment.NewLine}" +
-                            $"dropped: {droppedFrames * 3}{Environment.NewLine}" +
-                            $"send - recieved: {frame.Thing - framesRecived}{Environment.NewLine}" +
-                            $"Escape: Show options";
-                        framesInGroup = 0;
-                        longestGap = 0;
-                        droppedFrames = 0;
+                    catch (Exception e) {
+                        var db = e;
                     }
                 });
 
