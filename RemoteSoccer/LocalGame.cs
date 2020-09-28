@@ -13,7 +13,7 @@ namespace RemoteSoccer
     {
         private const string ConnectionId = "local-player";
         private IGameView gameView;
-        private readonly Game game;
+        public readonly Game game;
 
         public string GameName => "local-game";
 

@@ -126,36 +126,40 @@ namespace RemoteSoccer
         {
         }
 
-        public async IAsyncEnumerable<Positions> Filter(IAsyncEnumerable<Positions> positionss) {
+        public Position[] TransforPositions(Position[] positions) {
+            var list = new Position[] { };
+            try
+            {
 
-
-                await foreach (var positions in positionss)
+                list = positions.SelectMany(x =>
                 {
-                var list = new Position[] { };
-                try
-                {
-
-                    list = positions.PositionsList.SelectMany(x =>
+                    if (TryTransfom(x.Id, out var id))
                     {
-                        if (TryTransfom(x.Id, out var id))
-                        {
-                            return new Position[] { new Position(x.X, x.Y, id, x.Vx, x.Vy) };
-                        }
-                        return new Position[] { };
-
-                    }).ToArray();
-                }
-                catch (Exception e) {
-                    var db = 0;
-                }
-
-                    if (list.Any())
-                    {
-                        // TODO
-                        // CountDownState should not be here 
-                        yield return new Positions(list, positions.Frame, positions.CountDownState, new physics2.Collision[] { });
+                        return new Position[] { new Position(x.X, x.Y, id, x.Vx, x.Vy) };
                     }
+                    return new Position[] { };
+
+                }).ToArray();
+            }
+            catch (Exception e)
+            {
+                var db = 0;
+            }
+            return list;
+        }
+
+        public async IAsyncEnumerable<Positions> Filter(IAsyncEnumerable<Positions> positionss) {
+            await foreach (var positions in positionss)
+            {
+                var list = TransforPositions(positions.PositionsList);
+
+                if (list.Any())
+                {
+                    // TODO
+                    // CountDownState should not be here 
+                    yield return new Positions(list, positions.Frame, positions.CountDownState, new physics2.Collision[] { });
                 }
+            }
         }
 
         public Task SpoolPositions(IAsyncEnumerable<Positions> positionss)

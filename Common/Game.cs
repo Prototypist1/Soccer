@@ -1085,7 +1085,7 @@ namespace Common
             playersInputs = new ConcurrentBag<PlayerInputs>();
         }
 
-        private Position[] GetPosition()
+        public Position[] GetPosition()
         {
             Player[] players = null;
             Center[] centers = null;

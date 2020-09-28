@@ -398,8 +398,6 @@ namespace RemoteSoccer
                     this.gameArea.Children.Add(text);
                     texts.Add(foot.Id, text);
                 }
-
-
             }
         }
 
