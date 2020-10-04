@@ -1008,7 +1008,7 @@ namespace Common
                 }
 
 
-                positions = new Positions(GetPosition().ToArray(), simulationTime, countDownSate, collisions);
+                positions = new Positions(GetPosition().ToArray(), new Preview[] { }, simulationTime, countDownSate, collisions);
             }
 
             if (thisTime.Any())

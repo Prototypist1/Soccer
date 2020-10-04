@@ -16,7 +16,6 @@ namespace RemoteSoccer
 
         public RemoteWithPreviewGame(Guid foot, Guid outer, Guid body, string gameName, SingleSignalRHandler.SignalRHandler handler, FieldDimensions fieldDimensions)
         {
-
             this.foot = foot;
             this.outer = outer;
             this.body = body;
@@ -74,6 +73,7 @@ namespace RemoteSoccer
                 {
                     localGame.game.PlayerInputs(input);
                 }
+
                 var local = localGame.game.GetPosition();
 
                 // let read local run
@@ -98,7 +98,8 @@ namespace RemoteSoccer
                 //// it is wierd that I have to have localPositions
                 //var localPositions = positions;
                 var myPositions = positions;
-                myPositions.PositionsList = positions.PositionsList.Union(translatingGameView.TransforPositions( local)).ToArray();
+                myPositions.Previews = translatingGameView.GetPreviews(local);
+                //myPositions.PositionsList = positions.PositionsList.Union(translatingGameView.TransforPositions( local)).ToArray();
                 yield return myPositions;
             }
         }

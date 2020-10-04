@@ -22,16 +22,31 @@ namespace Common
         }
     }
 
+    public struct Preview {
+        public Preview(Guid id, double x, double y)
+        {
+            Id = id;
+            X = x;
+            Y = y;
+        }
+
+        public Guid Id { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+    }
+
     public struct Positions
     {
         public Position[] PositionsList { get; set; }
+        public Preview[] Previews { get; set; }
         public Collision[] Collisions { get; set; }
         public int Frame { get; set; }
         public CountDownState CountDownState { get;set;}
 
-        public Positions(Position[] positionsList, int frame, CountDownState countDownState, Collision[] collisions)
+        public Positions(Position[] positionsList, Preview[] previews, int frame, CountDownState countDownState, Collision[] collisions)
         {
             this.PositionsList = positionsList ?? throw new ArgumentNullException(nameof(positionsList));
+            this.Previews = previews;
             Frame = frame;
             this.CountDownState = countDownState;
             Collisions = collisions ?? throw new ArgumentNullException(nameof(collisions));

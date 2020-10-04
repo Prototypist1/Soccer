@@ -107,6 +107,8 @@ namespace RemoteSoccer
             //}
         }
 
+        private readonly Dictionary<Guid, Line> previews = new Dictionary<Guid, Line>();
+
         private readonly Dictionary<Guid, ElementEntry> elements = new Dictionary<Guid, ElementEntry>();
         private readonly Dictionary<Guid, TextBlock> texts = new Dictionary<Guid, TextBlock>();
 
@@ -462,42 +464,42 @@ namespace RemoteSoccer
                                     var Stretch = v / element.element.Width;
 
 
-                                    if (v != 0)
-                                    {
-                                        element.element.TransformMatrix =
-                                        // first we center
-                                        new Matrix4x4(
-                                            1, 0, 0, 0,
-                                            0, 1, 0, 0,
-                                            0, 0, 1, 0,
-                                            (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
-                                        // then we stretch
-                                        * new Matrix4x4(
-                                           (float)(1 + Stretch), 0, 0, 0,
-                                            0, 1, 0, 0,
-                                            0, 0, 1, 0,
-                                            0, 0, 0, 1)
-                                        // slide it back a little bit
-                                        * new Matrix4x4(
-                                            1, 0, 0, 0,
-                                            0, 1, 0, 0,
-                                            0, 0, 1, 0,
-                                            (float)(-v / 2.0), 0, 0, 1)
-                                        // then we rotate
-                                        * new Matrix4x4(
-                                            (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
-                                            (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
-                                            0, 0, 1, 0,
-                                            0, 0, 0, 1)
-                                        // then we move to the right spot
-                                        * new Matrix4x4(
-                                            1, 0, 0, 0,
-                                            0, 1, 0, 0,
-                                            0, 0, 1, 0,
-                                            (float)position.X, (float)position.Y, 0, 1);
-                                    }
-                                    else
-                                    {
+                                    //if (v != 0)
+                                    //{
+                                    //    element.element.TransformMatrix =
+                                    //    // first we center
+                                    //    new Matrix4x4(
+                                    //        1, 0, 0, 0,
+                                    //        0, 1, 0, 0,
+                                    //        0, 0, 1, 0,
+                                    //        (float)(-element.element.Width / 2.0), (float)(-element.element.Height / 2.0), 0, 1)
+                                    //    // then we stretch
+                                    //    * new Matrix4x4(
+                                    //       (float)(1 + Stretch), 0, 0, 0,
+                                    //        0, 1, 0, 0,
+                                    //        0, 0, 1, 0,
+                                    //        0, 0, 0, 1)
+                                    //    // slide it back a little bit
+                                    //    * new Matrix4x4(
+                                    //        1, 0, 0, 0,
+                                    //        0, 1, 0, 0,
+                                    //        0, 0, 1, 0,
+                                    //        (float)(-v / 2.0), 0, 0, 1)
+                                    //    // then we rotate
+                                    //    * new Matrix4x4(
+                                    //        (float)(position.Vx / v), (float)(position.Vy / v), 0, 0,
+                                    //        (float)(-position.Vy / v), (float)(position.Vx / v), 0, 0,
+                                    //        0, 0, 1, 0,
+                                    //        0, 0, 0, 1)
+                                    //    // then we move to the right spot
+                                    //    * new Matrix4x4(
+                                    //        1, 0, 0, 0,
+                                    //        0, 1, 0, 0,
+                                    //        0, 0, 1, 0,
+                                    //        (float)position.X, (float)position.Y, 0, 1);
+                                    //}
+                                    //else
+                                    //{
 
                                         element.element.TransformMatrix =
                                         // first we center
@@ -513,7 +515,7 @@ namespace RemoteSoccer
                                             0, 1, 0, 0,
                                             0, 0, 1, 0,
                                             (float)position.X, (float)position.Y, 0, 1);
-                                    }
+                                    //}
                                 }
                                 else if (element.element is Polygon polygon)
                                 {
@@ -582,6 +584,43 @@ namespace RemoteSoccer
                                 }
                             }
                         }
+
+
+
+                        foreach (var item in positions.Previews)
+                        {
+                            var position =  positions.PositionsList.Single(x => x.Id == item.Id);
+                            var dx = item.X - position.X;
+                            var dy = item.Y - position.Y;
+
+                            var x = (item.X + position.X) / 2.0;
+                            var y = (item.Y + position.Y) / 2.0;
+
+
+                            if (previews.TryGetValue(item.Id, out var preview))
+                            {
+
+                            }
+                            else {
+                                preview = new Line();
+                                preview.Stroke = new SolidColorBrush(Colors.Beige);
+                                preview.StrokeEndLineCap = PenLineCap.Round;
+                                preview.StrokeEndLineCap = PenLineCap.Round;
+                                preview.StrokeThickness = 30;
+                                preview.Opacity = .2f;
+                                this.gameArea.Children.Add(preview);
+                                Canvas.SetZIndex(preview, Constants.ballZ);
+                                previews[item.Id] = preview;
+                            }
+
+                            preview.X1 = dx / 2.0;
+                            preview.X2 = -dx / 2.0;
+                            preview.Y1 = dy / 2.0;
+                            preview.Y2 = -dy / 2.0;
+
+                            preview.Translation = new Vector3((float)x, (float)y, 0);
+                        }
+
 
 
                         var now = DateTime.Now;

@@ -148,6 +148,19 @@ namespace RemoteSoccer
             return list;
         }
 
+        internal Preview[] GetPreviews(Position[] local)
+        {
+            return local.SelectMany(x =>
+            {
+                if (TryTransfom(x.Id, out var id))
+                {
+                    return new Preview[] { new Preview(id,x.X, x.Y) };
+                }
+                return new Preview[] { };
+
+            }).ToArray();
+        }
+
         public async IAsyncEnumerable<Positions> Filter(IAsyncEnumerable<Positions> positionss) {
             await foreach (var positions in positionss)
             {
@@ -157,7 +170,7 @@ namespace RemoteSoccer
                 {
                     // TODO
                     // CountDownState should not be here 
-                    yield return new Positions(list, positions.Frame, positions.CountDownState, new physics2.Collision[] { });
+                    yield return new Positions(list, new Preview[] { }, positions.Frame, positions.CountDownState, new physics2.Collision[] { });
                 }
             }
         }
