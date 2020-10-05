@@ -12,10 +12,6 @@ namespace physics2
 
         public Player OwnerOrNull= null;
 
-        // throwing info
-        public Vector proposedThrow;
-        
-
         public Ball(double mass, double x, double y, bool mobile, Circle circle) : base(mass, x, y, mobile)
         {
             this.x0 = x;

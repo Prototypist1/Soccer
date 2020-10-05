@@ -23,7 +23,7 @@
 
         public const double MaxLean = 0;
 
-        public const double MimimunThrowingSpped = 50;
+        public const double MimimunThrowingSpped = 100;
 
         public const double MinPlayerCollisionForce = 300;
 

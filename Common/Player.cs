@@ -23,6 +23,9 @@ namespace physics2
             //}
         }
 
+
+        // throwing info
+        public Vector proposedThrow = new Vector();
         public bool Throwing = false;
         public bool ForceThrow = false;
 
