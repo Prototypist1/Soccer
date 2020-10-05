@@ -593,23 +593,21 @@ namespace RemoteSoccer
                             var dx = item.X - position.X;
                             var dy = item.Y - position.Y;
 
-                            var x = (item.X + position.X) / 2.0;
-                            var y = (item.Y + position.Y) / 2.0;
-
+                            var x = (item.X + position.X) / 2.0;//position.X - (dx/2.0); //
+                            var y = (item.Y + position.Y) / 2.0;//position.Y - (dy/2.0); //
 
                             if (previews.TryGetValue(item.Id, out var preview))
                             {
-
                             }
                             else {
                                 preview = new Line();
-                                preview.Stroke = new SolidColorBrush(Colors.Beige);
+                                preview.Stroke = new SolidColorBrush(Colors.White);
                                 preview.StrokeEndLineCap = PenLineCap.Round;
-                                preview.StrokeEndLineCap = PenLineCap.Round;
-                                preview.StrokeThickness = 30;
+                                preview.StrokeStartLineCap = PenLineCap.Round;
+                                preview.StrokeThickness = item.IsFoot ? Constants.PlayerRadius * 2 : Constants.footLen * 2; ;
                                 preview.Opacity = .2f;
                                 this.gameArea.Children.Add(preview);
-                                Canvas.SetZIndex(preview, Constants.ballZ);
+                                Canvas.SetZIndex(preview, item.IsFoot ? Constants.footPreviewZ: Constants.bodyPreviewZ);
                                 previews[item.Id] = preview;
                             }
 

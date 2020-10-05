@@ -950,7 +950,7 @@ namespace Common
 
                                     //}
                                     //else
-                                    if (throwV.Length * 2 < ball.proposedThrow.Length || throwV.Dot(ball.proposedThrow) < 0)
+                                    if ((throwV.Length * 2 < ball.proposedThrow.Length || throwV.Dot(ball.proposedThrow) < 0) && foot.Throwing)
                                     {
                                         // throw the ball!
                                         ball.UpdateVelocity(ball.proposedThrow.x + body.Vx, ball.proposedThrow.y + body.Vy);

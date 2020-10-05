@@ -1,14 +1,16 @@
 ﻿namespace Common
 {
     public static class Constants {
-        public const int fieldZ = -2;
-        public const int lineZ = -1;
-        public const int goalZ = 0;
-        public const int bodyZ = 1;
-        public const int textZ = 2;
-        public const int ballZ = 4;
-        public const int footZ = 3;
-        public const int effectZ = 5;
+        public const int fieldZ = 0;
+        public const int lineZ = 1;
+        public const int goalZ = 2;
+        public const int bodyZ = 3;
+        public const int bodyPreviewZ = 4;
+        public const int textZ = 5;
+        public const int footPreviewZ = 6;
+        public const int footZ = 7;
+        public const int ballZ = 8;
+        public const int effectZ = 9;
 
         //public const double playerPadding = 200;
 

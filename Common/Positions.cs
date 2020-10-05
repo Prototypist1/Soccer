@@ -23,13 +23,15 @@ namespace Common
     }
 
     public struct Preview {
-        public Preview(Guid id, double x, double y)
+        public Preview(Guid id, double x, double y, bool isFoot)
         {
             Id = id;
             X = x;
             Y = y;
+            IsFoot = isFoot;
         }
 
+        public bool IsFoot { get; set; }
         public Guid Id { get; set; }
         public double X { get; set; }
         public double Y { get; set; }
