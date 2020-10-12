@@ -80,10 +80,10 @@ namespace RemoteSoccer
         {
 
             var connection = new HubConnectionBuilder()
-                //.WithUrl(@"https://soccerserver.azurewebsites.net/GameHub", x=>
+                .WithUrl(@"https://soccerserver.azurewebsites.net/GameHub", x=>
                 //.WithUrl(@"http://Pyrite:5000/GameHub", x =>
                 //.WithUrl(@"http://192.168.1.7:5000/GameHub", x =>
-                .WithUrl(@"http://localhost:5000/GameHub", x =>
+                //.WithUrl(@"http://localhost:5000/GameHub", x =>
                 {
                     // for some reason this seems to break azure signal r service
                     //x.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;

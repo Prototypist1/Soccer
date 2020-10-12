@@ -145,6 +145,7 @@ namespace physics2
                                     new Circle(p1.Padding),
                                     new Circle(p2.Padding),
                                     timeLeft,
+                                    ball.OwnerOrNull == p1 ? PhysicsMath.BallState.obj1 : ball.OwnerOrNull == p2 ? PhysicsMath.BallState.obj2 : PhysicsMath.BallState.neither,
                                     out var @event))
                                 {
                                     if (ball.OwnerOrNull == p1)

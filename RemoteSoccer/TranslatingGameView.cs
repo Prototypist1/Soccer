@@ -67,7 +67,7 @@ namespace RemoteSoccer
 
             if (bodies.Any() || feet.Any())
             {
-                gameView.HandleObjectsCreated(new ObjectsCreated(feet,bodies,null,new GoalCreated[] { }, new OuterCreated[] { }));
+                gameView.HandleObjectsCreated(new ObjectsCreated(feet,bodies,null,new GoalCreated[] { }, new OuterCreated[] { },objectsCreated.LeftScore, objectsCreated.RightScore));
             }
         }
 

@@ -61,7 +61,7 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private const int BodyA = 0x10;
+        private const int BodyA = 0x80;
         IGameView rge;
 
         private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
@@ -394,7 +394,7 @@ namespace RemoteSoccer
             localSettings.Values[LocalSettingsKeys.PlayerColorB] = color.B;
 
             game.ChangeColor(new ColorChanged(foot, color.R, color.G, color.B, 0xff));
-            game.ChangeColor(new ColorChanged(body, color.R, color.G, color.B, 0x20));
+            game.ChangeColor(new ColorChanged(body, color.R, color.G, color.B, BodyA));
 
         }
 
@@ -449,7 +449,10 @@ namespace RemoteSoccer
         private async void Button_Click_1(object sender, RoutedEventArgs e)
         {
             await StopSendingInputs();
-            game.LeaveGame(new LeaveGame());
+            PlayerInfo player = null;
+            localPlayers.Run(x => { player = x.Single(); return x; });
+
+            game.LeaveGame(new LeaveGame(player.LocalId));
             game.OnDisconnect(null);
             game.ClearCallbacks();
 

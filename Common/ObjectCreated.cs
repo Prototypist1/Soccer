@@ -96,13 +96,17 @@ namespace Common
             BodyCreated[] bodies, 
             BallCreated ball, 
             GoalCreated[] goals,
-            OuterCreated[] outers)
+            OuterCreated[] outers,
+            int leftScore,
+            int rightScore)
         {
             Feet = feet ?? throw new ArgumentNullException(nameof(feet));
             Bodies = bodies ?? throw new ArgumentNullException(nameof(bodies));
             Ball = ball;
             Goals = goals ?? throw new ArgumentNullException(nameof(goals));
             Outers = outers ?? throw new ArgumentNullException(nameof(outers));
+            LeftScore = leftScore;
+            RightScore = rightScore;
         }
 
         public FootCreated[] Feet { get; set; }
@@ -110,6 +114,8 @@ namespace Common
         public OuterCreated[] Outers { get; set; }
         public BallCreated Ball { get; set; }
         public GoalCreated[] Goals { get; set; }
+        public int LeftScore { get; set; }
+        public int RightScore { get; set; }
 
     }
 

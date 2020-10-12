@@ -8,20 +8,17 @@ namespace physics2
     {
         private readonly Circle circle;
 
-        private readonly double x0,y0;
-
         public Player OwnerOrNull= null;
 
         public Ball(double mass, double x, double y, bool mobile, Circle circle) : base(mass, x, y, mobile)
         {
-            this.x0 = x;
-            this.y0 = y;
+
             this.circle = circle ?? throw new System.ArgumentNullException(nameof(circle));
         }
 
-        public void Reset() {
-            this.X = x0;
-            this.Y = y0;
+        public void Reset(double x, double y) {
+            this.X = x;
+            this.Y = y;
             this.Vx = 0;
             this.Vy = 0;
             this.OwnerOrNull = null;

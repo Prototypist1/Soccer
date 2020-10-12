@@ -16,20 +16,20 @@ namespace Common
     {
         private int players = 0;
 
-        private readonly JumpBallConcurrent<PhysicsEngine> physicsEngine;
+        private JumpBallConcurrent<PhysicsEngine> physicsEngine;
 
         // maybe lock feed and bodies at the same time?
         // a signal jumpball
         private readonly JumpBallConcurrent<Dictionary<Guid, Player>> feet = new JumpBallConcurrent<Dictionary<Guid, Player>>(new Dictionary<Guid, Player>());
         private readonly JumpBallConcurrent<Dictionary<Guid, Center>> bodies = new JumpBallConcurrent<Dictionary<Guid, Center>>(new Dictionary<Guid, Center>());
-        private readonly Guid ballId;
-        private readonly Ball ball;
+        private Guid ballId;
+        private  Ball ball;
 
         private readonly ConcurrentSet<FootCreated> feetCreaated = new ConcurrentSet<FootCreated>();
         private readonly ConcurrentSet<BodyCreated> bodiesCreated = new ConcurrentSet<BodyCreated>();
         private readonly ConcurrentSet<OuterCreated> bodyNoLeansCreated = new ConcurrentSet<OuterCreated>();
 
-        private readonly BallCreated ballCreated;
+        private  BallCreated ballCreated;
         private readonly ConcurrentSet<GoalCreated> goalsCreated = new ConcurrentSet<GoalCreated>();
 
         private class ConnectionStuff {
@@ -56,14 +56,19 @@ namespace Common
 
 
 
-        private readonly GameStateTracker gameStateTracker;
-        private readonly FieldDimensions field;
+        private  GameStateTracker gameStateTracker;
+        private  FieldDimensions field;
 
         public class GameStateTracker
         {
             public int leftScore = 0, rightScore = 0;
-            private readonly Action resetBallAction;
-            private readonly double ballStartX, ballStartY;
+            private readonly Action<double, double> resetBallAction;
+            private double ballStartX, ballStartY;
+            private readonly double maxX;
+            private readonly double minX;
+            private readonly double maxY;
+            private readonly double minY;
+            private readonly Random random = new Random();
 
             public CountDownState UpdateGameState()
             {
@@ -75,7 +80,7 @@ namespace Common
                 }
                 if (gameState == resetBall)
                 {
-                    resetBallAction();
+                    resetBallAction(ballStartX, ballStartY);
                 }
                 if (gameState >= startCountDown && gameState < endCountDown)
                 {
@@ -84,7 +89,7 @@ namespace Common
                     {
                         res.StrokeThickness = tuple.radius - (Constants.footLen * (gameState - startCountDown) / ((double)(endCountDown - startCountDown)));
                         res.Radius = tuple.radius;
-                        res.BallOpacity = Math.Min(1.0, Math.Abs(((endCountDown - startCountDown) - 2 * (gameState - startCountDown)) / ((double)(endCountDown - startCountDown))));
+                        res.BallOpacity = gameState > resetBall ? (gameState- resetBall)/(double)(endCountDown - resetBall) : ((resetBall- startCountDown) - (gameState- startCountDown)) / (double)(resetBall - startCountDown);
                         res.X = tuple.x;
                         res.Y = tuple.y;
                     }
@@ -106,15 +111,17 @@ namespace Common
             private const int stopGrowingCircle = 100;
             private const int resetBall = 100;
             private const int startCountDown = 0;
-            private const int endCountDown = 200;
+            private const int endCountDown = 600;
 
             private int gameState = play;
 
-            public GameStateTracker(Action resetBallAction, double ballStartX, double ballStartY)
+            public GameStateTracker(Action<double,double> resetBallAction, double maxX, double minX, double maxY, double minY)
             {
                 this.resetBallAction = resetBallAction ?? throw new ArgumentNullException(nameof(resetBallAction));
-                this.ballStartX = ballStartX;
-                this.ballStartY = ballStartY;
+                this.maxX = maxX;
+                this.minX = minX;
+                this.maxY = maxY;
+                this.minY = minY;
             }
 
             public bool CanScore() => gameState == play;
@@ -122,13 +129,16 @@ namespace Common
             public void Scored()
             {
                 gameState = 1;
+                this.ballStartX = random.NextDouble() * (maxX - minX) + minX; 
+                this.ballStartY = random.NextDouble() * (maxY - minY) + minY;
             }
 
             public bool TryGetBallWall(out (double x, double y, double radius) ballWall)
             {
                 if (gameState >= startGrowingCircle)
                 {
-                    ballWall = (ballStartX,
+                    ballWall = (
+                        ballStartX,
                         ballStartY,
                         Constants.footLen * ((Math.Min(gameState, stopGrowingCircle) - startGrowingCircle) / (double)(stopGrowingCircle - startGrowingCircle)));
                     return true;
@@ -310,7 +320,7 @@ namespace Common
             return new UpdateScore() { Left = gameStateTracker.leftScore, Right = gameStateTracker.rightScore };
         }
 
-        public Game(Action<UpdateScore> onUpdateScore, FieldDimensions field)
+        public void Init(Action<UpdateScore> onUpdateScore, FieldDimensions field)
         {
 
             if (onUpdateScore == null)
@@ -381,9 +391,11 @@ namespace Common
 
             gameStateTracker = new GameStateTracker(
                 ball.Reset,
-                field.xMax / 2.0,
-                field.yMax / 2.0
-            );
+                (field.xMax / 2.0) + Constants.footLen,
+                (field.xMax / 2.0) - Constants.footLen,
+                field.yMax - Constants.footLen,
+                Constants.footLen);
+
             physicsEngine = new JumpBallConcurrent<PhysicsEngine>(new PhysicsEngine(gameStateTracker));// 
 
             var rightGoalManger = new GoalManager(gameStateTracker, onUpdateScore, true);
@@ -422,7 +434,9 @@ namespace Common
                 bodiesCreated.ToArray(), 
                 ballCreated, 
                 goalsCreated.ToArray(),
-                bodyNoLeansCreated.ToArray());
+                bodyNoLeansCreated.ToArray(),
+                gameStateTracker.leftScore,
+                gameStateTracker.rightScore);
         }
 
         public ObjectsCreated CreatePlayer(string connectionId, CreatePlayer createPlayer)
@@ -527,7 +541,9 @@ namespace Common
                 new[] { bodyCreated }, 
                 null, 
                 new GoalCreated[] { },
-                new [] { bodyNoLeanCreated });
+                new [] { bodyNoLeanCreated },
+                gameStateTracker.leftScore,
+                gameStateTracker.rightScore);
         }
 
         public bool TryDisconnect(string connectionId, out List<ObjectRemoved> objectRemoveds)
@@ -931,6 +947,9 @@ namespace Common
                             var newPart = 1;//Math.Max(1, throwV.Length);
                             var oldPart = 10;// Math.Max(1, ball.proposedThrow.Length);
 
+
+                            // I think force throw is making throwing harder
+                            
                             if (foot.ForceThrow && foot == ball.OwnerOrNull)
                             {
                                 foot.proposedThrow = new Vector(
@@ -943,6 +962,7 @@ namespace Common
                                 ball.OwnerOrNull = null;
                                 foot.ForceThrow = false;
                             }
+                            
 
                             //if (foot.Throwing)
                             //{

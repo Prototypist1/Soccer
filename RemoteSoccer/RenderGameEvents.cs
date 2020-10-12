@@ -228,6 +228,8 @@ namespace RemoteSoccer
                         {
                             this.gameArea.Children.Remove(value.element);
                         }
+                        // remove a text if it has one
+                        texts.Remove(objectRemoved.Id);
                     }
                 });
         }
@@ -287,6 +289,9 @@ namespace RemoteSoccer
                     {
                         CreateOjectsView(objectCreated);
                     }
+
+                    leftScore.Text = objectsCreated.LeftScore.ToString();
+                    rightScore.Text = objectsCreated.RightScore.ToString();
                 });
         }
 

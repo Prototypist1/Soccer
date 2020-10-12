@@ -69,9 +69,12 @@ namespace RemoteSoccer
 
                 localGame.OverwritePositions(positions);
 
-                foreach (var input in concurrentLinkedList)
+                if (concurrentLinkedList.Count < 20)
                 {
-                    localGame.game.PlayerInputs(input);
+                    foreach (var input in concurrentLinkedList)
+                    {
+                        localGame.game.PlayerInputs(input);
+                    }
                 }
 
                 var local = localGame.game.GetPosition();

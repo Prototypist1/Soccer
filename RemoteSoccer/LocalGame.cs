@@ -19,7 +19,8 @@ namespace RemoteSoccer
 
         public LocalGame(FieldDimensions fieldDimensions)
         {
-            this.game = new Game(x => gameView?.HandleUpdateScore(x), fieldDimensions);
+            this.game = new Game();
+            this.game.Init(x => gameView?.HandleUpdateScore(x), fieldDimensions);
         }
 
         public void CreatePlayer(CreatePlayer createPlayer) {

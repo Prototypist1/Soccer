@@ -17,15 +17,17 @@
 
         public const double goalLen = 6000;
         public const double footLen = 4500;
-        public const int PlayerRadius = 750;//750;// 500;//300;
+        public const int PlayerRadius = 900 ;//750;//750;// 500;//300;
         public const int BallRadius = 650;//150;//250;//30;//
         public const double BallMass = 1;
 
         public const double MaxLean = 0;
 
-        public const double MimimunThrowingSpped = 100;
+        public const double MimimunThrowingSpped = 150;
 
         public const double MinPlayerCollisionForce = 300;
+
+        public const double ExtraBallTakeForce = 100;
 
         public const int ThrowTimeout = 5;
         public const int MaxDeltaV = 40;

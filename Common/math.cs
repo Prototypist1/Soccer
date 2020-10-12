@@ -216,7 +216,8 @@ namespace Physics2
             Vector normal,
             Vector velocityVector1,
             Vector velocityVector2,
-            Vector position1
+            Vector position1,
+            BallState ballState
             )
         {
             // update the V of both
@@ -349,13 +350,35 @@ namespace Physics2
 
                     // we know they are moving together
 
-                    var denom = velocityVector1.NewMinus().NewAdded(velocityVector2).Dot(normal);
 
-                    var vv1dot= velocityVector1.Dot(normal.NewMinus());
-                    var vv2dot = velocityVector2.Dot(normal);
 
-                    var part1 = Math.Min(1, Math.Max(-1, vv1dot / denom));
-                    var part2 = Math.Min(1, Math.Max(-1, vv2dot / denom));
+                    double part1 ,part2;
+
+                    switch (ballState)
+                    {
+                        case BallState.neither:
+                            var denom = velocityVector1.NewMinus().NewAdded(velocityVector2).Dot(normal);
+
+                            var vv1dot = velocityVector1.Dot(normal.NewMinus());
+                            var vv2dot = velocityVector2.Dot(normal);
+
+                            part1 = Math.Min(1, Math.Max(-1, vv1dot / denom));
+                            part2 = Math.Min(1, Math.Max(-1, vv2dot / denom));
+                            break;
+                        case BallState.obj1:
+                            f += Constants.MinPlayerCollisionForce * Math.Sign(f);
+                            part1 = -1;
+                            part2 = 1;
+                            break;
+                        case BallState.obj2:
+                            f += Constants.MinPlayerCollisionForce * Math.Sign(f);
+                            part1 = 1;
+                            part2 = -1;
+                            break;
+                        default:
+                            throw new Exception("incomplete enum");
+                    }
+
 
                     return new DoubleUpdatePositionVelocityEvent(
                         time,
@@ -533,6 +556,11 @@ namespace Physics2
             return false;
         }
 
+        public enum BallState { 
+            neither,
+            obj1,
+            obj2
+        }
 
         internal static bool TryCollisionBall2(
             IPhysicsObject collide1,
@@ -542,6 +570,7 @@ namespace Physics2
             Circle c1,
             Circle c2,
             double endTime,
+            BallState ballState,
             out DoubleUpdatePositionVelocityEvent evnt)
         {
 
@@ -574,7 +603,7 @@ namespace Physics2
 
             if (TrySolveQuadratic(A, B, C, out var time) && time <= endTime)
             {
-                evnt = DoCollision2(applyForces1, applyForces2, c1.Radius, time, GetNormal(collide1, collide2, time), collide1.Velocity, collide2.Velocity, collide1.Position);
+                evnt = DoCollision2(applyForces1, applyForces2, c1.Radius, time, GetNormal(collide1, collide2, time), collide1.Velocity, collide2.Velocity, collide1.Position, ballState);
                 return true;
             }
             evnt = default;
