@@ -16,10 +16,12 @@
 
 
         public const double goalLen = 6000;
-        public const double footLen = 4500;
+        public const double footLen = 5000;
         public const int PlayerRadius = 900 ;//750;//750;// 500;//300;
         public const int BallRadius = 650;//150;//250;//30;//
         public const double BallMass = 1;
+
+        //public const double speedLimit = 500;
 
         public const double MaxLean = 0;
 
@@ -31,5 +33,12 @@
 
         public const int ThrowTimeout = 5;
         public const int MaxDeltaV = 40;
+
+        public const int EnergyAdd = 150_000;//250_000 ;//400;
+        public const double SpeedScale = .25;
+        public const double Add = 30;
+        public const double ToThe = 3.5;//1.9;
+        public const double speedLimit = 1000;
+        public const double FrictionDenom = 100;
     }
 }

@@ -8,7 +8,7 @@ namespace RemoteSoccer
 {
     internal class TranslatingGameView : IGameView
     {
-        private readonly IGameView gameView;
+        //private readonly IGameView gameView;
 
         private readonly Guid /*localFoot, localOuter, localBody,*/ foot, outer, body;
 
@@ -34,8 +34,8 @@ namespace RemoteSoccer
         }
 
 
-        public TranslatingGameView(IGameView gameView, Guid foot, Guid outer, Guid body) {
-            this.gameView = gameView;
+        public TranslatingGameView(Guid foot, Guid outer, Guid body) {
+            //this.gameView = gameView;
             //this.localFoot = Guid.NewGuid();
             //this.localOuter = Guid.NewGuid();
             //this.localBody = Guid.NewGuid();
@@ -46,57 +46,57 @@ namespace RemoteSoccer
 
         public void HandleColorChanged(ColorChanged colorChanged)
         {
-            if (TryTransfom(colorChanged.Id)) {
-                gameView.HandleColorChanged(new ColorChanged (colorChanged.Id, colorChanged.R, colorChanged.G, colorChanged.B, colorChanged.A));
-            }
+            //if (TryTransfom(colorChanged.Id)) {
+            //    gameView.HandleColorChanged(new ColorChanged (colorChanged.Id, colorChanged.R, colorChanged.G, colorChanged.B, colorChanged.A));
+            //}
         }
 
         public void HandleNameChanged(NameChanged nameChanged)
         {
-            if (TryTransfom(nameChanged.Id))
-            {
-                gameView.HandleNameChanged(new NameChanged(nameChanged.Id, nameChanged.Name));
-            }
+            //if (TryTransfom(nameChanged.Id))
+            //{
+            //    gameView.HandleNameChanged(new NameChanged(nameChanged.Id, nameChanged.Name));
+            //}
         }
 
         public void HandleObjectsCreated(ObjectsCreated objectsCreated)
         {
-            var bodies = objectsCreated.Bodies.Where(x => TryTransfom(x.Id)).ToArray();
+            //var bodies = objectsCreated.Bodies.Where(x => TryTransfom(x.Id)).ToArray();
 
-            var feet = objectsCreated.Feet.Where(x => TryTransfom(x.Id)).ToArray();
+            //var feet = objectsCreated.Feet.Where(x => TryTransfom(x.Id)).ToArray();
 
-            if (bodies.Any() || feet.Any())
-            {
-                gameView.HandleObjectsCreated(new ObjectsCreated(feet,bodies,null,new GoalCreated[] { }, new OuterCreated[] { },objectsCreated.LeftScore, objectsCreated.RightScore));
-            }
+            //if (bodies.Any() || feet.Any())
+            //{
+            //    gameView.HandleObjectsCreated(new ObjectsCreated(feet,bodies,null,new GoalCreated[] { }, new OuterCreated[] { },objectsCreated.LeftScore, objectsCreated.RightScore));
+            //}
         }
 
         public void HandleObjectsRemoved(ObjectsRemoved objectsRemoved)
         {
-            var list = objectsRemoved.List.Where(x => TryTransfom(x.Id)).ToArray();
+            //var list = objectsRemoved.List.Where(x => TryTransfom(x.Id)).ToArray();
 
-            if (list.Any()) {
-                gameView.HandleObjectsRemoved(new ObjectsRemoved(list));
-            }
+            //if (list.Any()) {
+            //    gameView.HandleObjectsRemoved(new ObjectsRemoved(list));
+            //}
         }
 
         public void HandleUpdateScore(UpdateScore updateScore)
         {
         }
 
-        public Position[] TransforPositions(Position[] positions) {
-            var list = new Position[] { };
-            try
-            {
+        //public Position[] TransforPositions(Position[] positions) {
+        //    var list = new Position[] { };
+        //    try
+        //    {
 
-                list = positions.Where(x => TryTransfom(x.Id)).ToArray();
-            }
-            catch (Exception e)
-            {
-                var db = 0;
-            }
-            return list;
-        }
+        //        list = positions.Where(x => TryTransfom(x.Id)).ToArray();
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        var db = 0;
+        //    }
+        //    return list;
+        //}
 
         internal Preview[] GetPreviews(Position[] local)
         {
@@ -111,23 +111,24 @@ namespace RemoteSoccer
             }).ToArray();
         }
 
-        public async IAsyncEnumerable<Positions> Filter(IAsyncEnumerable<Positions> positionss) {
-            await foreach (var positions in positionss)
-            {
-                var list = TransforPositions(positions.PositionsList);
+        //public async IAsyncEnumerable<Positions> Filter(IAsyncEnumerable<Positions> positionss) {
+        //    await foreach (var positions in positionss)
+        //    {
+        //        var list = TransforPositions(positions.PositionsList);
 
-                if (list.Any())
-                {
-                    // TODO
-                    // CountDownState should not be here 
-                    yield return new Positions(list, new Preview[] { }, positions.Frame, positions.CountDownState, new physics2.Collision[] { });
-                }
-            }
-        }
+        //        if (list.Any())
+        //        {
+        //            // TODO
+        //            // CountDownState should not be here 
+        //            yield return new Positions(list, new Preview[] { }, positions.Frame, positions.CountDownState, new physics2.Collision[] { });
+        //        }
+        //    }
+        //}
 
         public Task SpoolPositions(IAsyncEnumerable<Positions> positionss)
         {
-             return gameView.SpoolPositions(Filter(positionss));
+            return Task.CompletedTask;
+             //return gameView.SpoolPositions(Filter(positionss));
         }
     }
 }

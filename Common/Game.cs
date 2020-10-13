@@ -638,7 +638,7 @@ namespace Common
 
                     if (ball.Velocity.Length > 0)
                     {
-                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / 75.0);
+                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Mass / Constants.FrictionDenom);
 
                         ball.ApplyForce(
                             friction.x,
@@ -736,7 +736,7 @@ namespace Common
                                     var damp = .98;
 
 
-                                    var engeryAdd = foot == ball.OwnerOrNull ? EnergyAdd / 2.0 : EnergyAdd;
+                                    var engeryAdd = foot == ball.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 
                                     var R0 = EInverse(E(Math.Sqrt(Math.Pow(outer.privateVx, 2) + Math.Pow(outer.privateVy, 2))) + engeryAdd);
                                     var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
@@ -763,7 +763,7 @@ namespace Common
                                     var with = v.Dot(f);
                                     var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
 
-                                    var engeryAdd = foot == ball.OwnerOrNull ? EnergyAdd / 2.0 : EnergyAdd;
+                                    var engeryAdd = foot == ball.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 
                                     //
                                     var finalE = E(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + engeryAdd;
@@ -868,12 +868,21 @@ namespace Common
 
                             var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
 
-                            foot.personalVx = (tx - foot.X);// /2.0;
-                            foot.personalVy = (ty - foot.Y);// / 2.0;
+
+                            var v = new Vector(tx - foot.X, ty - foot.Y);
+
+                            var len = v.Length;
+                            if (len != 0)
+                            {
+                                var speedLimit = SpeedLimit(len);
+                                v = v.NewUnitized().NewScaled(speedLimit);
+                            }
+                            foot.personalVx = v.x;//(tx - foot.X);// /2.0;
+                            foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;
                         }
                         else {
 
-                            var tx = (input.FootX*10) + foot.X;
+                            var tx = (input.FootX * 10) + foot.X;
                             var ty = (input.FootY * 10) + foot.Y;
 
 
@@ -897,8 +906,18 @@ namespace Common
 
                             //var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
 
-                            foot.personalVx = vx;//(tx - foot.X);// /2.0;
-                            foot.personalVy = vy;//(ty - foot.Y);// / 2.0;
+                            var v = new Vector(vx, vy);
+
+                            // there is a speed limit things moving too fast are bad for online play
+                            // you can get hit before you have time to respond 
+                            var len = v.Length;
+                            if (len != 0)
+                            {
+                                var speedLimit = SpeedLimit(len);
+                                v = v.NewUnitized().NewScaled(speedLimit);
+                            }
+                            foot.personalVx = v.x;//(tx - foot.X);// /2.0;
+                            foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;
                         }
 
                        // if (foot == ball.OwnerOrNull)
@@ -1048,12 +1067,16 @@ namespace Common
         private int running = 0;
 
 
-        private const int EnergyAdd = 150_000;//250_000 ;//400;
-        private const double SpeedScale = .5;
-        private const double Add = 0;
-        private const double ToThe = 3.5;//1.9;
-        private double E(double v) => Math.Pow(Math.Max(0, v - Add), ToThe) * SpeedScale;
-        private double EInverse(double e) => Math.Pow(e / SpeedScale, 1 / ToThe) + Add;
+
+        private double E(double v) => Math.Pow(Math.Max(0, v - Constants.Add), Constants.ToThe) * Constants.SpeedScale;
+        private double EInverse(double e) => Math.Pow(e / Constants.SpeedScale, 1 / Constants.ToThe) + Constants.Add;
+        private double SpeedLimit(double d) {
+
+            var p2 = Math.Min(1, d / Constants.speedLimit);
+            var p1 = 1 - p2;
+
+            return (d * p1) + (Constants.speedLimit * p2);
+        }
 
         public void PlayerInputs(PlayerInputs playerInputs)
         {

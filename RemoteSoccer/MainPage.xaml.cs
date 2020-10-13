@@ -61,7 +61,7 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private const int BodyA = 0x80;
+        private const int BodyA = 0x40;
         IGameView rge;
 
         private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
@@ -86,6 +86,9 @@ namespace RemoteSoccer
 
             if (lockCurser.Thing)
             {
+                Window.Current.CoreWindow.PointerPosition = new Windows.Foundation.Point(
+                    (Window.Current.CoreWindow.Bounds.Left + Window.Current.CoreWindow.Bounds.Right) / 2.0,
+                    (Window.Current.CoreWindow.Bounds.Top + Window.Current.CoreWindow.Bounds.Bottom) / 2.0);
                 Window.Current.CoreWindow.PointerCursor = null;
             }
             else
@@ -413,6 +416,9 @@ namespace RemoteSoccer
             lockCurser.thing = !lockCurser.Thing;
             if (lockCurser.thing)
             {
+                Window.Current.CoreWindow.PointerPosition = new Windows.Foundation.Point(
+                    (Window.Current.CoreWindow.Bounds.Left + Window.Current.CoreWindow.Bounds.Right) / 2.0,
+                    (Window.Current.CoreWindow.Bounds.Top + Window.Current.CoreWindow.Bounds.Bottom) / 2.0);
                 Window.Current.CoreWindow.PointerCursor = null;
             }
             else

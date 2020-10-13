@@ -27,7 +27,7 @@ namespace RemoteSoccer
 
         public void ChangeColor(ColorChanged colorChanged)
         {
-            localGame.ChangeColor(colorChanged);
+            //localGame.ChangeColor(colorChanged);
             remoteGame.ChangeColor(colorChanged);
         }
 
@@ -69,11 +69,14 @@ namespace RemoteSoccer
 
                 localGame.OverwritePositions(positions);
 
-                if (concurrentLinkedList.Count < 20)
+                var i = 0;
+                foreach (var input in concurrentLinkedList)
                 {
-                    foreach (var input in concurrentLinkedList)
+                    localGame.game.PlayerInputs(input);
+                    i++;
+                    if (i > 20)
                     {
-                        localGame.game.PlayerInputs(input);
+                        break;
                     }
                 }
 
@@ -170,7 +173,7 @@ namespace RemoteSoccer
 
         public void SetCallbacks(IGameView gameView)
         {
-            translatingGameView = new TranslatingGameView(gameView, foot, outer, body);
+            translatingGameView = new TranslatingGameView(foot, outer, body);
             localGame.SetCallbacks(translatingGameView);
             remoteGame.SetCallbacks(gameView);
         }
