@@ -34,11 +34,15 @@
         public const int ThrowTimeout = 5;
         public const int MaxDeltaV = 40;
 
-        public const int EnergyAdd = 150_000;//250_000 ;//400;
-        public const double SpeedScale = .25;
-        public const double Add = 30;
-        public const double ToThe = 3.5;//1.9;
+        public const double EnergyAdd = .4;//250_000 ;//400;
+        //public const double SpeedScale = 1;
+        //public const double Add = 100;
+        //public const double ToThe = 2;//1.9;
+        // fastest you can move your foot
         public const double speedLimit = 1000;
-        public const double FrictionDenom = 100;
+        // firction on the ball
+        public const double FrictionDenom = 500;
+        public const int bodyStartAt = 70;
+        public const int bodySpeedLimit = 250;
     }
 }

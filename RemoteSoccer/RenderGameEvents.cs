@@ -275,10 +275,10 @@ namespace RemoteSoccer
                         CreateOjectsView(objectCreated);
                     }
 
-                    foreach (var objectCreated in objectsCreated.Outers)
-                    {
-                        CreateOjectsView(objectCreated);
-                    }
+                    //foreach (var objectCreated in objectsCreated.Outers)
+                    //{
+                    //    CreateOjectsView(objectCreated);
+                    //}
 
                     if (objectsCreated.Ball != null)
                     {

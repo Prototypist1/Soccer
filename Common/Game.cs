@@ -27,7 +27,7 @@ namespace Common
 
         private readonly ConcurrentSet<FootCreated> feetCreaated = new ConcurrentSet<FootCreated>();
         private readonly ConcurrentSet<BodyCreated> bodiesCreated = new ConcurrentSet<BodyCreated>();
-        private readonly ConcurrentSet<OuterCreated> bodyNoLeansCreated = new ConcurrentSet<OuterCreated>();
+        //private readonly ConcurrentSet<OuterCreated> bodyNoLeansCreated = new ConcurrentSet<OuterCreated>();
 
         private  BallCreated ballCreated;
         private readonly ConcurrentSet<GoalCreated> goalsCreated = new ConcurrentSet<GoalCreated>();
@@ -299,16 +299,16 @@ namespace Common
                     element.A = colorChanged.A;
                 }
             }
-            foreach (var element in bodyNoLeansCreated)
-            {
-                if (element.Id == colorChanged.Id)
-                {
-                    element.G = colorChanged.G;
-                    element.R = colorChanged.R;
-                    element.B = colorChanged.B;
-                    element.A = colorChanged.A;
-                }
-            }
+            //foreach (var element in bodyNoLeansCreated)
+            //{
+            //    if (element.Id == colorChanged.Id)
+            //    {
+            //        element.G = colorChanged.G;
+            //        element.R = colorChanged.R;
+            //        element.B = colorChanged.B;
+            //        element.A = colorChanged.A;
+            //    }
+            //}
         }
 
         public UpdateScore Reset()
@@ -434,7 +434,7 @@ namespace Common
                 bodiesCreated.ToArray(), 
                 ballCreated, 
                 goalsCreated.ToArray(),
-                bodyNoLeansCreated.ToArray(),
+                //bodyNoLeansCreated.ToArray(),
                 gameStateTracker.leftScore,
                 gameStateTracker.rightScore);
         }
@@ -498,19 +498,19 @@ namespace Common
             bodiesCreated.AddOrThrow(bodyCreated);
 
 
-            var bodyNoLeanCreated = new OuterCreated(
-                        body.Outer.X,
-                        body.Outer.Y,
-                        Constants.bodyZ,
-                        createPlayer.Outer,
-                        createPlayer.BodyDiameter + (Constants.MaxLean*2),
-                        createPlayer.BodyR,
-                        createPlayer.BodyG,
-                        createPlayer.BodyB,
-                        (byte)((int)createPlayer.BodyA/2)
-                        );
+            //var bodyNoLeanCreated = new OuterCreated(
+            //            body.Outer.X,
+            //            body.Outer.Y,
+            //            Constants.bodyZ,
+            //            createPlayer.Outer,
+            //            createPlayer.BodyDiameter + (Constants.MaxLean*2),
+            //            createPlayer.BodyR,
+            //            createPlayer.BodyG,
+            //            createPlayer.BodyB,
+            //            (byte)((int)createPlayer.BodyA/2)
+            //            );
 
-            bodyNoLeansCreated.AddOrThrow(bodyNoLeanCreated);
+            //bodyNoLeansCreated.AddOrThrow(bodyNoLeanCreated);
 
             var footCreated = new FootCreated(
                         foot.X,
@@ -528,7 +528,7 @@ namespace Common
             connectionObjects.AddOrThrow(connectionId,new ConnectionStuff( new List<ObjectCreated>(){
                 bodyCreated,
                 footCreated ,
-                bodyNoLeanCreated
+                //bodyNoLeanCreated
             },
             createPlayer.Body,
             foot));
@@ -541,7 +541,7 @@ namespace Common
                 new[] { bodyCreated }, 
                 null, 
                 new GoalCreated[] { },
-                new [] { bodyNoLeanCreated },
+                //new [] { bodyNoLeanCreated },
                 gameStateTracker.leftScore,
                 gameStateTracker.rightScore);
         }
@@ -574,12 +574,12 @@ namespace Common
                         objectRemoveds.Add(new ObjectRemoved(item.Id));
                     }
 
-                    var bodyNoLean = bodyNoLeansCreated.SingleOrDefault(x => x.Id == item.Id);
-                    if (bodyNoLean != null)
-                    {
-                        bodyNoLeansCreated.RemoveOrThrow(bodyNoLean);
-                        objectRemoveds.Add(new ObjectRemoved(item.Id));
-                    }
+                    //var bodyNoLean = bodyNoLeansCreated.SingleOrDefault(x => x.Id == item.Id);
+                    //if (bodyNoLean != null)
+                    //{
+                    //    bodyNoLeansCreated.RemoveOrThrow(bodyNoLean);
+                    //    objectRemoveds.Add(new ObjectRemoved(item.Id));
+                    //}
                 }
                 return true;
             }
@@ -626,15 +626,15 @@ namespace Common
 
                 if (ball.OwnerOrNull == null) {
 
-                    //if (ball.Velocity.Length > 0)
-                    //{
-                    //    var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length* ball.Velocity.Length * ball.Mass / (150.0*150.0));
+                    if (ball.Velocity.Length > 0)
+                    {
+                        var friction = ball.Velocity.NewUnitized().NewScaled(-ball.Velocity.Length * ball.Velocity.Length * ball.Mass / (175.0 * 175));
 
-                    //    ball.ApplyForce(
-                    //        friction.x,
-                    //        friction.y);
+                        ball.ApplyForce(
+                            friction.x,
+                            friction.y);
 
-                    //}
+                    }
 
                     if (ball.Velocity.Length > 0)
                     {
@@ -963,14 +963,15 @@ namespace Common
 
                             var throwV = new Vector(foot.Vx - body.Vx, foot.Vy - body.Vy);
 
-                            var newPart = 1;//Math.Max(1, throwV.Length);
-                            var oldPart = 10;// Math.Max(1, ball.proposedThrow.Length);
 
 
                             // I think force throw is making throwing harder
-                            
                             if (foot.ForceThrow && foot == ball.OwnerOrNull)
                             {
+
+                                var newPart = 1;//Math.Max(1, throwV.Length);
+                                var oldPart = 2;// Math.Max(1, ball.proposedThrow.Length);
+
                                 foot.proposedThrow = new Vector(
                                         ((throwV.x * newPart) + (foot.proposedThrow.x * oldPart)) / (newPart + oldPart),
                                         ((throwV.y * newPart) + (foot.proposedThrow.y * oldPart)) / (newPart + oldPart));
@@ -980,50 +981,53 @@ namespace Common
                                 ball.OwnerOrNull.LastHadBall = simulationTime;
                                 ball.OwnerOrNull = null;
                                 foot.ForceThrow = false;
+                                foot.proposedThrow = new Vector();
                             }
-                            
+                            else 
+                            if (foot.Throwing)
+                            {
 
-                            //if (foot.Throwing)
-                            //{
-                                
 
 
 
                                 //if (foot.proposedThrow.Length > Constants.MimimunThrowingSpped)
                                 //{
-                                    //if (throwV.Length > ball.proposedThrow.Length) // && throwV.Dot(ball.proposedThrow) > 0
-                                    //{
+                                //if (throwV.Length > ball.proposedThrow.Length) // && throwV.Dot(ball.proposedThrow) > 0
+                                //{
 
-                                    //}
-                                    //else
-                                    if (foot.proposedThrow.Length > Constants.MimimunThrowingSpped && (throwV.Length * 2 < foot.proposedThrow.Length || throwV.Dot(foot.proposedThrow) < 0) && foot.Throwing && foot == ball.OwnerOrNull)
+                                //}
+                                //else
+                                if (foot.proposedThrow.Length > Constants.MimimunThrowingSpped && (throwV.Length * 1.3 < foot.proposedThrow.Length || throwV.Dot(foot.proposedThrow) < 0) && foot.Throwing && foot == ball.OwnerOrNull)
                                     {
                                         // throw the ball!
                                         ball.UpdateVelocity(foot.proposedThrow.x + body.Vx, foot.proposedThrow.y + body.Vy);
                                         ball.OwnerOrNull.LastHadBall = simulationTime;
                                         ball.OwnerOrNull = null;
                                         foot.ForceThrow = false;
-                                    }
-                                    //else if (foot.proposedThrow.Length ==0) 
-                                    //{
-                                    //    foot.proposedThrow = new Vector(ball.Vx, ball.Vy);
-                                    //}
-                                    else 
-                                    {
-                                        foot.proposedThrow = new Vector(
+                                    foot.proposedThrow = new Vector();
+                                }
+                                else if (foot.proposedThrow.Length == 0)
+                                {
+                                    foot.proposedThrow = new Vector(throwV.x, throwV.y);
+                                }
+                                else 
+                                {
+                                    var newPart = 1;//Math.Max(1, throwV.Length);
+                                    var oldPart = 4;// Math.Max(1, ball.proposedThrow.Length);
+                                    foot.proposedThrow = new Vector(
                                                 ((throwV.x * newPart) + (foot.proposedThrow.x * oldPart)) / (newPart + oldPart),
                                                 ((throwV.y * newPart) + (foot.proposedThrow.y * oldPart)) / (newPart + oldPart));
-                                    }
+                                }
                                 //}
                                 //else if (throwV.Length > Constants.MimimunThrowingSpped)
                                 //{
                                 //    foot.proposedThrow = throwV;
                                 //}
-                            //}
-                            //else
-                            //{
-                            //    foot.proposedThrow = new Vector();
-                            //}
+                            }
+                            else
+                            {
+                                foot.proposedThrow = new Vector();
+                            }
                         }
                         //else {
                         //    foot.ForceThrow = false;
@@ -1068,14 +1072,31 @@ namespace Common
 
 
 
-        private double E(double v) => Math.Pow(Math.Max(0, v - Constants.Add), Constants.ToThe) * Constants.SpeedScale;
-        private double EInverse(double e) => Math.Pow(e / Constants.SpeedScale, 1 / Constants.ToThe) + Constants.Add;
+        private double E(double v) //=> Math.Pow(Math.Max(0, v - Constants.Add), Constants.ToThe) * Constants.SpeedScale;
+        {
+            var simpleV = Math.Max(0, v - Constants.bodyStartAt);
+
+            var distanceToTop = ((Constants.bodySpeedLimit - Constants.bodyStartAt) - simpleV)/ (Constants.bodySpeedLimit - Constants.bodyStartAt);
+
+            var eDistanceToTop = Math.Pow(Math.Max(0,distanceToTop), .5);
+
+            return ((1 - eDistanceToTop) * (Constants.bodySpeedLimit - Constants.bodyStartAt)) + Constants.bodyStartAt;
+        }
+        private double EInverse(double e) //=> Math.Pow(e / Constants.SpeedScale, 1 / Constants.ToThe) + Constants.Add;
+        {
+            var p2 = Math.Min(1, (e- Constants.bodyStartAt) / (Constants.bodySpeedLimit- Constants.bodyStartAt));
+            var p1 = 1 - p2;
+
+            return Constants.bodyStartAt + ((e - Constants.bodyStartAt) * p1) + ((Constants.bodySpeedLimit - Constants.bodyStartAt) * p2);
+        }
         private double SpeedLimit(double d) {
 
             var p2 = Math.Min(1, d / Constants.speedLimit);
             var p1 = 1 - p2;
 
             return (d * p1) + (Constants.speedLimit * p2);
+
+
         }
 
         public void PlayerInputs(PlayerInputs playerInputs)
