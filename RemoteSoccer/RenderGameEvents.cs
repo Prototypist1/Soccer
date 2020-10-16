@@ -382,7 +382,7 @@ namespace RemoteSoccer
                     {
                         Text = foot.Name,
                         FontSize = 1600,
-                        Foreground = new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff))
+                        Foreground = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff))
                     };
 
                     Canvas.SetZIndex(text, Constants.textZ);
