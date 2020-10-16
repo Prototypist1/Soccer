@@ -53,14 +53,17 @@
                         <TextBlock FontSize="35">Color</TextBlock>
                     </Border>
                     <Border BorderThickness="10" >
-                        <ColorPicker x:Name="ColorPicker" ColorChanged="ColorPicker_ColorChanged" IsAlphaEnabled="False" IsAlphaTextInputVisible="False" IsAccessKeyScope="False" IsAlphaSliderVisible="False"/>
+                        <ColorPicker 
+                            x:Name="ColorPicker" 
+                            ColorChanged="ColorPicker_ColorChanged" 
+                            IsAlphaEnabled="False" 
+                            IsAlphaTextInputVisible="False" 
+                            IsColorChannelTextInputVisible="False"
+                            IsAccessKeyScope="False" 
+                            IsAlphaSliderVisible="False"/>
                     </Border>
-
                     <Border BorderThickness="10" >
-                        <TextBlock FontSize="35">Name</TextBlock>
-                    </Border>
-                    <Border BorderThickness="10" >
-                        <TextBox x:Name="Namer" TextChanged="TextBox_TextChanged" HorizontalAlignment="Stretch"/>
+                        <TextBox x:Name="Namer" TextChanged="TextBox_TextChanged" HorizontalAlignment="Stretch" PlaceholderText="Name"/>
                     </Border>
                     <Border BorderThickness="10" >
                         <Button Click="Button_Click_1" Content="Exit To Main Menu" HorizontalAlignment="Stretch"/>

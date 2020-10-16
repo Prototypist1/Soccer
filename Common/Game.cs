@@ -23,13 +23,13 @@ namespace Common
         private readonly JumpBallConcurrent<Dictionary<Guid, Player>> feet = new JumpBallConcurrent<Dictionary<Guid, Player>>(new Dictionary<Guid, Player>());
         private readonly JumpBallConcurrent<Dictionary<Guid, Center>> bodies = new JumpBallConcurrent<Dictionary<Guid, Center>>(new Dictionary<Guid, Center>());
         private Guid ballId;
-        private  Ball ball;
+        private Ball ball;
 
         private readonly ConcurrentSet<FootCreated> feetCreaated = new ConcurrentSet<FootCreated>();
         private readonly ConcurrentSet<BodyCreated> bodiesCreated = new ConcurrentSet<BodyCreated>();
         //private readonly ConcurrentSet<OuterCreated> bodyNoLeansCreated = new ConcurrentSet<OuterCreated>();
 
-        private  BallCreated ballCreated;
+        private BallCreated ballCreated;
         private readonly ConcurrentSet<GoalCreated> goalsCreated = new ConcurrentSet<GoalCreated>();
 
         private class ConnectionStuff {
@@ -49,15 +49,15 @@ namespace Common
 
         private readonly ConcurrentIndexed<string, ConnectionStuff> connectionObjects = new ConcurrentIndexed<string, ConnectionStuff>();
 
-        private ConcurrentBag<PlayerInputs> playersInputs = new
-            ConcurrentBag<PlayerInputs>();
-            //ConcurrentLinkedList<PlayerInputs>();
+        private ConcurrentDictionary<Guid, ConcurrentLinkedList<PlayerInputs>> playersInputs = new
+            ConcurrentDictionary<Guid, ConcurrentLinkedList<PlayerInputs>>();
+        //ConcurrentLinkedList<PlayerInputs>();
         public DateTime LastInputUTC { get; private set; } = DateTime.Now;
 
 
 
-        private  GameStateTracker gameStateTracker;
-        private  FieldDimensions field;
+        private GameStateTracker gameStateTracker;
+        private FieldDimensions field;
 
         public class GameStateTracker
         {
@@ -89,7 +89,7 @@ namespace Common
                     {
                         res.StrokeThickness = tuple.radius - (Constants.footLen * (gameState - startCountDown) / ((double)(endCountDown - startCountDown)));
                         res.Radius = tuple.radius;
-                        res.BallOpacity = gameState > resetBall ? (gameState- resetBall)/(double)(endCountDown - resetBall) : ((resetBall- startCountDown) - (gameState- startCountDown)) / (double)(resetBall - startCountDown);
+                        res.BallOpacity = gameState > resetBall ? (gameState - resetBall) / (double)(endCountDown - resetBall) : ((resetBall - startCountDown) - (gameState - startCountDown)) / (double)(resetBall - startCountDown);
                         res.X = tuple.x;
                         res.Y = tuple.y;
                     }
@@ -115,7 +115,7 @@ namespace Common
 
             private int gameState = play;
 
-            public GameStateTracker(Action<double,double> resetBallAction, double maxX, double minX, double maxY, double minY)
+            public GameStateTracker(Action<double, double> resetBallAction, double maxX, double minX, double maxY, double minY)
             {
                 this.resetBallAction = resetBallAction ?? throw new ArgumentNullException(nameof(resetBallAction));
                 this.maxX = maxX;
@@ -129,7 +129,7 @@ namespace Common
             public void Scored()
             {
                 gameState = 1;
-                this.ballStartX = random.NextDouble() * (maxX - minX) + minX; 
+                this.ballStartX = random.NextDouble() * (maxX - minX) + minX;
                 this.ballStartY = random.NextDouble() * (maxY - minY) + minY;
             }
 
@@ -430,9 +430,9 @@ namespace Common
         public ObjectsCreated GetObjectsCreated()
         {
             return new ObjectsCreated(
-                feetCreaated.ToArray(), 
-                bodiesCreated.ToArray(), 
-                ballCreated, 
+                feetCreaated.ToArray(),
+                bodiesCreated.ToArray(),
+                ballCreated,
                 goalsCreated.ToArray(),
                 //bodyNoLeansCreated.ToArray(),
                 gameStateTracker.leftScore,
@@ -458,7 +458,7 @@ namespace Common
 
             foot.Body = body;
 
-            var externalForce = new ExternalForce() { 
+            var externalForce = new ExternalForce() {
                 X = startX,
                 Y = startY
             };
@@ -525,7 +525,7 @@ namespace Common
 
             feetCreaated.AddOrThrow(footCreated);
 
-            connectionObjects.AddOrThrow(connectionId,new ConnectionStuff( new List<ObjectCreated>(){
+            connectionObjects.AddOrThrow(connectionId, new ConnectionStuff(new List<ObjectCreated>(){
                 bodyCreated,
                 footCreated ,
                 //bodyNoLeanCreated
@@ -537,9 +537,9 @@ namespace Common
             Interlocked.Add(ref players, 1);
 
             return new ObjectsCreated(
-                new[] { footCreated }, 
-                new[] { bodyCreated }, 
-                null, 
+                new[] { footCreated },
+                new[] { bodyCreated },
+                null,
                 new GoalCreated[] { },
                 //new [] { bodyNoLeanCreated },
                 gameStateTracker.leftScore,
@@ -556,6 +556,11 @@ namespace Common
 
                 feet.Run(x => { x.Remove(toRemoves.Foot.id); return x; });
                 physicsEngine.Run(x => { x.RemovePlayer(toRemoves.Foot); return x; });
+
+                var firstPlayer = FirstPlayerFoot;
+                if (firstPlayer != null && firstPlayer.id == toRemoves.Foot.id) {
+                    Interlocked.CompareExchange(ref FirstPlayerFoot, null, firstPlayer);
+                }
 
                 objectRemoveds = new List<ObjectRemoved>();
                 foreach (var item in toRemoves.objectsCreated)
@@ -589,38 +594,35 @@ namespace Common
 
         private int simulationTime = 0;
         private PlayerInputs[] nextTime = new PlayerInputs[] { };
+
+        private IEnumerable<Dictionary<Guid, PlayerInputs>> playersInputsSpool(){
+            while (playersInputs.All(x => x.Value.Any())){
+                var res =new  Dictionary<Guid, PlayerInputs>();
+                foreach (var item in playersInputs)
+                {
+                    var innerRes = item.Value.First();
+                    item.Value.RemoveStart();
+                    res[innerRes.FootId] = innerRes;
+
+
+                }
+                yield return res;
+            }
+        }
+
+        //private IEnumerable<PlayerInputs> OneSetSpool() {
+        //    foreach (var item in playersInputs)
+        //    {
+        //        var res = item.Value.First();
+        //        item.Value.RemoveStart();
+        //        yield return res;
+        //    }
+        //}
+
         private void Apply()
         {
             Positions positions = default;
-
-            var myPlayersInputs = Interlocked.Exchange(ref playersInputs, new ConcurrentBag<PlayerInputs>());
-
-            var frames = new List<Dictionary<Guid, PlayerInputs>>();
-
-            foreach (var list in new IEnumerable<PlayerInputs>[] { nextTime, myPlayersInputs })
-            {
-                foreach (var input in list)
-                {
-                    foreach (var frame in frames)
-                    {
-                        if (!frame.ContainsKey(input.BodyId))
-                        {
-                            frame.Add(input.BodyId, input);
-                            goto done;
-                        }
-                    }
-
-                    frames.Add(new Dictionary<Guid, PlayerInputs> {
-                    { input.BodyId,input}
-                });
-
-                done:;
-                }
-            }
-
-            nextTime = frames.Where(x => x.Count < connectionObjects.Count).SelectMany(x=>x.Values).ToArray();
-            var thisTime = frames.Where(x => x.Count >= connectionObjects.Count).ToArray();
-            foreach (var inputSet in thisTime)
+            foreach (var inputSet in playersInputsSpool())
             {
                 var countDownSate = gameStateTracker.UpdateGameState();
 
@@ -836,6 +838,72 @@ namespace Common
                                 body.personalVx = (tx - body.X);// /2.0;
                                 body.personalVy = (ty - body.Y);// /2.0;
                             }
+
+
+
+                            var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
+
+                            if (input.Controller)
+                            {
+                                var tx = (input.FootX * max) + body.X;
+                                var ty = (input.FootY * max) + body.Y;
+
+                                var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
+
+
+                                var v = new Vector(tx - foot.X, ty - foot.Y);
+
+                                var len = v.Length;
+                                if (len != 0)
+                                {
+                                    var speedLimit = SpeedLimit(len);
+                                    v = v.NewUnitized().NewScaled(speedLimit);
+                                }
+                                foot.personalVx = v.x;//(tx - foot.X);// /2.0;
+                                foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;
+                            }
+                            else
+                            {
+
+                                var tx = (input.FootX * 10) + foot.X;
+                                var ty = (input.FootY * 10) + foot.Y;
+
+
+                                var dx = tx - body.X;
+                                var dy = ty - body.Y;
+
+                                var d = new Vector(dx, dy);
+
+                                if (d.Length > max)
+                                {
+                                    d = d.NewUnitized().NewScaled(max);
+                                }
+
+                                var validTx = d.x + body.X;
+                                var validTy = d.y + body.Y;
+
+                                var vx = validTx - foot.X;
+                                var vy = validTy - foot.Y;
+
+                                //var tx = (input.FootX * max) + body.X;
+                                //var ty = (input.FootY * max) + body.Y;
+
+                                //var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
+
+                                var v = new Vector(vx, vy);
+
+                                // there is a speed limit things moving too fast are bad for online play
+                                // you can get hit before you have time to respond 
+                                var len = v.Length;
+                                if (len != 0)
+                                {
+                                    var speedLimit = SpeedLimit(len);
+                                    v = v.NewUnitized().NewScaled(speedLimit);
+                                }
+                                foot.personalVx = v.x;//(tx - foot.X);// /2.0;
+                                foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;
+                            }
+
                         }
 
                         //if (gameStateTracker.TryGetBallWall(out var ballWall)) {
@@ -859,68 +927,7 @@ namespace Common
                         //    }
                         //}
 
-                        var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
-
-                        if (input.Controller)
-                        {
-                            var tx = (input.FootX * max) + body.X;
-                            var ty = (input.FootY * max) + body.Y;
-
-                            var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
-
-
-                            var v = new Vector(tx - foot.X, ty - foot.Y);
-
-                            var len = v.Length;
-                            if (len != 0)
-                            {
-                                var speedLimit = SpeedLimit(len);
-                                v = v.NewUnitized().NewScaled(speedLimit);
-                            }
-                            foot.personalVx = v.x;//(tx - foot.X);// /2.0;
-                            foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;
-                        }
-                        else {
-
-                            var tx = (input.FootX * 10) + foot.X;
-                            var ty = (input.FootY * 10) + foot.Y;
-
-
-                            var dx = tx - body.X;
-                            var dy = ty - body.Y;
-
-                            var d = new Vector(dx, dy);
-
-                            if (d.Length > max) {
-                                d = d.NewUnitized().NewScaled(max);
-                            }
-
-                            var validTx = d.x + body.X;
-                            var validTy = d.y + body.Y;
-
-                            var vx = validTx - foot.X;
-                            var vy = validTy - foot.Y;
-
-                            //var tx = (input.FootX * max) + body.X;
-                            //var ty = (input.FootY * max) + body.Y;
-
-                            //var vector = new Vector(tx - foot.personalVx, ty - foot.personalVy);
-
-                            var v = new Vector(vx, vy);
-
-                            // there is a speed limit things moving too fast are bad for online play
-                            // you can get hit before you have time to respond 
-                            var len = v.Length;
-                            if (len != 0)
-                            {
-                                var speedLimit = SpeedLimit(len);
-                                v = v.NewUnitized().NewScaled(speedLimit);
-                            }
-                            foot.personalVx = v.x;//(tx - foot.X);// /2.0;
-                            foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;
-                        }
-
-                       // if (foot == ball.OwnerOrNull)
+                        // if (foot == ball.OwnerOrNull)
                         {
 
                             var dx = foot.X - ball.X;
@@ -1060,12 +1067,12 @@ namespace Common
                 positions = new Positions(GetPosition().ToArray(), new Preview[] { }, simulationTime, countDownSate, collisions);
             }
 
-            if (thisTime.Any())
-            {
+            //if (thisTime.Any())
+            //{
                 var next = new Node(positions);
                 lastPositions.next.SetResult(next);
                 lastPositions = next;
-            }
+            //}
         }
 
         private int running = 0;
@@ -1099,11 +1106,24 @@ namespace Common
 
         }
 
+        // boxed guid
+
+        private class RefGuid {
+            public readonly Guid id;
+
+            public RefGuid(Guid id)
+            {
+                this.id = id;
+            }
+        }
+        RefGuid FirstPlayerFoot;
         public void PlayerInputs(PlayerInputs playerInputs)
         {
             //var lastLast = LastInputUTC;
-            playersInputs.Add(playerInputs);
-            if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
+            playersInputs.GetOrAdd(playerInputs.FootId, new ConcurrentLinkedList<PlayerInputs>()).Add(playerInputs);
+
+            var firstPlayer = Interlocked.CompareExchange(ref FirstPlayerFoot, new RefGuid(playerInputs.FootId), null);
+            if (firstPlayer.id == playerInputs.FootId && Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
                 Apply();
                 running = 0;
@@ -1152,7 +1172,7 @@ namespace Common
                 }
                 return x;
             });
-            playersInputs = new ConcurrentBag<PlayerInputs>();
+            playersInputs = new ConcurrentDictionary<Guid, ConcurrentLinkedList<PlayerInputs>>();
         }
 
         public Position[] GetPosition()
