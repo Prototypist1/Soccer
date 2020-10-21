@@ -23,6 +23,20 @@
                 <TextBox Width="600" FontSize="35" x:Name="GameName" TextChanged="GameName_TextChanged" KeyDown="GameName_KeyDown" />
             </Border>
             <Border BorderThickness="5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <RadioButton Grid.Column="0" GroupName="Test" x:Name="KeyBoardAndMouse" IsChecked="True"> 
+                        Mouse and Keyboard
+                    </RadioButton>
+                    <RadioButton Grid.Column="1" GroupName="Test" x:Name="Mouse">
+                        Mouse
+                    </RadioButton>
+                </Grid>
+            </Border>
+            <Border BorderThickness="5">
                 <Button FontSize="35" Width="600" Click="StartOrJoin" x:Name="StartOrJoinButton" >Go</Button>
             </Border>
         </StackPanel>

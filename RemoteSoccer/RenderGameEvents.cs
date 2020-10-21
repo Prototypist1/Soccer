@@ -164,9 +164,10 @@ namespace RemoteSoccer
             {
                 mouse = new Ellipse
                 {
-                    Height = Constants.PlayerRadius * 2,
-                    Width = Constants.PlayerRadius * 2,
-                    Fill = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff))
+                    Height = Constants.PlayerRadius  * 2.5,
+                    Width = Constants.PlayerRadius * 2.5,
+                    Stroke = new SolidColorBrush(Color.FromArgb(0xAA, 0xff, 0xff, 0xff)),
+                    StrokeThickness = Constants.BallRadius / 2.0
                 };
                 Canvas.SetZIndex(mouse, Constants.mouseZ);
                 this.gameArea.Children.Add(mouse);

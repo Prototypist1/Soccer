@@ -137,6 +137,7 @@
     </Compile>
     <Compile Include="ControllerInputes.cs" />
     <Compile Include="FullField.cs" />
+    <Compile Include="GameInfo.cs" />
     <Compile Include="IGameView.cs" />
     <Compile Include="IInputs.cs" />
     <Compile Include="IRemoteGame.cs" />

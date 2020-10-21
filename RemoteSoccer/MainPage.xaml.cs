@@ -156,10 +156,15 @@ namespace RemoteSoccer
         {
             base.OnNavigatedTo(e);
 
-            var gameName = (string)e.Parameter;
+            var gameInfo =  (GameInfo)e.Parameter;
+
+            var gameName = gameInfo.gameName;
+
+            var controlScheme = gameInfo.controlScheme;
 
 
-  
+
+
 
             Task.Run(async () =>
             {
@@ -181,7 +186,7 @@ namespace RemoteSoccer
                     //Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
                     //Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
 
-                    await CreatePlayer();
+                    await CreatePlayer(controlScheme);
 
                     // why is this not part of set callbacks??
                     var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
@@ -233,13 +238,27 @@ namespace RemoteSoccer
         readonly Guid outer = Guid.NewGuid();
         readonly Guid foot = Guid.NewGuid();
 
-        private async Task CreatePlayer()
+        private async Task CreatePlayer(ControlScheme controlScheme)
         {
+            IInputs inputs = null;
 
-            var (inputs,refx,refy) = SimpleMouseInputs.Create(lockCurser, game, body, foot, fieldDimensions.xMax/2.0, fieldDimensions.yMax/2.0);
+            switch (controlScheme)
+            {
+                case ControlScheme.MouseAndKeyboard:
+                    inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
+                    break;
+                case ControlScheme.SipmleMouse:
+                    var (temp, refx, refy) = SimpleMouseInputs.Create(lockCurser, game, body, foot, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
+                    inputs = temp;
+                    rge.InitMouse(refx, refy);
+                    break;
+                case ControlScheme.Controller:
+                    throw new NotImplementedException();
+                    break;
+                default:
+                    break;
+            }
 
-            rge.InitMouse(refx, refy);
-            //new MouseKeyboardInputs(lockCurser, game, body, foot);
 
             await inputs.Init();
 

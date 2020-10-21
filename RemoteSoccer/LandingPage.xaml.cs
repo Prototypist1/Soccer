@@ -110,7 +110,7 @@ namespace RemoteSoccer
                             var handler = (await SingleSignalRHandler.GetOrThrow());
                             handler.SetOnClosed(null);
                             handler.ClearCallBacks();
-                            this.Frame.Navigate(typeof(MainPage), gameCreated.Id);
+                            this.Frame.Navigate(typeof(MainPage), new GameInfo( gameCreated.Id, Mouse.IsChecked.Value ? ControlScheme.SipmleMouse: ControlScheme.MouseAndKeyboard));
                         });
                     }
                     else if (res.Is2(out var joined))
@@ -122,7 +122,7 @@ namespace RemoteSoccer
                             var handler = (await SingleSignalRHandler.GetOrThrow());
                             handler.SetOnClosed(null);
                             handler.ClearCallBacks();
-                            this.Frame.Navigate(typeof(MainPage), joined.Id);
+                            this.Frame.Navigate(typeof(MainPage), new GameInfo(joined.Id, Mouse.IsChecked.Value ? ControlScheme.SipmleMouse : ControlScheme.MouseAndKeyboard));
                         });
                     }
                     else if (res.Is3(out var exception))

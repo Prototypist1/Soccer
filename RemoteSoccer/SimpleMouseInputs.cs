@@ -90,11 +90,11 @@ namespace RemoteSoccer
                                 //    (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
                                 
                                 var point = CoreWindow.GetForCurrentThread().PointerPosition;
-                                footX = (point.X - lastX) * 30;// * .75;
-                                footY = (point.Y - lastY) * 30;// * .75;
+                                footX = (point.X - lastX);// * .75;
+                                footY = (point.Y - lastY);// * .75;
 
-                                mouseX.thing += footX;
-                                mouseY.thing += footY;
+                                mouseX.thing += footX*30;
+                                mouseY.thing += footY*30;
 
                                 point = new Point(lastX, lastY);
                                 coreWindow.PointerPosition = point;
