@@ -709,10 +709,56 @@ namespace Common
 
                             foot.Throwing = input.Throwing;
 
+                            if (input.ControlScheme == ControlScheme.SipmleMouse)
+                            {
+
+                                var dx = input.BodyX - body.X;
+                                var dy = input.BodyY - body.Y;
+
+                                if (dx != 0 || dy != 0)
+                                {
+
+                                    // base velocity becomes the part of the velocity in the direction of the players movement
+                                    var v = new Vector(body.Outer.privateVx, body.Outer.privateVy);
+                                    var f = new Vector(dx, dy).NewUnitized();
+                                    var with = v.Dot(f);
+                                    var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
+
+                                    var engeryAdd = foot == ball.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
+
+                                    //
+                                    var finalE = E(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + engeryAdd;
+                                    var inputAmount = new Vector(input.BodyX, input.BodyY).Length;
+                                    if (inputAmount < .1)
+                                    {
+                                        finalE = 0;
+                                    }
+                                    else if (inputAmount < 1)
+                                    {
+                                        finalE = Math.Min(finalE, (inputAmount - .1) * (inputAmount - .1) * engeryAdd * 100);
+                                    }
+
+                                    var finalSpeed = EInverse(finalE);
+                                    var finalVelocity = f.NewScaled(finalSpeed);
+
+                                    if (finalVelocity.Length > new Vector(dx, dy).Length)
+                                    {
+                                        finalVelocity = finalVelocity.NewUnitized().NewScaled(new Vector(dx, dy).Length);
+                                    }
+
+                                    body.Outer.privateVx = finalVelocity.x;// / 2.0;
+                                    body.Outer.privateVy = finalVelocity.y;// / 2.0;
+                                }
+                                else {
+                                    body.Outer.privateVx = 0;
+                                    body.Outer.privateVy = 0;
+                                }
+                            }
+                            else 
                             if (input.BodyX != 0 || input.BodyY != 0)
                             {
                                 // crush oppozing forces
-                                if (!input.Controller)
+                                if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                                 {
                                     var v = new Vector(outer.privateVx, outer.privateVy);
                                     var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY));
@@ -749,7 +795,7 @@ namespace Common
                                     outer.privateVx = (damp * outer.privateVx) + (t * input.BodyX);// / 2.0;
                                     outer.privateVy = (damp * outer.privateVy) + (t * input.BodyY);// / 2.0;
                                 }
-                                else
+                                else if (input.ControlScheme == ControlScheme.Controller)
                                 {
 
 
@@ -793,22 +839,24 @@ namespace Common
 
                             }
 
-                            if (input.Controller)
-                            {
-                                var tx = (input.BodyX * Constants.MaxLean) + body.Outer.X;
-                                var ty = (input.BodyY * Constants.MaxLean) + body.Outer.Y;
 
-                                var vector = new Vector(tx - body.personalVx, ty - body.personalVy);
+                            
+                            //if (input.Controller == ControlScheme.Controller)
+                            //{
+                            //    var tx = (input.BodyX * Constants.MaxLean) + body.Outer.X;
+                            //    var ty = (input.BodyY * Constants.MaxLean) + body.Outer.Y;
 
-                                body.personalVx = (tx - body.X);// /2.0;
-                                body.personalVy = (ty - body.Y);// /2.0;
-                            }
+                            //    var vector = new Vector(tx - body.personalVx, ty - body.personalVy);
+
+                            //    body.personalVx = (tx - body.X);// /2.0;
+                            //    body.personalVy = (ty - body.Y);// /2.0;
+                            //}
 
 
 
                             var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
 
-                            if (input.Controller)
+                            if (input.ControlScheme == ControlScheme.Controller)
                             {
                                 var tx = (input.FootX * max) + body.X;
                                 var ty = (input.FootY * max) + body.Y;
@@ -827,11 +875,11 @@ namespace Common
                                 foot.personalVx = v.x;//(tx - foot.X);// /2.0;
                                 foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;
                             }
-                            else
+                            else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                             {
 
-                                var tx = (input.FootX * 10) + foot.X;
-                                var ty = (input.FootY * 10) + foot.Y;
+                                var tx = (input.FootX) + foot.X;
+                                var ty = (input.FootY) + foot.Y;
 
 
                                 var dx = tx - body.X;
@@ -859,6 +907,34 @@ namespace Common
                                 {
                                     var speedLimit = SpeedLimit(len);
                                     v = v.NewUnitized().NewScaled(speedLimit);
+                                }
+                                foot.personalVx = v.x;//(tx - foot.X);// /2.0;
+                                foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;
+                            } else if (input.ControlScheme == ControlScheme.SipmleMouse) {
+
+                                var dx = input.FootX - body.X;
+                                var dy = input.FootY - body.Y;
+
+                                var d = new Vector(dx, dy);
+
+                                if (d.Length > max)
+                                {
+                                    d = d.NewUnitized().NewScaled(max);
+                                }
+
+                                var validTx = d.x + body.X;
+                                var validTy = d.y + body.Y;
+
+                                var vx = validTx - foot.X;
+                                var vy = validTy - foot.Y;
+
+                                var v = new Vector(vx, vy);
+
+                                // simple mouse drive the speed limit when it needs to
+                                var len = v.Length;
+                                if (len > Constants.speedLimit)
+                                {
+                                    v = v.NewUnitized().NewScaled(Constants.speedLimit);
                                 }
                                 foot.personalVx = v.x;//(tx - foot.X);// /2.0;
                                 foot.personalVy = v.y;//(ty - foot.Y);// / 2.0;

@@ -56,7 +56,8 @@
                         <ColorPicker 
                             x:Name="ColorPicker" 
                             ColorChanged="ColorPicker_ColorChanged" 
-                            IsAlphaEnabled="False" 
+                            IsAlphaEnabled="False"
+                            IsHexInputVisible="False"
                             IsAlphaTextInputVisible="False" 
                             IsColorChannelTextInputVisible="False"
                             IsAccessKeyScope="False" 

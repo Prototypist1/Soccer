@@ -161,6 +161,7 @@
     <Compile Include="RenderGameEvents.cs" />
     <Compile Include="Scaler.cs" />
     <Compile Include="SignalRHandler.cs" />
+    <Compile Include="SimpleMouseInputs.cs" />
     <Compile Include="TranslatingGameView.cs" />
     <Compile Include="Zoomer.cs" />
   </ItemGroup>

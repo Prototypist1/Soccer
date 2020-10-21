@@ -27,84 +27,12 @@ namespace RemoteSoccer
         // this is just a shape
         private class ElementEntry
         {
-            //private const int V = 0;
             public readonly Shape element;
-            //private readonly Brush[] brushes;
 
-            public ElementEntry(Shape element /*,Color color*/)
+            public ElementEntry(Shape element )
             {
                 this.element = element ?? throw new ArgumentNullException(nameof(element));
-                //this.brushes = GenerateBrushes(color);
             }
-
-            //public Brush GetBrush(double width, double velocity)
-            //{
-            //    //return brushes[Math.Min(V - 1, (int)(V * velocity / width))];
-            //}
-
-            //private Brush[] GenerateBrushes(Color color)
-            //{
-            //    var darkColor = Color.FromArgb(color.A, (byte)(((int)color.R) / 2), (byte)(((int)color.G) / 2), (byte)(((int)color.B) / 2));
-            //    var deadColor = Color.FromArgb(0x00, darkColor.R, darkColor.G, darkColor.B);
-
-            //    var brushes = new Brush[V];
-
-            //    {
-            //        var stops = new GradientStopCollection();
-            //        stops.Add(new GradientStop()
-            //        {
-            //            Color = darkColor,
-            //            Offset = 1,
-            //        });
-            //        stops.Add(new GradientStop()
-            //        {
-            //            Color = color,
-            //            Offset = .8,
-            //        });
-            //        brushes[0] = new RadialGradientBrush(stops);
-            //    }
-            //    for (int i = 1; i < V; i++)
-            //    {
-            //        var stops = new GradientStopCollection();
-            //        stops.Add(new GradientStop()
-            //        {
-            //            Color = deadColor,
-            //            Offset = 1,
-            //        });
-            //        var x = (i / 100.0);
-            //        double partDark;
-            //        double lightPart;
-            //        if (x < .2)
-            //        {
-            //            partDark = x * (1 - (x * 5 / 2.0));
-            //            lightPart = x * (x * 5 / 2.0);
-            //        }
-            //        else
-            //        {
-            //            partDark = .1;
-            //            lightPart = .1 + (x - .2);
-            //        }
-            //        var normalPartDark = partDark / (partDark + lightPart);
-            //        var notmalPartLight = lightPart / (partDark + lightPart);
-
-            //        stops.Add(new GradientStop()
-            //        {
-            //            Color = Color.FromArgb(
-            //                color.A,
-            //                (byte)(int)((darkColor.R * normalPartDark) + (color.R * notmalPartLight)),
-            //                (byte)(int)((darkColor.G * normalPartDark) + (color.G * notmalPartLight)),
-            //                (byte)(int)((darkColor.B * normalPartDark) + (color.B * notmalPartLight))),
-            //            Offset = 1 - x,
-            //        });
-            //        stops.Add(new GradientStop()
-            //        {
-            //            Color = color,
-            //            Offset = Math.Max(0, .8 - x),
-            //        });
-            //        brushes[i] = new RadialGradientBrush(stops);
-            //    }
-            //    return brushes;
-            //}
         }
 
         private readonly Dictionary<Guid, Line> previews = new Dictionary<Guid, Line>();
@@ -127,7 +55,13 @@ namespace RemoteSoccer
 
         private Random random = new Random();
         private readonly IReadonlyRef<int> frame;
+        private readonly FieldDimensions fieldDimensions;
 
+        // simple mouse controls
+        // null when not inited
+        private Ellipse mouse;
+        private IReadonlyRef<double> mouseX;
+        private IReadonlyRef<double> mouseY;
 
         public RenderGameEvents(
             Canvas gameArea,
@@ -139,6 +73,7 @@ namespace RemoteSoccer
             FieldDimensions fieldDimensions)
         {
             this.frame = frame;
+            this.fieldDimensions = fieldDimensions;
             this.fps = fps;
             this.gameArea = gameArea;
             this.leftScore = leftScore;
@@ -157,15 +92,13 @@ namespace RemoteSoccer
             bell.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/bell.wav"));
 
 
-            ballWall = new Ellipse
+            ballWall  = new Ellipse
             {
                 Visibility = Visibility.Collapsed,
                 Stroke = new SolidColorBrush(Color.FromArgb(0xff, 0xbb, 0xbb, 0xbb)),
                 StrokeThickness = 20
-            };
-
+            };            
             Canvas.SetZIndex(ballWall, 0);
-
             this.gameArea.Children.Add(ballWall);
 
 
@@ -214,6 +147,30 @@ namespace RemoteSoccer
                 }
             }
 
+        }
+
+
+        public void InitMouse(
+            IReadonlyRef<double> mouseX,
+            IReadonlyRef<double> mouseY) {
+
+
+            this.mouseX = mouseX;
+            this.mouseY = mouseY;
+
+            var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+            CoreDispatcherPriority.Normal,
+            () =>
+            {
+                mouse = new Ellipse
+                {
+                    Height = Constants.PlayerRadius * 2,
+                    Width = Constants.PlayerRadius * 2,
+                    Fill = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff))
+                };
+                Canvas.SetZIndex(mouse, Constants.mouseZ);
+                this.gameArea.Children.Add(mouse);
+            });
         }
 
         public void HandleObjectsRemoved(ObjectsRemoved objectsRemoved)
@@ -769,7 +726,6 @@ namespace RemoteSoccer
                         Canvas.SetLeft(ballWall, positions.CountDownState.X - positions.CountDownState.Radius);
                         Canvas.SetTop(ballWall, positions.CountDownState.Y - positions.CountDownState.Radius);
 
-
                         ballWall.Visibility = positions.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
 
                         if (positions.CountDownState.Countdown)
@@ -781,6 +737,24 @@ namespace RemoteSoccer
                             {
                                 ball.Opacity = positions.CountDownState.BallOpacity;
                             }
+                        }
+
+                        if (mouse != null)
+                        {
+                            mouse.TransformMatrix =
+                                        // first we center
+                                        new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)(-mouse.Width / 2.0), (float)(-mouse.Height / 2.0), 0, 1)
+                                        *
+                                        // then we move to the right spot
+                                        new Matrix4x4(
+                                            1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            (float)mouseX.Thing, (float)mouseY.Thing, 0, 1);
                         }
 
                         this.gameArea.TransformMatrix = new Matrix4x4(

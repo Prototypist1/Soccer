@@ -9,22 +9,32 @@ using Windows.UI.Xaml;
 
 namespace RemoteSoccer
 {
-
-    class MouseKeyboardInputs : IInputs
-    {
+    class SimpleMouseInputs : IInputs {
         private readonly IReadonlyRef<bool> lockCurser;
         private readonly IGame game;
         double lastX = 0, lastY = 0;
         private readonly Guid body;
         private readonly Guid foot;
+        private readonly Ref<double> mouseX;
+        private readonly Ref<double> mouseY;
 
-        public MouseKeyboardInputs(IReadonlyRef<bool> lockCurser, IGame game, Guid body, Guid foot)
+        private SimpleMouseInputs(IReadonlyRef<bool> lockCurser, IGame game, Guid body, Guid foot, double mouseStartX, double mouseStartY)
         {
             this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
             this.game = game ?? throw new ArgumentNullException(nameof(game));
             this.body = body;
             this.foot = foot;
+            mouseX = new Ref<double>(mouseStartX);
+            mouseY = new Ref<double>(mouseStartY);
+
         }
+
+
+        public static (SimpleMouseInputs, IReadonlyRef<double>, IReadonlyRef<double>) Create(IReadonlyRef<bool> lockCurser, IGame game, Guid body, Guid foot, double mouseStartX, double mouseStartY) {
+            var res = new SimpleMouseInputs(lockCurser,game, body, foot, mouseStartX, mouseStartY);
+            return (res, res.mouseX, res.mouseY);
+        }
+
 
         public async Task Init()
         {
@@ -72,17 +82,19 @@ namespace RemoteSoccer
                                     game.ResetGame(new ResetGame(game.GameName));
                                 }
 
-                                bodyX =
-                                    (coreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
-                                    (coreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
-                                bodyY =
-                                    (coreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
-                                    (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
-
-
+                                //bodyX =
+                                //    (coreWindow.GetKeyState(VirtualKey.A).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
+                                //    (coreWindow.GetKeyState(VirtualKey.D).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
+                                //bodyY =
+                                //    (coreWindow.GetKeyState(VirtualKey.W).HasFlag(CoreVirtualKeyStates.Down) ? -1.0 : 0.0) +
+                                //    (coreWindow.GetKeyState(VirtualKey.S).HasFlag(CoreVirtualKeyStates.Down) ? 1.0 : 0.0);
+                                
                                 var point = CoreWindow.GetForCurrentThread().PointerPosition;
-                                footX = (point.X - lastX);// * .75;
-                                footY = (point.Y - lastY);// * .75;
+                                footX = (point.X - lastX) * 30;// * .75;
+                                footY = (point.Y - lastY) * 30;// * .75;
+
+                                mouseX.thing += footX;
+                                mouseY.thing += footY;
 
                                 point = new Point(lastX, lastY);
                                 coreWindow.PointerPosition = point;
@@ -90,7 +102,7 @@ namespace RemoteSoccer
 
                                 lastX = point.X;
                                 lastY = point.Y;
-                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, foot, body, ControlScheme.MouseAndKeyboard, mouseDown);
+                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, foot, body, ControlScheme.SipmleMouse, mouseDown);
 
                             }
                             else
@@ -100,7 +112,7 @@ namespace RemoteSoccer
                                 lastX = point.X;
                                 lastY = point.Y;
 
-                                res = new PlayerInputs(0, 0, 0, 0, foot, body, ControlScheme.MouseAndKeyboard, false);
+                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, foot, body, ControlScheme.SipmleMouse, false);
                             }
 
                         });

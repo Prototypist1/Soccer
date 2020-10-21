@@ -11,6 +11,7 @@
         public const int footZ = 7;
         public const int ballZ = 8;
         public const int effectZ = 9;
+        public const int mouseZ = 10;
 
         //public const double playerPadding = 200;
 

@@ -62,7 +62,7 @@ namespace RemoteSoccer
     public sealed partial class MainPage : Page
     {
         private const int BodyA = 0x40;
-        IGameView rge;
+        RenderGameEvents rge;
 
         private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
 
@@ -236,7 +236,10 @@ namespace RemoteSoccer
         private async Task CreatePlayer()
         {
 
-            var inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
+            var (inputs,refx,refy) = SimpleMouseInputs.Create(lockCurser, game, body, foot, fieldDimensions.xMax/2.0, fieldDimensions.yMax/2.0);
+
+            rge.InitMouse(refx, refy);
+            //new MouseKeyboardInputs(lockCurser, game, body, foot);
 
             await inputs.Init();
 

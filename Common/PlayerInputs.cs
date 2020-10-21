@@ -18,9 +18,15 @@ namespace Common
         }
     }
 
+    public enum ControlScheme { 
+        MouseAndKeyboard,
+        SipmleMouse,
+        Controller
+    }
+
     public struct PlayerInputs
     {
-        public bool Controller { get; set; }
+        public ControlScheme ControlScheme { get; set; }
         public double FootX { get; set; }
         public double FootY { get; set; }
         public double BodyX { get; set; }
@@ -29,7 +35,7 @@ namespace Common
         public Guid BodyId { get; set; }
         public bool Throwing { get; set; }
 
-        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId, bool controller, bool throwing)
+        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId, ControlScheme controlScheme, bool throwing)
         {
             this.FootX = footX;
             this.FootY = footY;
@@ -37,7 +43,7 @@ namespace Common
             this.BodyY = bodyY;
             this.FootId = footId;
             this.BodyId = bodyId;
-            this.Controller = controller;
+            this.ControlScheme = controlScheme;
             this.Throwing = throwing;
         }
 
