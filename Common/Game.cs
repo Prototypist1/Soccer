@@ -1151,24 +1151,25 @@ namespace Common
 
             var list = new Position[1+ players.Length + (centers.Length*2)];
             var at = 0;
-            list[at]=new Position(ball.X, ball.Y, ballId, ball.Vx, ball.Vy);
+            list[at]=new Position(ball.X, ball.Y, ballId, ball.Vx, ball.Vy, false);
             at++;
 
             foreach (var foot in players)
             {
-                list[at] = new Position(foot.X, foot.Y, foot.id, foot.Vx, foot.Vy);
+                list[at] = new Position(foot.X, foot.Y, foot.id, foot.Vx, foot.Vy, foot.Throwing);
                 at++;
             }
             foreach (var body in centers)
             {
-                list[at] = new Position(body.X, body.Y, body.id, body.Vx, body.Vy);
+                list[at] = new Position(body.X, body.Y, body.id, body.Vx, body.Vy, false);
                 at++;
                 list[at] = new Position(
                     body.Outer.X, 
                     body.Outer.Y, 
                     body.Outer.Id, 
                     body.Vx, 
-                    body.Vy);
+                    body.Vy,
+                    false);
                 at++;
             }
             return list;

@@ -283,6 +283,9 @@ namespace RemoteSoccer
                 catch (InvalidOperationException)
                 {
                 }
+                catch (Exception e) { 
+                
+                }
             }
 
 
@@ -297,6 +300,9 @@ namespace RemoteSoccer
                 }
                 catch (InvalidOperationException)
                 {
+                }
+                catch (Exception e) {
+                
                 }
             }
 

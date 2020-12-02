@@ -2,6 +2,7 @@
 
 namespace Common
 {
+
     public struct CreatePlayer {
         public CreatePlayer(
             Guid foot,
