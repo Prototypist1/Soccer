@@ -583,31 +583,31 @@ namespace RemoteSoccer
 
                             preview.Translation = new Vector3((float)x, (float)y, 0);
 
-                            if (item.Throwing)
-                            {
-                                if (previews.TryGetValue(throwId, out var throwPreview))
-                                {
-                                }
-                                else
-                                {
-                                    throwPreview = new Line();
-                                    throwPreview.Stroke = new SolidColorBrush(Colors.Red);
-                                    throwPreview.StrokeEndLineCap = PenLineCap.Round;
-                                    throwPreview.StrokeStartLineCap = PenLineCap.Round;
-                                    throwPreview.StrokeThickness = item.IsFoot ? Constants.PlayerRadius * 2 : Constants.footLen * 2; ;
-                                    throwPreview.Opacity = .2f;
-                                    this.gameArea.Children.Add(throwPreview);
-                                    Canvas.SetZIndex(preview, item.IsFoot ? Constants.footPreviewZ : Constants.bodyPreviewZ);
-                                    previews[throwId] = throwPreview;
-                                }
+                            //if (item.Throwing)
+                            //{
+                            //    if (previews.TryGetValue(throwId, out var throwPreview))
+                            //    {
+                            //    }
+                            //    else
+                            //    {
+                            //        throwPreview = new Line();
+                            //        throwPreview.Stroke = new SolidColorBrush(Colors.Red);
+                            //        throwPreview.StrokeEndLineCap = PenLineCap.Round;
+                            //        throwPreview.StrokeStartLineCap = PenLineCap.Round;
+                            //        throwPreview.StrokeThickness = item.IsFoot ? Constants.PlayerRadius * 2 : Constants.footLen * 2; ;
+                            //        throwPreview.Opacity = .2f;
+                            //        this.gameArea.Children.Add(throwPreview);
+                            //        Canvas.SetZIndex(preview, item.IsFoot ? Constants.footPreviewZ : Constants.bodyPreviewZ);
+                            //        previews[throwId] = throwPreview;
+                            //    }
 
-                                throwPreview.X1 = dx / 2.0;
-                                throwPreview.X2 = -dx / 2.0;
-                                throwPreview.Y1 = dy / 2.0;
-                                throwPreview.Y2 = -dy / 2.0;
+                            //    throwPreview.X1 = dx / 2.0;
+                            //    throwPreview.X2 = -dx / 2.0;
+                            //    throwPreview.Y1 = dy / 2.0;
+                            //    throwPreview.Y2 = -dy / 2.0;
 
-                                throwPreview.Translation = new Vector3((float)x, (float)y, 0);
-                            }
+                            //    throwPreview.Translation = new Vector3((float)x, (float)y, 0);
+                            //}
                         }
 
 

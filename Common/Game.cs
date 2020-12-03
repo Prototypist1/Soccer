@@ -1149,27 +1149,26 @@ namespace Common
             bodies.Run(x => { centers = x.Values.ToArray(); return x; });
 
 
-            var list = new Position[1+ players.Length + (centers.Length*2)];
+            var list = new Position[1 + players.Length + (centers.Length * 2)];
             var at = 0;
-            list[at]=new Position(ball.X, ball.Y, ballId, ball.Vx, ball.Vy, false);
+            list[at] = new Position(ball.X, ball.Y, ballId, ball.Vx, ball.Vy);
             at++;
 
             foreach (var foot in players)
             {
-                list[at] = new Position(foot.X, foot.Y, foot.id, foot.Vx, foot.Vy, foot.Throwing);
+                list[at] = new Position(foot.X, foot.Y, foot.id, foot.Vx, foot.Vy);// 
                 at++;
             }
             foreach (var body in centers)
             {
-                list[at] = new Position(body.X, body.Y, body.id, body.Vx, body.Vy, false);
+                list[at] = new Position(body.X, body.Y, body.id, body.Vx, body.Vy);
                 at++;
                 list[at] = new Position(
-                    body.Outer.X, 
-                    body.Outer.Y, 
-                    body.Outer.Id, 
-                    body.Vx, 
-                    body.Vy,
-                    false);
+                    body.Outer.X,
+                    body.Outer.Y,
+                    body.Outer.Id,
+                    body.Vx,
+                    body.Vy);
                 at++;
             }
             return list;

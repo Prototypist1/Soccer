@@ -37,10 +37,17 @@ namespace Server
                 routes.MapHub<GameHub>($"/{nameof(GameHub)}");
             });
 
-            app.Run(async (context) =>
-            {
-                await context.Response.WriteAsync("Hello World!");
-            });
+            //app.UseRouting();
+
+            //app.UseEndpoints(endpoints =>
+            //{
+            //    endpoints.MapHub<GameHub>($"/{nameof(GameHub)}");
+            //});
+
+            //app.Run(async (context) =>
+            //{
+            //    await context.Response.WriteAsync("Hello World!");
+            //});
         }
     }
 }

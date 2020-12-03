@@ -7,12 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="3.1.5" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="3.1.5" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.5.0" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="5.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.6.1" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
     <PackageReference Include="Prototypist.Fluent" Version="1.0.0.2" />
     <PackageReference Include="Prototypist.TaskChain" Version="1.0.8" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>

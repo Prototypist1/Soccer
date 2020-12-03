@@ -16,40 +16,42 @@ namespace Common
         // I use it for the ball and the foot and the body
         // this is an obviously stupid design
         // I should have a different kinds of positions
-        public bool Throwing { get; set; }
+        //public bool Throwing { get; set; }
 
-        public Position(double x, double y, Guid id, double vx, double vy , bool thowing)
+        public Position(double x, double y, Guid id, double vx, double vy)
         {
             X = x;
             Y = y;
             Id = id;
             Vx = vx;
             Vy = vy;
-            Throwing = thowing;
+           // Throwing = thowing;
         }
     }
 
 
 
     public struct Preview {
-        public Preview(Guid id, double x, double y, bool isFoot, double vx, double vy, bool throwing)
+        public Preview(Guid id, double x, double y, bool isFoot
+            //, double vx, double vy, bool throwing
+            )
         {
             Id = id;
             X = x;
             Y = y;
             IsFoot = isFoot;
-            Vx = vx;
-            Vy = vy;
-            Throwing = throwing;
+            //Vx = vx;
+            //Vy = vy;
+            //Throwing = throwing;
         }
 
         public bool IsFoot { get; set; }
         public Guid Id { get; set; }
         public double X { get; set; }
         public double Y { get; set; }
-        public double Vx { get; set; }
-        public double Vy { get; set; }
-        public bool Throwing { get; set; }
+        //public double Vx { get; set; }
+        //public double Vy { get; set; }
+        //public bool Throwing { get; set; }
     }
 
     public struct Positions

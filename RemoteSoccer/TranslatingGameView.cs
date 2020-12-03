@@ -104,7 +104,7 @@ namespace RemoteSoccer
             {
                 if (TryTransfom(x.Id))
                 {
-                    return new Preview[] { new Preview(x.Id, x.X, x.Y,x.Id == foot,x.Vx,x.Vy,x.Throwing) };
+                    return new Preview[] { new Preview(x.Id, x.X, x.Y,x.Id == foot/*,x.Vx,x.Vy,x.Throwing*/) };
                 }
                 return new Preview[] { };
 
