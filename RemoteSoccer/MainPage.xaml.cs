@@ -41,19 +41,19 @@ namespace RemoteSoccer
     class PlayerInfo
     {
 
-        public readonly Guid body;
-        public readonly Guid foot;
+        //public readonly Guid body;
+        //public readonly Guid foot;
         public readonly IInputs input;
 
-        public PlayerInfo(Guid body, Guid foot, IInputs input, string localId)
+        public PlayerInfo(/*Guid body, Guid foot,*/ IInputs input, Guid localId)
         {
-            this.body = body;
-            this.foot = foot;
+            //this.body = body;
+            //this.foot = foot;
             this.input = input ?? throw new ArgumentNullException(nameof(input));
             LocalId = localId;
         }
 
-        public string LocalId { get; }
+        public Guid LocalId { get; }
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ namespace RemoteSoccer
 
         private bool sending = true;
         private TaskCompletionSource<bool> StoppedSending = new TaskCompletionSource<bool>();
-        private IGame game;
+        private Game2 game;
 
         // assumed to be run on the main thread
         private async IAsyncEnumerable<PlayerInputs> MainLoop()
@@ -161,7 +161,7 @@ namespace RemoteSoccer
             var gameName = gameInfo.gameName;
 
             var controlScheme = gameInfo.controlScheme;
-
+            git
 
 
 
@@ -172,24 +172,25 @@ namespace RemoteSoccer
                 {
                     //game = new LocalGame(fieldDimensions);
 
-                    game = new RemoteWithPreviewGame(foot, outer,body, gameName, await SingleSignalRHandler.GetOrThrow(), fieldDimensions);
+                    game = new Game2();
+                    //game = new RemoteWithPreviewGame(foot, outer,body, gameName, await SingleSignalRHandler.GetOrThrow(), fieldDimensions);
                     //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
                     game.OnDisconnect(OnDisconnect);
-                    game.SetCallbacks(rge);
+                    //game.SetCallbacks(rge);
                     //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
 
-                    //foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
-                    //{
-                    //    await CreatePlayer(gamePad);
-                    //}
+                    foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
+                    {
+                        await CreatePlayer(gamePad);
+                    }
 
                     //Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
                     //Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
 
-                    await CreatePlayer(controlScheme);
+                    //await CreatePlayer(controlScheme);
 
                     // why is this not part of set callbacks??
-                    var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
+                    //var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
 
                     game.StreamInputs(MainLoop());
                 }
@@ -222,7 +223,7 @@ namespace RemoteSoccer
                 if (playerInfo != null)
                 {
                     x.Remove(playerInfo);
-                    game.LeaveGame(new LeaveGame(playerInfo.LocalId));
+                    game.LeaveGame(new RemovePlayerEvent(playerInfo.LocalId));
                 }
                 return x;
             });
@@ -234,101 +235,92 @@ namespace RemoteSoccer
         }
 
         // these do not really work with multiple players
-        readonly Guid body = Guid.NewGuid();
-        readonly Guid outer = Guid.NewGuid();
-        readonly Guid foot = Guid.NewGuid();
+        //readonly Guid body = Guid.NewGuid();
+        //readonly Guid outer = Guid.NewGuid();
+        //readonly Guid foot = Guid.NewGuid();
 
-        private async Task CreatePlayer(ControlScheme controlScheme)
-        {
-            IInputs inputs = null;
+        //private async Task CreatePlayer(ControlScheme controlScheme, Guid id)
+        //{
+        //    IInputs inputs = null;
 
-            switch (controlScheme)
-            {
-                case ControlScheme.MouseAndKeyboard:
-                    inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
-                    break;
-                case ControlScheme.SipmleMouse:
-                    var (temp, refx, refy) = SimpleMouseInputs.Create(lockCurser, game, body, foot, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
-                    inputs = temp;
-                    rge.InitMouse(refx, refy);
-                    break;
-                case ControlScheme.Controller:
-                    throw new NotImplementedException();
-                    break;
-                default:
-                    break;
-            }
-
-
-            await inputs.Init();
-
-            var newPlayer = new PlayerInfo(body, foot, inputs, Guid.NewGuid().ToString());
-
-            var added = false;
-            while (!added)
-            {
-                try
-                {
-                    localPlayers.Run(x => { x.Add(newPlayer); return x; });
-                    added = true;
-                }
-                catch (Exception e)
-                {
-                    var db = 0;
-                }
-            }
-
-            //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-            var color = GetColor();
-            //}
-
-            //var name = "";
+        //    switch (controlScheme)
+        //    {
+        //        case ControlScheme.MouseAndKeyboard:
+        //            inputs = new MouseKeyboardInputs(lockCurser, game, id);
+        //            break;
+        //        case ControlScheme.SipmleMouse:
+        //            var (temp, refx, refy) = SimpleMouseInputs.Create(lockCurser, game, body, foot, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
+        //            inputs = temp;
+        //            rge.InitMouse(refx, refy);
+        //            break;
+        //        case ControlScheme.Controller:
+        //            throw new NotImplementedException();
+        //            break;
+        //        default:
+        //            break;
+        //    }
 
 
-            //if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerName, out var savedName))
-            //{
-            //    name = (string)savedName;
-            //}
+        //    await inputs.Init();
+
+        //    var newPlayer = new PlayerInfo(/*body, foot,*/ inputs, id);
+
+        //    var added = false;
+        //    while (!added)
+        //    {
+        //        try
+        //        {
+        //            localPlayers.Run(x => { x.Add(newPlayer); return x; });
+        //            added = true;
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            var db = 0;
+        //        }
+        //    }
+
+        //    //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+        //    var color = GetColor();
+        //    //}
+
+        //    //var name = "";
 
 
-            game.CreatePlayer(
-                new CreatePlayer(
-                    foot,
-                    body,
-                    outer,
-                    Constants.footLen * 2,
-                    Constants.PlayerRadius * 2,
-                    color[0],
-                    color[1],
-                    color[2],
-                    BodyA,
-                    color[0],
-                    color[1],
-                    color[2],
-                    0xff,
-                    "",
-                    newPlayer.LocalId
-                    ));
-        }
+        //    //if (localSettings.Values.TryGetValue(LocalSettingsKeys.PlayerName, out var savedName))
+        //    //{
+        //    //    name = (string)savedName;
+        //    //}
+
+
+        //    game.CreatePlayer(
+        //        new AddPlayerEvent(id,
+        //            "",
+        //            BodyA,
+        //            color[0],
+        //            color[1],
+        //            color[2],
+        //            0xff,
+        //            color[0],
+        //            color[1],
+        //            color[2],
+        //            new Physics2.Vector(fieldDimensions.xMax/2.0, fieldDimensions.yMax/2.0)
+        //            ));
+        //}
 
         private async Task CreatePlayer(Windows.Gaming.Input.Gamepad gamepad)
         {
             var body = Guid.NewGuid();
-            var outer = Guid.NewGuid();
-            var foot = Guid.NewGuid();
 
-            var inputs = new ControllerInputes(/*lockCurser,*/ body, foot, gamepad,
+            var inputs = new ControllerInputes(/*lockCurser,*/ body, /*foot,*/ gamepad,
                 () =>
                 {
                     var color = GetColor();
-                    game.ChangeColor(new ColorChanged(foot, color[0], color[1], color[2], 0xff));
-                    game.ChangeColor(new ColorChanged(body, color[0], color[1], color[2], BodyA));
-                    game.ChangeColor(new ColorChanged(outer, color[0], color[1], color[2], BodyA / 2));
+                    game.UpdatePlayer(new UpdatePlayerEvent(body, "", 0xff, color[0], color[1], color[2], BodyA,color[0], color[1], color[2]));
                 });
 
             await inputs.Init();
 
-            var newPlayer = new PlayerInfo(body, foot, inputs, Guid.NewGuid().ToString());
+            var newPlayer = new PlayerInfo(inputs, body);
 
             var added = false;
             while (!added)
@@ -356,24 +348,18 @@ namespace RemoteSoccer
             //    name = (string)savedName;
             //}
 
-
             game.CreatePlayer(
-                new CreatePlayer(
-                    foot,
-                    body,
-                    outer,
-                    Constants.footLen * 2,
-                    Constants.PlayerRadius * 2,
-                    color[0],
-                    color[1],
-                    color[2],
+                new AddPlayerEvent(body,
+                    "",
                     BodyA,
                     color[0],
                     color[1],
                     color[2],
                     0xff,
-                    "",
-                    newPlayer.LocalId
+                    color[0],
+                    color[1],
+                    color[2],
+                    new Physics2.Vector(fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0)
                     ));
         }
 
@@ -410,16 +396,16 @@ namespace RemoteSoccer
 
         private void ColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
         {
-            var color = ColorPicker.Color;
+            //var color = ColorPicker.Color;
 
 
-            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-            localSettings.Values[LocalSettingsKeys.PlayerColorR] = color.R;
-            localSettings.Values[LocalSettingsKeys.PlayerColorG] = color.G;
-            localSettings.Values[LocalSettingsKeys.PlayerColorB] = color.B;
+            //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            //localSettings.Values[LocalSettingsKeys.PlayerColorR] = color.R;
+            //localSettings.Values[LocalSettingsKeys.PlayerColorG] = color.G;
+            //localSettings.Values[LocalSettingsKeys.PlayerColorB] = color.B;
 
-            game.ChangeColor(new ColorChanged(foot, color.R, color.G, color.B, 0xff));
-            game.ChangeColor(new ColorChanged(body, color.R, color.G, color.B, BodyA));
+            //game.ChangeColor(new ColorChanged(foot, color.R, color.G, color.B, 0xff));
+            //game.ChangeColor(new ColorChanged(body, color.R, color.G, color.B, BodyA));
 
         }
 
@@ -460,12 +446,12 @@ namespace RemoteSoccer
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            var name = Namer.Text;
+            //var name = Namer.Text;
 
-            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-            localSettings.Values[LocalSettingsKeys.PlayerName] = name;
+            //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            //localSettings.Values[LocalSettingsKeys.PlayerName] = name;
 
-            game.NameChanged(new NameChanged(body, name));
+            //game.NameChanged(new NameChanged(body, name));
         }
 
         public async Task StopSendingInputs()
@@ -480,9 +466,9 @@ namespace RemoteSoccer
             PlayerInfo player = null;
             localPlayers.Run(x => { player = x.Single(); return x; });
 
-            game.LeaveGame(new LeaveGame(player.LocalId));
+            game.LeaveGame(new RemovePlayerEvent(player.LocalId));
             game.OnDisconnect(null);
-            game.ClearCallbacks();
+            //game.ClearCallbacks();
 
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                 CoreDispatcherPriority.Normal,

@@ -9,24 +9,27 @@ namespace RemoteSoccer
 {
     class ControllerInputes : IInputs
     {
+        private readonly Guid id;
 
         //private readonly IReadonlyRef<bool> lockCurser;
 
-        private readonly Guid body;
-        private readonly Guid foot;
+        //private readonly Guid body;
+        //private readonly Guid foot;
         public readonly Gamepad gamepad;
         private readonly Action changeColor;
 
         public ControllerInputes(
             //IReadonlyRef<bool> lockCurser,
-            Guid body,
-            Guid foot,
+            //Guid body,
+            //Guid foot,
+            Guid id,
             Gamepad gamepad,
             Action changeColor)
         {
+            this.id = id;
             //this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
-            this.body = body;
-            this.foot = foot;
+            //this.body = body;
+            //this.foot = foot;
             this.gamepad = gamepad;
             this.changeColor = changeColor;
         }

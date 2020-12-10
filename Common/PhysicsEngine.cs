@@ -608,7 +608,7 @@ namespace physics2
 
                                 var position = goal.posistion.NewAdded(normal.NewScaled(Constants.goalLen));
 
-                                gameState.Handle(new GameState.GoalScored(position, goal.leftGoal));
+                                GameStateUpdater.Handle(gameState,new GameState.GoalScored(position, goal.leftGoal));
                             }
                         });
                     }
