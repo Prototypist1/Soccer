@@ -337,7 +337,7 @@ namespace physics2
 
     public static class PhysicsEngine2
     {
-  
+
         public static IEnumerable<(GameState.Player, GameState.Player)> PlayerPairs(GameState gameState)
         {
             foreach (var p1 in gameState.players.Values)
@@ -352,17 +352,18 @@ namespace physics2
             }
         }
 
-        private class UpdateAction {
+        private class UpdateAction
+        {
             public double time;
             public Action action;
 
         }
 
         // try to move forward by 1 time;
-        public static Collision[] Simulate(GameState gameState, GameStateTracker gameStateTracker)
+        public static Collision[] Simulate(this GameState gameState, GameStateTracker gameStateTracker)
         {
             // who needs fine grained locking??
-  
+
 
             var collisions = new List<Collision>();
 
@@ -399,14 +400,14 @@ namespace physics2
                 {
                     foreach (var parameter in gameState.perimeterSegments)
                     {
-                        if (PhysicsMath2.TryBallLineCollision(gameState.ball.posistion, gameState.ball.velocity, parameter.start, parameter.end, new Vector(0,0), Constants.BallRadius, out var time))
+                        if (PhysicsMath2.TryBallLineCollision(gameState.ball.posistion, gameState.ball.velocity, parameter.start, parameter.end, new Vector(0, 0), Constants.BallRadius, out var time))
                         {
                             events.Add(new UpdateAction
                             {
                                 time = time,
                                 action = () =>
                                 {
-                                    gameState.ball.velocity = PhysicsMath2.HitWall(gameState.ball.velocity, parameter.start, parameter.end);
+                                    gameState.ball.velocity = gameState.ball.velocity.NewAdded(PhysicsMath2.HitWall(gameState.ball.velocity, parameter.start, parameter.end));
                                 }
                             });
                         }
@@ -442,11 +443,11 @@ namespace physics2
                     {
                         if (PhysicsMath2.TryBallLineCollision(
                             player.foot.position,
-                            player.foot.velocity.NewAdded(player.body.velocity).NewAdded(player.externalVelocity), 
-                            parameter.start, 
-                            parameter.end, 
-                            new Vector(0, 0), 
-                            Constants.BallRadius, 
+                            player.foot.velocity.NewAdded(player.body.velocity).NewAdded(player.externalVelocity),
+                            parameter.start,
+                            parameter.end,
+                            new Vector(0, 0),
+                            Constants.BallRadius,
                             out var time))
                         {
                             events.Add(new UpdateAction
@@ -462,11 +463,11 @@ namespace physics2
                                     var collisionLocation = player.foot.position.NewAdded(normal.NewScaled(-Constants.PlayerRadius));
                                     var force = normal.NewScaled(2 * player.foot.velocity.NewAdded(player.body.velocity).NewAdded(player.externalVelocity).Dot(normal));
                                     gameState.collisions.Add(new GameState.Collision(collisionLocation, force));
-
-
-                                    player.externalVelocity = PhysicsMath2.HitWall(player.externalVelocity, parameter.start, parameter.end);
-                                    player.body.velocity = PhysicsMath2.HitWall(player.body.velocity, parameter.start, parameter.end);
-                                    player.foot.velocity = PhysicsMath2.HitWall(player.foot.velocity, parameter.start, parameter.end);
+                                    
+                                    // half the foot and body velocity becomes external so you bounce a bit
+                                    player.externalVelocity = player.externalVelocity.NewAdded( PhysicsMath2.HitWall(player.foot.velocity.NewScaled(.5).NewAdded(player.body.velocity.NewScaled(.5)).NewAdded(player.externalVelocity), parameter.start, parameter.end));
+                                    player.body.velocity = player.body.velocity.NewAdded(PhysicsMath2.HitWall(player.body.velocity.NewScaled(.5), parameter.start, parameter.end));
+                                    player.foot.velocity = player.foot.velocity.NewAdded(PhysicsMath2.HitWall(player.foot.velocity.NewScaled(.5), parameter.start, parameter.end));
 
                                 }
                             });
@@ -513,23 +514,22 @@ namespace physics2
                                     part1 = -1;
                                     part2 = 1;
                                 }
-                                else {
+                                else
+                                {
                                     var velocityVector1 = p1.foot.velocity.NewAdded(p1.body.velocity).NewAdded(p1.externalVelocity);
-                                    var velocityVector2 = p1.foot.velocity.NewAdded(p1.body.velocity).NewAdded(p1.externalVelocity);
-
-
+                                    var velocityVector2 = p2.foot.velocity.NewAdded(p2.body.velocity).NewAdded(p2.externalVelocity);
 
                                     var denom = velocityVector1.NewMinus().NewAdded(velocityVector2).Dot(normal);
 
                                     var vv1dot = velocityVector1.Dot(normal.NewMinus());
                                     var vv2dot = velocityVector2.Dot(normal);
 
-                                    part1 = Math.Min(1, Math.Max(-1, vv1dot / denom));
-                                    part2 = Math.Min(1, Math.Max(-1, vv2dot / denom));
+                                    part1 = Math.Min(1, Math.Max(-1, (vv2dot / denom) - (vv1dot / denom)));
+                                    part2 = -part1;
                                 }
 
-                                p1.externalVelocity = p1.externalVelocity.NewAdded(force.NewScaled((1+ part1) / p1.mass));
-                                p2.externalVelocity = p2.externalVelocity.NewAdded(force.NewScaled(-(1 +part2) / p2.mass));
+                                p1.externalVelocity = p1.externalVelocity.NewAdded(force.NewScaled(-(1 + part1) / p1.mass));
+                                p2.externalVelocity = p2.externalVelocity.NewAdded(force.NewScaled((1 + part2) / p2.mass));
 
                                 if (gameState.ball.ownerOrNull == p1)
                                 {
@@ -561,7 +561,7 @@ namespace physics2
                             player.foot.position,
                             new Vector(ballWall.x, ballWall.y),
                             player.foot.velocity.NewAdded(player.body.velocity).NewAdded(player.externalVelocity),
-                            new Vector(0,0),
+                            new Vector(0, 0),
                             Constants.PlayerRadius + ballWall.radius,
                             out var time))
                         {
@@ -588,34 +588,44 @@ namespace physics2
                     }
                 }
 
-                foreach (var goal in gameState.goals)
+                if (gameStateTracker.CanScore())
                 {
-                    if (PhysicsMath2.TryBallBallCollistion(
-                        gameState.ball.posistion,
-                        goal.posistion,
-                        gameState.ball.velocity,
-                        new Vector(0,0),
-                        Constants.BallRadius + Constants.goalLen,
-                        out var time))
+
+                    foreach (var goal in new[] { gameState.leftGoal, gameState.rightGoal })
                     {
-                        events.Add(new UpdateAction
+                        if (PhysicsMath2.TryBallBallCollistion(
+                            gameState.ball.posistion,
+                            goal.posistion,
+                            gameState.ball.velocity,
+                            new Vector(0, 0),
+                            Constants.BallRadius + Constants.goalLen,
+                            out var time))
                         {
-                            time = time,
-                            action = () =>
+                            events.Add(new UpdateAction
                             {
+                                time = time,
+                                action = () =>
+                                {
+                                    if (gameStateTracker.CanScore())
+                                    {
+                                        var normal = gameState.ball.posistion.NewAdded(goal.posistion.NewScaled(-1)).NewUnitized();
 
-                                var normal = gameState.ball.posistion.NewAdded(goal.posistion.NewScaled(-1)).NewUnitized();
+                                        var position = goal.posistion.NewAdded(normal.NewScaled(Constants.goalLen));
 
-                                var position = goal.posistion.NewAdded(normal.NewScaled(Constants.goalLen));
+                                        GameStateUpdater.Handle(gameState, new GameState.GoalScored(position, goal.leftGoal));
 
-                                GameStateUpdater.Handle(gameState,new GameState.GoalScored(position, goal.leftGoal));
-                            }
-                        });
+                                        gameStateTracker.Scored();
+                                    }
+
+                                }
+                            });
+                        }
                     }
                 }
 
                 events = events
                     .Where(x => x.time > 0)
+                    .Where(x => x.time <= timeLeft)
                     .ToList();
 
                 if (events.Any())

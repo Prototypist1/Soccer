@@ -1,6 +1,7 @@
 ﻿//using Microsoft.Toolkit.Uwp.UI.Media;
 
 using Common;
+using Microsoft.Graphics.Canvas.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,6 +44,41 @@ namespace RemoteSoccer
         public Ellipse ellipse;
     }
 
+    class ParameterExtension
+    {
+        public Line line;
+    }
+
+    class RenderGameState2 {
+        private CanvasControl canvas;
+        private FullField zoomer;
+
+        public RenderGameState2(CanvasControl canvas, FullField zoomer)
+        {
+            this.canvas = canvas;
+            this.zoomer = zoomer;
+        }
+
+        public void Update(GameState gameState, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
+        {
+            var (playerX, playerY, xPlus, yPlus) = zoomer.Update(Array.Empty<Position>());
+
+            var scale = (float) zoomer.GetTimes();
+
+            DrawCircle(
+                gameState.leftGoal.posistion.x, gameState.leftGoal.posistion.y, Constants.goalLen, Colors.Green);
+            DrawCircle(
+                gameState.rightGoal.posistion.x, gameState.rightGoal.posistion.y, Constants.goalLen, Colors.Green);
+        
+            void DrawCircle(double x, double y, double rad, Color color) {
+                args.DrawingSession.FillCircle(
+                   (float)((x * scale) + xPlus), (float)((y * scale) + yPlus), (float)(rad * scale), color);
+
+            }
+        }
+
+    }
+
     class RenderGameState {
 
         private Canvas gameArea;
@@ -51,9 +87,10 @@ namespace RemoteSoccer
 
         private Dictionary<Guid, PlayerExtension> players = new Dictionary<Guid, PlayerExtension>();
         private BallExtension ballExtension;
-        private GoalExtension goal1;
-        private GoalExtension goal2;
+        private GoalExtension leftGoal;
+        private GoalExtension rightGoal;
         private BallWallExtension ballWallExtension;
+        private List<ParameterExtension> parameter;
 
         public RenderGameState(Canvas gameArea, FullField gameView, TextBlock leftScore, TextBlock rightScore)
         {
@@ -67,7 +104,7 @@ namespace RemoteSoccer
         
         }
 
-        public void MoveTo(FrameworkElement element, double x, double y) {
+        private void MoveTo(FrameworkElement element, double x, double y) {
             element.TransformMatrix =
                         // first we center
                         new Matrix4x4(
@@ -163,12 +200,11 @@ namespace RemoteSoccer
                 var ball = new Ellipse()
                 {
                     Height = 2 * Constants.BallRadius,
-                    Width = 2 * Constants.BallRadius
+                    Width = 2 * Constants.BallRadius,
+                    Fill = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00))
                 };
 
                 MoveTo(ball, gameState.ball.posistion.x, gameState.ball.posistion.y);
-
-                ball.Fill = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff));
 
                 Canvas.SetZIndex(ball, Constants.ballZ);
 
@@ -188,18 +224,18 @@ namespace RemoteSoccer
 
 
             #region goals
-            if (goal1 == null)
+            if (leftGoal == null)
             {
-                goal1 = new GoalExtension
+                leftGoal = new GoalExtension
                 {
-                    ellipse = MakeGoal(gameState.goals.First())
+                    ellipse = MakeGoal(gameState.leftGoal)
                 };
             }
-            if (goal2 == null)
+            if (rightGoal == null)
             {
-                goal2 = new GoalExtension
+                rightGoal = new GoalExtension
                 {
-                    ellipse = MakeGoal(gameState.goals.Skip(1).First())
+                    ellipse = MakeGoal(gameState.rightGoal)
                 };
             }
             #endregion
@@ -211,7 +247,7 @@ namespace RemoteSoccer
                 var ballWall = new Ellipse
                 {
                     Visibility = Visibility.Collapsed,
-                    Stroke = new SolidColorBrush(Color.FromArgb(0xff, 0xbb, 0xbb, 0xbb)),
+                    Stroke = new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff)),
                 };
                 Canvas.SetZIndex(ballWall, Constants.footZ);
                 this.gameArea.Children.Add(ballWall);
@@ -222,15 +258,41 @@ namespace RemoteSoccer
             }
             ballWallExtension.ellipse.Visibility = gameState.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
             ballWallExtension.ellipse.Width = gameState.CountDownState.Radius * 2;
-            ballWallExtension.ellipse.Height = gameState.CountDownState.Radius * 2;
-            ballExtension.ellipse.Opacity = gameState.CountDownState.BallOpacity;
+            ballWallExtension.ellipse.Height =  gameState.CountDownState.Radius * 2;
+            ballExtension.ellipse.Opacity = gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity: 1 ;
             MoveTo(ballWallExtension.ellipse, gameState.CountDownState.X, gameState.CountDownState.Y);
-            ballExtension.ellipse.StrokeThickness = gameState.CountDownState.StrokeThickness;
+            ballWallExtension.ellipse.StrokeThickness = gameState.CountDownState.StrokeThickness;
             #endregion
 
             #region score
             leftScore.Text = gameState.leftScore + "";
             rightScore.Text = gameState.rightScore + "";
+            #endregion
+
+            #region Walls
+            if (parameter == null) {
+                parameter = new List<ParameterExtension>();
+                foreach (var segment in gameState.perimeterSegments)
+                {
+                    var line = new Line
+                    {
+                        Stroke = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00)),
+                        X1 = segment.start.x,
+                        Y1 = segment.start.y,
+                        X2 = segment.end.x,
+                        Y2 = segment.end.y,
+                        StrokeThickness = 100
+                    };
+                    var parameterPart = new ParameterExtension
+                        {
+                        line = line
+                        };
+
+                    parameter.Add(parameterPart);
+                    Canvas.SetZIndex(line, Constants.footZ);
+                    this.gameArea.Children.Add(line);
+                }
+            }
             #endregion
 
             var (playerX, playerY, xPlus, yPlus) = gameView.Update(Array.Empty<Position>());
@@ -253,7 +315,7 @@ namespace RemoteSoccer
 
             MoveTo(goal, gameStateGoal.posistion.x, gameStateGoal.posistion.y);
 
-            goal.Fill = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00));
+            goal.Fill = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff));
 
             Canvas.SetZIndex(goal, Constants.goalZ);
 

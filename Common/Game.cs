@@ -603,7 +603,7 @@ namespace Common
                 {
                     var innerRes = item.Value.First();
                     item.Value.RemoveStart();
-                    res[innerRes.BodyId] = innerRes;
+                    res[innerRes.Id] = innerRes;
                 }
                 yield return res;
             }
@@ -1086,7 +1086,7 @@ namespace Common
         public void PlayerInputs(PlayerInputs playerInputs)
         {
             //var lastLast = LastInputUTC;
-            playersInputs.GetOrAdd(playerInputs.FootId, new ConcurrentLinkedList<PlayerInputs>()).Add(playerInputs);
+            playersInputs.GetOrAdd(playerInputs.Id, new ConcurrentLinkedList<PlayerInputs>()).Add(playerInputs);
 
 
             if (Interlocked.CompareExchange(ref running, 1, 0) == 0)

@@ -25,6 +25,10 @@ namespace RemoteSoccer
 
         public (double, double, double, double) Update(Position[] positionsList)
         {
+            return Update();
+        }
+
+        public (double, double, double, double) Update() {
             var times = GetTimes();
             return (
                 centerX,

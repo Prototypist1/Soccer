@@ -1,4 +1,5 @@
 ﻿using Common;
+using Physics2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,21 +46,31 @@ namespace RemoteSoccer
         {
             //if (lockCurser.Thing)
             //{
-                var snap = gamepad.GetCurrentReading();
+            var snap = gamepad.GetCurrentReading();
 
-                if ((snap.Buttons & GamepadButtons.A) == GamepadButtons.A)
+            if ((snap.Buttons & GamepadButtons.A) == GamepadButtons.A)
+            {
+                if (!lastA)
                 {
-                    if (!lastA)
-                    {
-                        changeColor();
-                    }
-                    lastA = true;
+                    changeColor();
                 }
-                else {
-                    lastA = false;
-                }
+                lastA = true;
+            }
+            else
+            {
+                lastA = false;
+            }
+            var right = new Vector(snap.RightThumbstickX, -snap.RightThumbstickY);
+            if (right.Length > 1) {
+                right = right.NewUnitized();
+            }
+            var left = new Vector(snap.LeftThumbstickX, -snap.LeftThumbstickY);
+            if (left.Length > 1)
+            {
+                left = left.NewUnitized();
+            }
 
-                return Task.FromResult(new PlayerInputs(snap.RightThumbstickX, -snap.RightThumbstickY, snap.LeftThumbstickX, -snap.LeftThumbstickY, foot, body,ControlScheme.Controller, (snap.Buttons & GamepadButtons.RightShoulder)== GamepadButtons.RightShoulder));
+            return Task.FromResult(new PlayerInputs(right.x, right.y, left.x, left.y, id, ControlScheme.Controller, (snap.Buttons & GamepadButtons.RightShoulder) == GamepadButtons.RightShoulder));
             //}
             //else
             //{

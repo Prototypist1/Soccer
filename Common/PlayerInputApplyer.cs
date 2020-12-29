@@ -5,23 +5,46 @@ using System.Collections.Generic;
 namespace Common
 {
     public static class PlayerInputApplyer {
+        
 
-        private static double E(double v)
+        private static double VtoE(double v)
         {
-            var simpleV = Math.Max(0, v - Constants.bodyStartAt);
+            //if (v < Constants.bodyStartAt)
+            //{
+            //    return v;
+            //}
+            //else
+            //{
+                var simpleV = Math.Max(0, v - Constants.bodyStartAt);
 
-            var distanceToTop = ((Constants.bodySpeedLimit - Constants.bodyStartAt) - simpleV) / (Constants.bodySpeedLimit - Constants.bodyStartAt);
+                var distanceToTop = ((Constants.bodySpeedLimit - Constants.bodyStartAt) - simpleV) / (Constants.bodySpeedLimit - Constants.bodyStartAt);
 
-            var eDistanceToTop = Math.Pow(Math.Max(0, distanceToTop), .5);
+                var eDistanceToTop = Math.Pow(Math.Max(0, distanceToTop), .5);
 
-            return ((1 - eDistanceToTop) * (Constants.bodySpeedLimit - Constants.bodyStartAt)) + Constants.bodyStartAt;
+                return ((1 - eDistanceToTop) * (Constants.bodySpeedLimit - Constants.bodyStartAt)) + Constants.bodyStartAt;
+            //}
         }
-        private static double EInverse(double e)
+        private static double EtoV(double e)
         {
-            var p2 = Math.Min(1, (e - Constants.bodyStartAt) / (Constants.bodySpeedLimit - Constants.bodyStartAt));
+            //if (e < VtoE(Constants.bodyStartAt))
+            //{
+            //    return e;
+            //}
+            //else {
+                var p2 = Math.Min(1, (e - Constants.bodyStartAt) / (Constants.bodySpeedLimit - Constants.bodyStartAt));
+                var p1 = 1 - p2;
+
+                return Constants.bodyStartAt + ((e - Constants.bodyStartAt) * p1) + ((Constants.bodySpeedLimit - Constants.bodyStartAt) * p2);
+            //}
+        }
+
+        private static double SpeedLimit(double d)
+        {
+
+            var p2 = Math.Min(1, d / Constants.speedLimit);
             var p1 = 1 - p2;
 
-            return Constants.bodyStartAt + ((e - Constants.bodyStartAt) * p1) + ((Constants.bodySpeedLimit - Constants.bodyStartAt) * p2);
+            return (d * p1) + (Constants.speedLimit * p2);
         }
 
         public static void Apply(this GameState state, Dictionary<Guid, PlayerInputs> inputs)
@@ -82,7 +105,7 @@ namespace Common
                             var engeryAdd = player == state.ball.ownerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 
                             //
-                            var finalE = E(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + engeryAdd;
+                            var finalE = VtoE(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + engeryAdd;
                             var inputAmount = new Vector(input.BodyX, input.BodyY).Length;
                             if (inputAmount < .1)
                             {
@@ -93,7 +116,7 @@ namespace Common
                                 finalE = Math.Min(finalE, (inputAmount - .1) * (inputAmount - .1) * engeryAdd * 100);
                             }
 
-                            var finalSpeed = EInverse(finalE);
+                            var finalSpeed = EtoV(finalE);
                             var finalVelocity = f.NewScaled(finalSpeed);
 
                             if (finalVelocity.Length > new Vector(dx, dy).Length)
@@ -135,7 +158,7 @@ namespace Common
 
                             var engeryAdd = player == state.ball.ownerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 
-                            var R0 = EInverse(E(Math.Sqrt(Math.Pow(player.body.velocity.x, 2) + Math.Pow(player.body.velocity.y, 2))) + engeryAdd);
+                            var R0 = EtoV(VtoE(Math.Sqrt(Math.Pow(player.body.velocity.x, 2) + Math.Pow(player.body.velocity.y, 2))) + engeryAdd);
                             var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
                             var b = 2 * ((Math.Sign(input.BodyX) * player.body.velocity.x * damp) + (Math.Sign(input.BodyY) * player.body.velocity.y * damp));
                             var c = Math.Pow(player.body.velocity.x * damp, 2) + Math.Pow(player.body.velocity.y * damp, 2) - Math.Pow(R0, 2);
@@ -155,29 +178,117 @@ namespace Common
                             var engeryAdd = player == state.ball.ownerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 
                             //
-                            var finalE = E(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + engeryAdd;
+                            var finalE = VtoE(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + engeryAdd;
                             var inputAmount = new Vector(input.BodyX, input.BodyY).Length;
                             if (inputAmount < .1)
                             {
-                                finalE = 0;
+                                player.body.velocity = new Vector(0, 0);
                             }
-                            else if (inputAmount < 1)
+                            else if (inputAmount < 9)
                             {
-                                finalE = Math.Min(finalE, (inputAmount - .1) * (inputAmount - .1) * engeryAdd * 100);
+                                var finalSpeed = ((inputAmount - .1) / .8) * Constants.bodyStartAt;
+                                var finalVelocity = f.NewScaled(finalSpeed);
+                                player.body.velocity = finalVelocity;
                             }
-
-                            var finalSpeed = EInverse(finalE);
-                            var finalVelocity = f.NewScaled(finalSpeed);
-
-
-                            var vector = new Vector(finalVelocity.x - player.body.velocity.x, finalVelocity.y - player.body.velocity.y);
-
-                            player.body.velocity = new Vector(player.body.velocity.x + vector.x, player.body.velocity.y + vector.y);
+                            else {
+                                var finalSpeed = EtoV(finalE);
+                                var finalVelocity = f.NewScaled(finalSpeed);
+                                player.body.velocity = finalVelocity;
+                            }
                         }
                     }
                     else
                     {
                         player.body.velocity = new Vector(0, 0);
+                    }
+
+
+                    var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
+
+                    if (input.ControlScheme == ControlScheme.Controller)
+                    {
+                        var tx = (input.FootX * max) + player.body.position.x;
+                        var ty = (input.FootY * max) + player.body.position.y;
+
+                        var vector = new Vector(tx - player.foot.velocity.x, ty - player.foot.velocity.y);
+
+
+                        var v = new Vector(tx - player.foot.position.x, ty - player.foot.position.y);
+
+                        var len = v.Length;
+                        if (len != 0)
+                        {
+                            var speedLimit = SpeedLimit(len);
+                            v = v.NewUnitized().NewScaled(speedLimit);
+                        }
+                        player.foot.velocity = v;
+                        
+                    }
+                    else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
+                    {
+
+                        var tx = (input.FootX) + player.foot.position.x;
+                        var ty = (input.FootY) + player.foot.position.y;
+
+
+                        var dx = tx - player.body.position.x;
+                        var dy = ty - player.body.position.y;
+
+                        var d = new Vector(dx, dy);
+
+                        if (d.Length > max)
+                        {
+                            d = d.NewUnitized().NewScaled(max);
+                        }
+
+                        var validTx = d.x + player.body.position.x;
+                        var validTy = d.y + player.body.position.y;
+
+                        var vx = validTx - player.foot.position.x;
+                        var vy = validTy - player.foot.position.y;
+
+                        var v = new Vector(vx, vy);
+
+                        // there is a speed limit things moving too fast are bad for online play
+                        // you can get hit before you have time to respond 
+                        var len = v.Length;
+                        if (len != 0)
+                        {
+                            var speedLimit = SpeedLimit(len);
+                            v = v.NewUnitized().NewScaled(speedLimit);
+                        }
+
+                        player.foot.velocity = v;
+                    }
+                    else if (input.ControlScheme == ControlScheme.SipmleMouse)
+                    {
+
+                        var dx = input.FootX - player.body.position.x;
+                        var dy = input.FootY - player.body.position.y;
+
+                        var d = new Vector(dx, dy);
+
+                        if (d.Length > max)
+                        {
+                            d = d.NewUnitized().NewScaled(max);
+                        }
+
+                        var validTx = d.x + player.body.position.x;
+                        var validTy = d.y + player.body.position.y;
+
+                        var vx = validTx - player.foot.position.x;
+                        var vy = validTy - player.foot.position.y;
+
+                        var v = new Vector(vx, vy);
+
+                        // simple mouse drive the speed limit when it needs to
+                        var len = v.Length;
+                        if (len > Constants.speedLimit)
+                        {
+                            v = v.NewUnitized().NewScaled(Constants.speedLimit);
+                        }
+
+                        player.foot.velocity = v;
                     }
                 }
 

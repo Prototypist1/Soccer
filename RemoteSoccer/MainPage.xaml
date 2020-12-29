@@ -6,13 +6,16 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Unloaded="Page_Unloaded"
     >
 
     <Grid x:Name="GameHolder" SizeChanged="GameHolder_SizeChanged" Background="#ffeeeeee"  PointerWheelChanged="GameHolder_PointerWheelChanged">
 
-        <Canvas x:Name="GameArea" />
+        <!--<Canvas x:Name="GameArea" />-->
+        <canvas:CanvasControl x:Name="Canvas" Draw="Canvas_Draw" />
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Border BorderThickness="10" >

@@ -13,25 +13,23 @@ namespace RemoteSoccer
         private readonly IReadonlyRef<bool> lockCurser;
         private readonly IGame game;
         double lastX = 0, lastY = 0;
-        private readonly Guid body;
-        private readonly Guid foot;
+        private readonly Guid id;
         private readonly Ref<double> mouseX;
         private readonly Ref<double> mouseY;
 
-        private SimpleMouseInputs(IReadonlyRef<bool> lockCurser, IGame game, Guid body, Guid foot, double mouseStartX, double mouseStartY)
+        private SimpleMouseInputs(IReadonlyRef<bool> lockCurser, IGame game, Guid id, double mouseStartX, double mouseStartY)
         {
             this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
             this.game = game ?? throw new ArgumentNullException(nameof(game));
-            this.body = body;
-            this.foot = foot;
+            this.id = id;
             mouseX = new Ref<double>(mouseStartX);
             mouseY = new Ref<double>(mouseStartY);
 
         }
 
 
-        public static (SimpleMouseInputs, IReadonlyRef<double>, IReadonlyRef<double>) Create(IReadonlyRef<bool> lockCurser, IGame game, Guid body, Guid foot, double mouseStartX, double mouseStartY) {
-            var res = new SimpleMouseInputs(lockCurser,game, body, foot, mouseStartX, mouseStartY);
+        public static (SimpleMouseInputs, IReadonlyRef<double>, IReadonlyRef<double>) Create(IReadonlyRef<bool> lockCurser, IGame game, Guid id, double mouseStartX, double mouseStartY) {
+            var res = new SimpleMouseInputs(lockCurser,game, id, mouseStartX, mouseStartY);
             return (res, res.mouseX, res.mouseY);
         }
 
@@ -102,7 +100,7 @@ namespace RemoteSoccer
 
                                 lastX = point.X;
                                 lastY = point.Y;
-                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, foot, body, ControlScheme.SipmleMouse, mouseDown);
+                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, id, ControlScheme.SipmleMouse, mouseDown);
 
                             }
                             else
@@ -112,7 +110,7 @@ namespace RemoteSoccer
                                 lastX = point.X;
                                 lastY = point.Y;
 
-                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, foot, body, ControlScheme.SipmleMouse, false);
+                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, id, ControlScheme.SipmleMouse, false);
                             }
 
                         });

@@ -31,18 +31,16 @@ namespace Common
         public double FootY { get; set; }
         public double BodyX { get; set; }
         public double BodyY { get; set; }
-        public Guid FootId { get; set; }
-        public Guid BodyId { get; set; }
+        public Guid Id { get; set; }
         public bool Throwing { get; set; }
 
-        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid footId, Guid bodyId, ControlScheme controlScheme, bool throwing)
+        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid Id, ControlScheme controlScheme, bool throwing)
         {
             this.FootX = footX;
             this.FootY = footY;
             this.BodyX = bodyX;
             this.BodyY = bodyY;
-            this.FootId = footId;
-            this.BodyId = bodyId;
+            this.Id = Id;
             this.ControlScheme = controlScheme;
             this.Throwing = throwing;
         }

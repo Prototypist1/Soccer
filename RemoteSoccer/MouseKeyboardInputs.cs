@@ -90,7 +90,7 @@ namespace RemoteSoccer
 
                                 lastX = point.X;
                                 lastY = point.Y;
-                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, foot, body, ControlScheme.MouseAndKeyboard, mouseDown);
+                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, id, ControlScheme.MouseAndKeyboard, mouseDown);
 
                             }
                             else
@@ -100,7 +100,7 @@ namespace RemoteSoccer
                                 lastX = point.X;
                                 lastY = point.Y;
 
-                                res = new PlayerInputs(0, 0, 0, 0, foot, body, ControlScheme.MouseAndKeyboard, false);
+                                res = new PlayerInputs(0, 0, 0, 0, id, ControlScheme.MouseAndKeyboard, false);
                             }
 
                         });

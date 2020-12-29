@@ -453,7 +453,7 @@ namespace Physics2
             var directionalUnit = DirectionalUnit(start, end);
             var normalUnit = NormalUnit(start, end, directionalUnit);
 
-            return velocity.NewAdded(normalUnit.NewScaled( velocity.Dot(normalUnit) * 2));
+            return normalUnit.NewScaled( velocity.Dot(normalUnit) * -2);
         }
 
         public static bool TrySolveQuadratic(double a, double b, double c, out double res)
@@ -498,16 +498,45 @@ namespace Physics2
 
         internal static void TryPushBallLine(GameState.Ball ball, GameState.PerimeterSegment perimeterSegment)
         {
-            throw new NotImplementedException();
+            var directionalUnit = DirectionalUnit(perimeterSegment.start, perimeterSegment.end);
+            var normalUnit = NormalUnit(perimeterSegment.start, perimeterSegment.end, directionalUnit);
+
+            var normalDistance = ball.posistion.Dot(normalUnit);
+            var lineNormalDistance = perimeterSegment.start.Dot(normalUnit);
+
+            var violation = Math.Abs(lineNormalDistance - normalDistance) - Constants.BallRadius;
+            if (violation < 0)
+            {
+                var violationVector = normalUnit.NewScaled(violation * Math.Sign(lineNormalDistance - normalDistance));
+                ball.velocity = ball.velocity.NewAdded(violationVector);
+            }
         }
         internal static void TryPushBallLine(GameState.Player player, GameState.PerimeterSegment perimeterSegment)
         {
-            throw new NotImplementedException();
+            var directionalUnit = DirectionalUnit(perimeterSegment.start, perimeterSegment.end);
+            var normalUnit = NormalUnit(perimeterSegment.start, perimeterSegment.end, directionalUnit);
+
+            var normalDistance = player.foot.position.Dot(normalUnit);
+            var lineNormalDistance = perimeterSegment.start.Dot(normalUnit);
+
+            var violation = Math.Abs(lineNormalDistance - normalDistance) - Constants.BallRadius;
+            if (violation < 0)
+            {
+                var violationVector = normalUnit.NewScaled(violation * Math.Sign(lineNormalDistance - normalDistance));
+                player.externalVelocity = player.externalVelocity.NewAdded(violationVector);
+            }
         }
 
         internal static void TryPushBallWall(GameState.Player player, (double x, double y, double radius) ballwall)
         {
-            throw new NotImplementedException();
+            var dis = player.foot.position.NewAdded(new Vector(-ballwall.x, -ballwall.y));
+
+
+            if (dis.Length < Constants.PlayerRadius + ballwall.radius)
+            {
+                var violationVector = (dis.Length == 0 ? new Vector(1,0) : dis.NewUnitized()).NewScaled((Constants.PlayerRadius + ballwall.radius) - dis.Length);
+                player.externalVelocity = player.externalVelocity.NewAdded(violationVector);
+            }
         }
 
     }

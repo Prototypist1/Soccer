@@ -81,7 +81,7 @@ namespace Common
             public int lastHadBall;
             public double mass;
         }
-        public List<Goal> goals = new List<Goal>();
+        public Goal leftGoal, rightGoal;
         public class Goal {
             public Vector posistion;
             public bool leftGoal;
@@ -110,6 +110,12 @@ namespace Common
 
         public class PerimeterSegment {
             public Vector start, end;
+
+            public PerimeterSegment(Vector start, Vector end)
+            {
+                this.start = start;
+                this.end = end;
+            }
         }
         public PerimeterSegment[] perimeterSegments;
         // previews 
@@ -118,7 +124,24 @@ namespace Common
 
     public static class GameStateUpdater{
 
-        public static void Handle(GameState gameState, UpdatePlayerEvent evnt)
+        public static void Handle(this GameState state, InitGameStateEvent evnt) {
+            state.ball = new GameState.Ball(evnt.ballPosition, evnt.ballVelocity);
+
+            state.leftGoal = new GameState.Goal(evnt.leftGoalPosition, true);
+            state.rightGoal = new GameState.Goal(evnt.rightGoalPosition, false);
+
+            state.perimeterSegments = new[]
+            {
+                new GameState.PerimeterSegment(new  Vector(0, 0),new  Vector(evnt.fieldDimensions.xMax, 0)),
+                new GameState.PerimeterSegment(new  Vector(0, evnt.fieldDimensions.yMax),new  Vector(0, 0)),
+                new GameState.PerimeterSegment(new  Vector(evnt.fieldDimensions.xMax,evnt.fieldDimensions.yMax),new  Vector(0,evnt.fieldDimensions.yMax)),
+                new GameState.PerimeterSegment(new  Vector(evnt.fieldDimensions.xMax,evnt.fieldDimensions.yMax),new  Vector(evnt.fieldDimensions.xMax,0))
+            };
+
+        }
+
+
+        public static void Handle(this GameState gameState, UpdatePlayerEvent evnt)
         {
             if (gameState.players.TryGetValue(evnt.id, out var player))
             {
@@ -133,7 +156,7 @@ namespace Common
                 player.foot.b = evnt.footB;
             }
         }
-        public static void Handle(GameState gameState, AddPlayerEvent evnt)
+        public static void Handle(this GameState gameState, AddPlayerEvent evnt)
         {
             gameState.players.Add(evnt.id, new GameState.Player
             {
@@ -141,19 +164,20 @@ namespace Common
                 name = evnt.Name,
                 externalVelocity = new Vector(0, 0),
                 body = new GameState.Player.Body(evnt.posistion, new Vector(0, 0), evnt.bodyA, evnt.bodyR, evnt.bodyG, evnt.bodyB),
-                foot = new GameState.Player.Foot(evnt.posistion, new Vector(0, 0), evnt.bodyA, evnt.bodyR, evnt.bodyG, evnt.bodyB)
+                foot = new GameState.Player.Foot(evnt.posistion, new Vector(0, 0), evnt.footA, evnt.footR, evnt.footG, evnt.footB),
+                mass = 1,
             });
         }
-        public static void Handle(GameState gameState, RemovePlayerEvent evnt)
+        public static void Handle(this GameState gameState, RemovePlayerEvent evnt)
         {
             gameState.players.Remove(evnt.id);
         }
-        public static void Handle(GameState gameState, ResetGameEvent evnt)
+        public static void Handle(this GameState gameState, ResetGameEvent evnt)
         {
             gameState.leftScore = 0;
             gameState.rightScore = 0;
         }
-        public static void Handle(GameState gameState, UpdateFrameEvent evnt)
+        public static void Handle(this GameState gameState, UpdateFrameEvent evnt)
         {
             if (evnt.frame > gameState.frame)
             {
@@ -191,7 +215,11 @@ namespace Common
                 }
             }
         }
-        public static void Handle(GameState gameState, GameState.GoalScored evnt)
+        public static void Handle(this GameState gameState, CountDownState countDownState) {
+            gameState.CountDownState = countDownState;
+        }
+
+        public static void Handle(this GameState gameState, GameState.GoalScored evnt)
         {
             gameState.goalsScored.Add(evnt);
             if (evnt.leftScored)
@@ -204,6 +232,24 @@ namespace Common
             }
         }
 
+    }
+
+    public class InitGameStateEvent
+    {
+        internal Vector ballPosition;
+        internal Vector ballVelocity;
+        internal Vector leftGoalPosition;
+        internal Vector rightGoalPosition;
+        internal FieldDimensions fieldDimensions;
+
+        public InitGameStateEvent(Vector ballPosition, Vector ballVelocity, Vector leftGoalPosition, Vector rightGoalPosition, FieldDimensions fieldDimensions)
+        {
+            this.ballPosition = ballPosition;
+            this.ballVelocity = ballVelocity;
+            this.leftGoalPosition = leftGoalPosition;
+            this.rightGoalPosition = rightGoalPosition;
+            this.fieldDimensions = fieldDimensions;
+        }
     }
 
     public class UpdatePlayerEvent {

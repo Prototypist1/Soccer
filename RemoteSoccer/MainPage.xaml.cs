@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Gaming.Input;
@@ -62,40 +63,20 @@ namespace RemoteSoccer
     public sealed partial class MainPage : Page
     {
         private const int BodyA = 0x40;
-        RenderGameEvents rge;
+        //RenderGameEvents rge;
 
         private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
 
         private Ref<bool> lockCurser = new Ref<bool>(true);
-        private IZoomer zoomer;
+        private FullField zoomer;
+        private RenderGameState2 renderGameState;
         private Ref<int> frame = new Ref<int>(0);
         private FieldDimensions fieldDimensions = FieldDimensions.Default;
+
         //private IInputs inputs;
         public MainPage()
         {
             this.InitializeComponent();
-
-
-            Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
-
-            //zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions);
-
-            zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax/2.0, fieldDimensions.yMax/2.0);
-
-            rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame, fieldDimensions);
-
-            if (lockCurser.Thing)
-            {
-                Window.Current.CoreWindow.PointerPosition = new Windows.Foundation.Point(
-                    (Window.Current.CoreWindow.Bounds.Left + Window.Current.CoreWindow.Bounds.Right) / 2.0,
-                    (Window.Current.CoreWindow.Bounds.Top + Window.Current.CoreWindow.Bounds.Bottom) / 2.0);
-                Window.Current.CoreWindow.PointerCursor = null;
-            }
-            else
-            {
-                Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
-            }
-
         }
 
         private async Task OnDisconnect(Exception ex)
@@ -114,20 +95,21 @@ namespace RemoteSoccer
         private Game2 game;
 
         // assumed to be run on the main thread
-        private async IAsyncEnumerable<PlayerInputs> MainLoop()
+        private async void MainLoop()
         {
             var sw = new Stopwatch();
             sw.Start();
 
             while (sending)
             {
-                PlayerInfo[] players = null;
-                localPlayers.Run(x => { players = x.ToArray(); return x; }) ;
-
-                foreach (var player in players)
-                {
-                    yield return await player.input.Next();
-                }
+                game.ApplyInputs( 
+                    (await Task.WhenAll(localPlayers.Read().Select(x=>(x.input.Next())).ToArray())).ToDictionary(x=>x.Id, x=>x));
+                //await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                //    CoreDispatcherPriority.Normal,
+                //    () =>
+                //    {
+                //        renderGameState.Update(game.gameState);
+                //    });
 
                 frame.thing++;
 
@@ -156,49 +138,58 @@ namespace RemoteSoccer
         {
             base.OnNavigatedTo(e);
 
+
+            Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
+
+            //zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions);
+
+
+            //rge = new RenderGameEvents(GameArea, Fps, LeftScore, RightScore, zoomer, frame, fieldDimensions);
+
+            //if (lockCurser.Thing)
+            //{
+            //    Window.Current.CoreWindow.PointerPosition = new Windows.Foundation.Point(
+            //        (Window.Current.CoreWindow.Bounds.Left + Window.Current.CoreWindow.Bounds.Right) / 2.0,
+            //        (Window.Current.CoreWindow.Bounds.Top + Window.Current.CoreWindow.Bounds.Bottom) / 2.0);
+            //    Window.Current.CoreWindow.PointerCursor = null;
+            //}
+            //else
+            //{
+            //    Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
+            //}
+
             var gameInfo =  (GameInfo)e.Parameter;
 
             var gameName = gameInfo.gameName;
 
             var controlScheme = gameInfo.controlScheme;
-            git
 
+            game = new Game2();
 
-
+            zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
+            //renderGameState = new RenderGameState(GameArea, zoomer, LeftScore, RightScore);
+            renderGameState = new RenderGameState2(Canvas, zoomer);
 
             Task.Run(async () =>
             {
                 try
                 {
-                    //game = new LocalGame(fieldDimensions);
-
-                    game = new Game2();
-                    //game = new RemoteWithPreviewGame(foot, outer,body, gameName, await SingleSignalRHandler.GetOrThrow(), fieldDimensions);
-                    //game = new RemoteGame(gameName, await SingleSignalRHandler.GetOrThrow());
-                    game.OnDisconnect(OnDisconnect);
-                    //game.SetCallbacks(rge);
-                    //inputs = new MouseKeyboardInputs(lockCurser, game, body, foot);
-
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
                     {
                         await CreatePlayer(gamePad);
                     }
 
-                    //Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
-                    //Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
+                    Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
+                    Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
 
-                    //await CreatePlayer(controlScheme);
-
-                    // why is this not part of set callbacks??
-                    //var dontWait = rge.SpoolPositions(game.JoinChannel(new JoinChannel(game.GameName)));
-
-                    game.StreamInputs(MainLoop());
+                    MainLoop();
                 }
                 catch (Exception ex)
                 {
                     await OnDisconnect(ex);
                 }
             });
+
 
         }
 
@@ -315,7 +306,7 @@ namespace RemoteSoccer
                 () =>
                 {
                     var color = GetColor();
-                    game.UpdatePlayer(new UpdatePlayerEvent(body, "", 0xff, color[0], color[1], color[2], BodyA,color[0], color[1], color[2]));
+                    game.UpdatePlayer(new UpdatePlayerEvent(body, "", BodyA, color[0], color[1], color[2], 0xff, color[0], color[1], color[2]));
                 });
 
             await inputs.Init();
@@ -467,7 +458,7 @@ namespace RemoteSoccer
             localPlayers.Run(x => { player = x.Single(); return x; });
 
             game.LeaveGame(new RemovePlayerEvent(player.LocalId));
-            game.OnDisconnect(null);
+            //game.OnDisconnect(null);
             //game.ClearCallbacks();
 
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
@@ -476,6 +467,19 @@ namespace RemoteSoccer
                 {
                     this.Frame.Navigate(typeof(LandingPage));
                 });
+        }
+
+        private void Canvas_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
+        {
+            renderGameState.Update(game.gameState, args);
+        }
+
+        // got this from https://microsoft.github.io/Win2D/html/QuickStart.htm
+        // they say it avoids memory leaks
+        private void Page_Unloaded(object sender, RoutedEventArgs e)
+        {
+            this.Canvas.RemoveFromVisualTree();
+            this.Canvas = null;
         }
     }
 }
