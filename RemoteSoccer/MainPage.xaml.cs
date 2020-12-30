@@ -1,4 +1,5 @@
 ﻿using Common;
+using Microsoft.Graphics.Canvas.UI.Xaml;
 using Prototypist.TaskChain;
 using System;
 using System.Collections.Concurrent;
@@ -104,12 +105,13 @@ namespace RemoteSoccer
             {
                 game.ApplyInputs( 
                     (await Task.WhenAll(localPlayers.Read().Select(x=>(x.input.Next())).ToArray())).ToDictionary(x=>x.Id, x=>x));
-                //await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                //    CoreDispatcherPriority.Normal,
-                //    () =>
-                //    {
-                //        renderGameState.Update(game.gameState);
-                //    });
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                    CoreDispatcherPriority.Normal,
+                    () =>
+                    {
+                        Canvas.Invalidate();
+                        //renderGameState.Update(game.gameState);
+                    });
 
                 frame.thing++;
 
@@ -168,7 +170,7 @@ namespace RemoteSoccer
 
             zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
             //renderGameState = new RenderGameState(GameArea, zoomer, LeftScore, RightScore);
-            renderGameState = new RenderGameState2(Canvas, zoomer);
+            renderGameState = new RenderGameState2(Canvas, zoomer, LeftScore, RightScore);
 
             Task.Run(async () =>
             {

@@ -28,8 +28,8 @@
 
         public const double MimimunThrowingSpped = 150;
 
-        public const double MinPlayerCollisionForce = 300;
-        public const double ExtraBallTakeForce = 200;
+        public const double MinPlayerCollisionForce = 400;
+        public const double ExtraBallTakeForce = 400;
 
 
         public const int ThrowTimeout = 5;

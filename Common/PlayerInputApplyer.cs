@@ -184,7 +184,7 @@ namespace Common
                             {
                                 player.body.velocity = new Vector(0, 0);
                             }
-                            else if (inputAmount < 9)
+                            else if (inputAmount < 0.9)
                             {
                                 var finalSpeed = ((inputAmount - .1) / .8) * Constants.bodyStartAt;
                                 var finalVelocity = f.NewScaled(finalSpeed);

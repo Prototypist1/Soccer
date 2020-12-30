@@ -53,10 +53,14 @@ namespace RemoteSoccer
         private CanvasControl canvas;
         private FullField zoomer;
 
-        public RenderGameState2(CanvasControl canvas, FullField zoomer)
+        private readonly TextBlock leftScore, rightScore;
+
+        public RenderGameState2(CanvasControl canvas, FullField zoomer, TextBlock leftScore, TextBlock rightScore)
         {
-            this.canvas = canvas;
-            this.zoomer = zoomer;
+            this.canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
+            this.zoomer = zoomer ?? throw new ArgumentNullException(nameof(zoomer));
+            this.leftScore = leftScore ?? throw new ArgumentNullException(nameof(leftScore));
+            this.rightScore = rightScore ?? throw new ArgumentNullException(nameof(rightScore));
         }
 
         public void Update(GameState gameState, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
@@ -65,18 +69,59 @@ namespace RemoteSoccer
 
             var scale = (float) zoomer.GetTimes();
 
-            DrawCircle(
-                gameState.leftGoal.posistion.x, gameState.leftGoal.posistion.y, Constants.goalLen, Colors.Green);
-            DrawCircle(
-                gameState.rightGoal.posistion.x, gameState.rightGoal.posistion.y, Constants.goalLen, Colors.Green);
-        
-            void DrawCircle(double x, double y, double rad, Color color) {
+            // goals
+            DrawFilledCircle(
+                gameState.leftGoal.posistion.x, gameState.leftGoal.posistion.y, Constants.goalLen, Color.FromArgb(0xff, 0xff, 0xff, 0xff));
+            DrawFilledCircle(
+                gameState.rightGoal.posistion.x, gameState.rightGoal.posistion.y, Constants.goalLen, Color.FromArgb(0xff, 0xff, 0xff, 0xff));
+
+            // players bodies
+            foreach (var playerPair in gameState.players)
+            {
+                DrawFilledCircle(playerPair.Value.body.position.x, playerPair.Value.body.position.y, Constants.footLen, Color.FromArgb(playerPair.Value.body.a, playerPair.Value.body.r, playerPair.Value.body.g, playerPair.Value.body.b));
+            }
+
+            // players feet
+            foreach (var playerPair in gameState.players)
+            {
+                DrawFilledCircle(playerPair.Value.foot.position.x, playerPair.Value.foot.position.y, Constants.PlayerRadius, Color.FromArgb(playerPair.Value.foot.a, playerPair.Value.foot.r, playerPair.Value.foot.g, playerPair.Value.foot.b));
+            }
+
+            // ball
+            DrawFilledCircle(gameState.ball.posistion.x, gameState.ball.posistion.y, Constants.BallRadius, Color.FromArgb(
+                (byte)((gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity : 1)* 0xff)
+                , 0x00, 0x00, 0x00));
+
+            // ball wall
+            if (gameState.CountDownState.Countdown) {
+                DrawCircle(gameState.CountDownState.X, gameState.CountDownState.Y, gameState.CountDownState.Radius,
+                    Color.FromArgb((byte)((1 - gameState.CountDownState.BallOpacity) * 0xff), 0x88, 0x88, 0x88), (float)gameState.CountDownState.StrokeThickness);
+            }
+
+            // score
+            leftScore.Text = gameState.leftScore + "";
+            rightScore.Text = gameState.rightScore + "";
+
+            // walls
+            
+            foreach (var segment in gameState.perimeterSegments)
+            {
+                args.DrawingSession.DrawLine(new Vector2((float)((segment.start.x * scale) + xPlus), (float)((segment.start.y * scale) + yPlus)),
+                    new Vector2((float)((segment.end.x * scale) + xPlus), (float)((segment.end.y * scale) + yPlus)),
+                    Color.FromArgb(0xff, 0x00, 0x00, 0x00));
+            }
+            
+            void DrawFilledCircle(double x, double y, double rad, Color color) {
                 args.DrawingSession.FillCircle(
                    (float)((x * scale) + xPlus), (float)((y * scale) + yPlus), (float)(rad * scale), color);
+            }
 
+            void DrawCircle(double x, double y, double rad, Color color, float strokeWidth)
+            {
+                args.DrawingSession.DrawCircle(
+                   (float)((x * scale) + xPlus), (float)((y * scale) + yPlus), (float)(rad * scale), color, strokeWidth * scale);
             }
         }
-
     }
 
     class RenderGameState {

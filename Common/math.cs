@@ -245,12 +245,12 @@ namespace Physics2
                             part2 = Math.Min(1, Math.Max(-1, vv2dot / denom));
                             break;
                         case BallState.obj1:
-                            f += Constants.MinPlayerCollisionForce * Math.Sign(f);
+                            f += Constants.ExtraBallTakeForce * Math.Sign(f);
                             part1 = -1;
                             part2 = 1;
                             break;
                         case BallState.obj2:
-                            f += Constants.MinPlayerCollisionForce * Math.Sign(f);
+                            f += Constants.ExtraBallTakeForce * Math.Sign(f);
                             part1 = 1;
                             part2 = -1;
                             break;
@@ -898,12 +898,12 @@ namespace Physics2
                             part2 = Math.Min(1, Math.Max(-1, vv2dot / denom));
                             break;
                         case BallState.obj1:
-                            f += Constants.MinPlayerCollisionForce * Math.Sign(f);
+                            f += Constants.ExtraBallTakeForce * Math.Sign(f);
                             part1 = -1;
                             part2 = 1;
                             break;
                         case BallState.obj2:
-                            f += Constants.MinPlayerCollisionForce * Math.Sign(f);
+                            f += Constants.ExtraBallTakeForce * Math.Sign(f);
                             part1 = 1;
                             part2 = -1;
                             break;
