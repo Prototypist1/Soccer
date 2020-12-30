@@ -6,6 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
+using System.Threading.Tasks;
+using Windows.Media.Core;
+using Windows.Media.Playback;
 using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -55,12 +59,31 @@ namespace RemoteSoccer
 
         private readonly TextBlock leftScore, rightScore;
 
+
+        private readonly MediaPlayer bell;
+        private readonly LinkedList<MediaPlayer> collisionSounds = new LinkedList<MediaPlayer>();
+
         public RenderGameState2(CanvasControl canvas, FullField zoomer, TextBlock leftScore, TextBlock rightScore)
         {
             this.canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
             this.zoomer = zoomer ?? throw new ArgumentNullException(nameof(zoomer));
             this.leftScore = leftScore ?? throw new ArgumentNullException(nameof(leftScore));
             this.rightScore = rightScore ?? throw new ArgumentNullException(nameof(rightScore));
+
+
+            bell = new MediaPlayer();
+            bell.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/bell.wav"));
+                    
+            var random = new Random();
+            for (int i = 0; i < 10; i++)
+            {
+
+                var player = new MediaPlayer();
+                player.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/hit{random.Next(1, 4)}.wav"));
+                collisionSounds.AddLast(player);
+
+            }
+
         }
 
         public void Update(GameState gameState, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
@@ -79,7 +102,11 @@ namespace RemoteSoccer
             foreach (var playerPair in gameState.players)
             {
                 DrawFilledCircle(playerPair.Value.body.position.x, playerPair.Value.body.position.y, Constants.footLen, Color.FromArgb(playerPair.Value.body.a, playerPair.Value.body.r, playerPair.Value.body.g, playerPair.Value.body.b));
+                
             }
+            // has ball highlight
+            DrawCircle(gameState.ball.posistion.x, gameState.ball.posistion.y, Constants.BallRadius, Color.FromArgb(0xff, 0xff, 0xff, 0xff), 20 / scale);
+
 
             // players feet
             foreach (var playerPair in gameState.players)
@@ -94,7 +121,7 @@ namespace RemoteSoccer
 
             // ball wall
             if (gameState.CountDownState.Countdown) {
-                DrawCircle(gameState.CountDownState.X, gameState.CountDownState.Y, gameState.CountDownState.Radius,
+                DrawCircle(gameState.CountDownState.X, gameState.CountDownState.Y, gameState.CountDownState.Radius- (gameState.CountDownState.StrokeThickness/2.0),
                     Color.FromArgb((byte)((1 - gameState.CountDownState.BallOpacity) * 0xff), 0x88, 0x88, 0x88), (float)gameState.CountDownState.StrokeThickness);
             }
 
@@ -103,14 +130,45 @@ namespace RemoteSoccer
             rightScore.Text = gameState.rightScore + "";
 
             // walls
-            
             foreach (var segment in gameState.perimeterSegments)
             {
                 args.DrawingSession.DrawLine(new Vector2((float)((segment.start.x * scale) + xPlus), (float)((segment.start.y * scale) + yPlus)),
                     new Vector2((float)((segment.end.x * scale) + xPlus), (float)((segment.end.y * scale) + yPlus)),
                     Color.FromArgb(0xff, 0x00, 0x00, 0x00));
             }
-            
+
+            //
+            var ourGoals = gameState.goalsScored;
+            gameState.goalsScored = new List<GameState.GoalScored>();
+            foreach (var goalSocred in ourGoals)
+            {
+                Task.Run(() =>
+                {
+                    bell.Volume = 3;
+                    bell.AudioBalance = goalSocred.leftScored ? 0:1;
+                    bell.Play();
+                });
+            }
+
+            var ourCollisions = gameState.collisions;
+            gameState.collisions = new List<GameState.Collision>();
+            foreach (var collision in ourCollisions)
+            {
+                if (collision.force.Length > 100)
+                {
+                    Task.Run(() =>
+                    {
+                        var item = collisionSounds.First.Value;
+                        collisionSounds.RemoveFirst();
+                        collisionSounds.AddLast(item);
+
+                        item.Volume = (collision.force.Length * collision.force.Length / 100.0);
+                        item.AudioBalance = collision.position.x / FieldDimensions.Default.xMax;
+                        item.Play();
+                    });
+                }
+            }
+
             void DrawFilledCircle(double x, double y, double rad, Color color) {
                 args.DrawingSession.FillCircle(
                    (float)((x * scale) + xPlus), (float)((y * scale) + yPlus), (float)(rad * scale), color);

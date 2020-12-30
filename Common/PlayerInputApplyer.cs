@@ -170,15 +170,14 @@ namespace Common
                         else if (input.ControlScheme == ControlScheme.Controller)
                         {
                             // base velocity becomes the part of the velocity in the direction of the players movement
-                            var v = new Vector(player.body.velocity.x, player.body.velocity.y);
                             var f = new Vector(input.BodyX, input.BodyY).NewUnitized();
-                            var with = v.Dot(f);
+                            var with = player.body.velocity.Dot(f);
                             var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
 
                             var engeryAdd = player == state.ball.ownerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 
                             //
-                            var finalE = VtoE(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + engeryAdd;
+                            var finalE = VtoE(baseValocity.Length) + engeryAdd;
                             var inputAmount = new Vector(input.BodyX, input.BodyY).Length;
                             if (inputAmount < .1)
                             {

@@ -469,6 +469,8 @@ namespace physics2
                                     player.body.velocity = player.body.velocity.NewAdded(PhysicsMath2.HitWall(player.body.velocity.NewScaled(.5), parameter.start, parameter.end));
                                     player.foot.velocity = player.foot.velocity.NewAdded(PhysicsMath2.HitWall(player.foot.velocity.NewScaled(.5), parameter.start, parameter.end));
 
+                                    // add a collision 
+                                    gameState.collisions.Add(new GameState.Collision(collisionLocation, force));
                                 }
                             });
                         }
@@ -506,11 +508,13 @@ namespace physics2
 
                                 if (gameState.ball.ownerOrNull == p1)
                                 {
+                                    force = force.NewAdded(force.NewUnitized().NewScaled(Constants.ExtraBallTakeForce));
                                     part1 = 1;
                                     part2 = -1;
                                 }
                                 else if (gameState.ball.ownerOrNull == p2)
                                 {
+                                    force = force.NewAdded(force.NewUnitized().NewScaled(Constants.ExtraBallTakeForce));
                                     part1 = -1;
                                     part2 = 1;
                                 }
@@ -547,7 +551,7 @@ namespace physics2
                                 var collisionLocation = p1.foot.position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
 
                                 // add a collision 
-                                gameState.collisions.Add(new GameState.Collision(collisionLocation, force));
+                                gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2)));
                             }
                         });
                     }
@@ -571,17 +575,17 @@ namespace physics2
                                 action = () =>
                                 {
                                     // from player to ball wall
-                                    var normal = new Vector(-ballWall.x, -ballwall.y).NewAdded(player.foot.position.NewMinus()).NewUnitized();
+                                    var normal = new Vector(ballWall.x, ballwall.y).NewAdded(player.foot.position.NewMinus()).NewUnitized();
 
                                     // add a collision 
                                     var collisionLocation = player.foot.position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
                                     var force = normal.NewScaled(2 * player.foot.velocity.NewAdded(player.body.velocity).NewAdded(player.externalVelocity).Dot(normal));
                                     gameState.collisions.Add(new GameState.Collision(collisionLocation, force));
 
-                                    // update velocity
-                                    player.externalVelocity = player.externalVelocity.NewAdded(normal.NewScaled(-2 * player.externalVelocity.Dot(normal)));
-                                    player.foot.velocity = player.foot.velocity.NewAdded(normal.NewScaled(-2 * player.foot.velocity.Dot(normal)));
-                                    player.body.velocity = player.body.velocity.NewAdded(normal.NewScaled(-2 * player.body.velocity.Dot(normal)));
+                                    // half the foot and body velocity becomes external so you bounce a bit
+                                    player.externalVelocity = player.externalVelocity.NewAdded(normal.NewScaled(-1 * player.externalVelocity.NewScaled(2).NewAdded(player.foot.velocity).NewAdded(player.body.velocity).Dot(normal)));
+                                    player.foot.velocity = player.foot.velocity.NewAdded(normal.NewScaled(-1 * player.foot.velocity.Dot(normal)));
+                                    player.body.velocity = player.body.velocity.NewAdded(normal.NewScaled(-1 * player.body.velocity.Dot(normal)));
                                 }
                             });
                         }
