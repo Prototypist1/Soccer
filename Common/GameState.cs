@@ -15,11 +15,13 @@ namespace Common
         public List<Collision> collisions = new List<Collision>();
         public class Collision {
             public Vector position, force;
+            public int frame;
 
-            public Collision(Vector position, Vector force)
+            public Collision(Vector position, Vector force, int frame)
             {
                 this.position = position;
                 this.force = force;
+                this.frame = frame;
             }
         }
         public List<GoalScored> goalsScored = new List<GoalScored>();

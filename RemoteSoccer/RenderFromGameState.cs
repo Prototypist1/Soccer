@@ -132,23 +132,23 @@ namespace RemoteSoccer
             // walls
             foreach (var segment in gameState.perimeterSegments)
             {
-                DrawLine(segment.start.x, segment.start.y ,
-                    segment.end.x , segment.end.y ,
-                    Color.FromArgb(0xff, 0x00, 0x00, 0x00),1/scale);
+                DrawLine(segment.start.x, segment.start.y,
+                    segment.end.x, segment.end.y,
+                    Color.FromArgb(0xff, 0x00, 0x00, 0x00), 1 / scale);
             }
 
             var myGoalsScore = gameState.goalsScored;
             gameState.goalsScored = new List<GameState.GoalScored>();
             //
-            var animationLength = 120.0;
-            foreach (var goalSocred in myGoalsScore.Where(x=> gameState.frame - x.frame < 60))
+            var goalAnimationLength = 120.0;
+            foreach (var goalSocred in myGoalsScore.Where(x=> gameState.frame - x.frame < goalAnimationLength))
             {
                 DrawLine(
                     goalSocred.posistion.x + (goalSocred.surface.x * 1000* (gameState.frame - goalSocred.frame)),
                     goalSocred.posistion.y + (goalSocred.surface.y * 1000* (gameState.frame - goalSocred.frame)),
                     goalSocred.posistion.x - (goalSocred.surface.x * 1000* (gameState.frame - goalSocred.frame)),
                     goalSocred.posistion.y - (goalSocred.surface.y * 1000* (gameState.frame - goalSocred.frame)),
-                    Color.FromArgb((byte)(1.0 - (((gameState.frame - goalSocred.frame) / animationLength))* 0xff), 0x00, 0x00, 0x00), 1 / scale);
+                    Color.FromArgb((byte)(1.0 - (((gameState.frame - goalSocred.frame) / goalAnimationLength))* 0xff), 0x00, 0x00, 0x00), 1 / scale);
                 
                 if (gameState.frame == goalSocred.frame)
                 {
@@ -166,20 +166,57 @@ namespace RemoteSoccer
 
             var ourCollisions = gameState.collisions;
             gameState.collisions = new List<GameState.Collision>();
-            foreach (var collision in ourCollisions)
+            var collisionAnimationLength = 12.0;
+            foreach (var collision in ourCollisions.Where(x => gameState.frame - x.frame < collisionAnimationLength))
             {
                 if (collision.force.Length > 100)
                 {
-                    Task.Run(() =>
-                    {
-                        var item = collisionSounds.First.Value;
-                        collisionSounds.RemoveFirst();
-                        collisionSounds.AddLast(item);
 
-                        item.Volume = (collision.force.Length * collision.force.Length / 100.0);
-                        item.AudioBalance = collision.position.x / FieldDimensions.Default.xMax;
-                        item.Play();
-                    });
+                    DrawLine(
+                        collision.position.x + ((collision.force.y + (collision.force.x/10.0)) * .5* (gameState.frame - collision.frame)),
+                        collision.position.y - ((collision.force.x + (collision.force.y / 10.0))  *.5* (gameState.frame - collision.frame)),
+                        collision.position.x + ((collision.force.y + (collision.force.x / 10.0)) * 1* (gameState.frame - collision.frame)),
+                        collision.position.y - ((collision.force.x + (collision.force.y / 10.0)) * 1 * (gameState.frame - collision.frame)),
+                        Color.FromArgb((byte)(1.0 - (((gameState.frame - collision.frame) / collisionAnimationLength)) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+
+                    DrawLine(
+                        collision.position.x - ((collision.force.y + (collision.force.x / 10.0)) * .5 * (gameState.frame - collision.frame)),
+                        collision.position.y + ((collision.force.x + (collision.force.y / 10.0)) * .5 * (gameState.frame - collision.frame)),
+                        collision.position.x - ((collision.force.y + (collision.force.x / 10.0)) * 1 * (gameState.frame - collision.frame)),
+                        collision.position.y + ((collision.force.x + (collision.force.y / 10.0)) * 1 * (gameState.frame - collision.frame)),
+                        Color.FromArgb((byte)(1.0 - (((gameState.frame - collision.frame) / collisionAnimationLength)) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+
+                    DrawLine(
+                        collision.position.x + ((collision.force.y - (collision.force.x / 10.0)) * .5* (gameState.frame - collision.frame)),
+                        collision.position.y - ((collision.force.x - (collision.force.y / 10.0)) * .5 * (gameState.frame - collision.frame)),
+                        collision.position.x + ((collision.force.y - (collision.force.x / 10.0)) * 1 * (gameState.frame - collision.frame)),
+                        collision.position.y - ((collision.force.x - (collision.force.y / 10.0)) * 1 * (gameState.frame - collision.frame)),
+                        Color.FromArgb((byte)(1.0 - (((gameState.frame - collision.frame) / collisionAnimationLength)) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+
+                    DrawLine(
+                        collision.position.x - ((collision.force.y - (collision.force.x / 10.0)) * .5 * (gameState.frame - collision.frame)),
+                        collision.position.y + ((collision.force.x - (collision.force.y / 10.0)) * .5 * (gameState.frame - collision.frame)),
+                        collision.position.x - ((collision.force.y - (collision.force.x / 10.0)) * 1 * (gameState.frame - collision.frame)),
+                        collision.position.y + ((collision.force.x - (collision.force.y / 10.0)) * 1 * (gameState.frame - collision.frame)),
+                        Color.FromArgb((byte)(1.0 - (((gameState.frame - collision.frame) / collisionAnimationLength)) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+
+                    if (gameState.frame == collision.frame)
+                    {
+
+
+                        Task.Run(() =>
+                        {
+                            var item = collisionSounds.First.Value;
+                            collisionSounds.RemoveFirst();
+                            collisionSounds.AddLast(item);
+
+                            item.Volume = (collision.force.Length * collision.force.Length / 100.0);
+                            item.AudioBalance = collision.position.x / FieldDimensions.Default.xMax;
+                            item.Play();
+                        });
+                    }
+
+                    gameState.collisions.Add(collision);
                 }
             }
 
