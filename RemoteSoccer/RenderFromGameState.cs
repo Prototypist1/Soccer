@@ -105,8 +105,8 @@ namespace RemoteSoccer
                 
             }
             // has ball highlight
-            DrawCircle(gameState.ball.posistion.x, gameState.ball.posistion.y, Constants.BallRadius, Color.FromArgb(0xff, 0xff, 0xff, 0xff), 20 / scale);
-
+            DrawCircle(gameState.ball.posistion.x, gameState.ball.posistion.y, Constants.BallRadius, 
+                Color.FromArgb((byte)((gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity : 1) * 0xff), 0xff, 0xff, 0xff), 20 / scale);
 
             // players feet
             foreach (var playerPair in gameState.players)
@@ -132,22 +132,36 @@ namespace RemoteSoccer
             // walls
             foreach (var segment in gameState.perimeterSegments)
             {
-                args.DrawingSession.DrawLine(new Vector2((float)((segment.start.x * scale) + xPlus), (float)((segment.start.y * scale) + yPlus)),
-                    new Vector2((float)((segment.end.x * scale) + xPlus), (float)((segment.end.y * scale) + yPlus)),
-                    Color.FromArgb(0xff, 0x00, 0x00, 0x00));
+                DrawLine(segment.start.x, segment.start.y ,
+                    segment.end.x , segment.end.y ,
+                    Color.FromArgb(0xff, 0x00, 0x00, 0x00),1/scale);
             }
 
-            //
-            var ourGoals = gameState.goalsScored;
+            var myGoalsScore = gameState.goalsScored;
             gameState.goalsScored = new List<GameState.GoalScored>();
-            foreach (var goalSocred in ourGoals)
+            //
+            var animationLength = 60.0;
+            foreach (var goalSocred in myGoalsScore.Where(x=> gameState.frame - x.frame < 60))
             {
-                Task.Run(() =>
+                DrawLine(
+                    goalSocred.posistion.x + (goalSocred.surface.x * 1000* (gameState.frame - goalSocred.frame)),
+                    goalSocred.posistion.y + (goalSocred.surface.y * 1000* (gameState.frame - goalSocred.frame)),
+                    goalSocred.posistion.x - (goalSocred.surface.x * 1000* (gameState.frame - goalSocred.frame)),
+                    goalSocred.posistion.y - (goalSocred.surface.y * 1000* (gameState.frame - goalSocred.frame)),
+                    Color.FromArgb((byte)(1.0 - (((gameState.frame - goalSocred.frame) / animationLength))* 0xff), 0x00, 0x00, 0x00), 1 / scale);
+                
+                if (gameState.frame == goalSocred.frame)
                 {
-                    bell.Volume = 3;
-                    bell.AudioBalance = goalSocred.leftScored ? 0:1;
-                    bell.Play();
-                });
+                    Task.Run(() =>
+                    {
+                        bell.Volume = 3;
+                        bell.AudioBalance = goalSocred.leftScored ? 0 : 1;
+                        bell.Play();
+                    });
+                }
+
+                gameState.goalsScored.Add(goalSocred);
+
             }
 
             var ourCollisions = gameState.collisions;
@@ -178,6 +192,15 @@ namespace RemoteSoccer
             {
                 args.DrawingSession.DrawCircle(
                    (float)((x * scale) + xPlus), (float)((y * scale) + yPlus), (float)(rad * scale), color, strokeWidth * scale);
+            }
+
+            void DrawLine(double x1, double y1, double x2, double y2, Color color, float strokeWidth)
+            {
+                args.DrawingSession.DrawLine(
+                    new Vector2((float)((x1 * scale) + xPlus), (float)((y1 * scale) + yPlus)),
+                    new Vector2((float)((x2 * scale) + xPlus), (float)((y2 * scale) + yPlus)),
+                    color,
+                    strokeWidth * scale);
             }
         }
     }

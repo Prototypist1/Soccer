@@ -431,6 +431,7 @@ namespace physics2
                                 time = time,
                                 action = () =>
                                 {
+                                    player.body.velocity = player.body.velocity.NewScaled(.5);
                                     gameState.ball.ownerOrNull = player;
                                     gameState.ball.posistion = player.foot.position;
                                     gameState.ball.velocity = player.foot.velocity.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
@@ -540,12 +541,16 @@ namespace physics2
                                     gameState.ball.ownerOrNull = p2;
                                     gameState.ball.posistion = p2.foot.position;
                                     gameState.ball.velocity = p2.externalVelocity.NewAdded(p2.body.velocity).NewAdded(p2.foot.velocity);
+
+                                    p1.body.velocity = p1.body.velocity.NewScaled(.5);
                                 }
                                 else if (gameState.ball.ownerOrNull == p2)
                                 {
                                     gameState.ball.ownerOrNull = p1;
                                     gameState.ball.posistion = p1.foot.position;
                                     gameState.ball.velocity = p1.externalVelocity.NewAdded(p1.body.velocity).NewAdded(p1.foot.velocity);
+
+                                    p2.body.velocity = p2.body.velocity.NewScaled(.5);
                                 }
 
                                 var collisionLocation = p1.foot.position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
@@ -616,7 +621,7 @@ namespace physics2
 
                                         var position = goal.posistion.NewAdded(normal.NewScaled(Constants.goalLen));
 
-                                        GameStateUpdater.Handle(gameState, new GameState.GoalScored(position, goal.leftGoal));
+                                        GameStateUpdater.Handle(gameState, new GameState.GoalScored(position, goal.leftGoal, new Vector(normal.y,-normal.x), gameState.frame));
 
                                         gameStateTracker.Scored();
                                     }

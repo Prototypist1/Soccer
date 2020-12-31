@@ -26,11 +26,15 @@ namespace Common
         public class GoalScored {
             public Vector posistion;
             public bool leftScored;
+            public Vector surface;
+            public int frame;
 
-            public GoalScored(Vector posistion, bool leftScored)
+            public GoalScored(Vector posistion, bool leftScored, Vector surface, int frame)
             {
                 this.posistion = posistion;
                 this.leftScored = leftScored;
+                this.surface = surface;
+                this.frame = frame;
             }
         }
 
