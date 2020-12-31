@@ -140,7 +140,7 @@ namespace RemoteSoccer
             var myGoalsScore = gameState.goalsScored;
             gameState.goalsScored = new List<GameState.GoalScored>();
             //
-            var animationLength = 60.0;
+            var animationLength = 120.0;
             foreach (var goalSocred in myGoalsScore.Where(x=> gameState.frame - x.frame < 60))
             {
                 DrawLine(
