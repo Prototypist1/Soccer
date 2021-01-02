@@ -114,6 +114,7 @@ namespace RemoteSoccer
                 DrawFilledCircle(playerPair.Value.foot.position.x, playerPair.Value.foot.position.y, Constants.PlayerRadius, Color.FromArgb(playerPair.Value.foot.a, playerPair.Value.foot.r, playerPair.Value.foot.g, playerPair.Value.foot.b));
             }
 
+
             // ball
             DrawFilledCircle(gameState.ball.posistion.x, gameState.ball.posistion.y, Constants.BallRadius, Color.FromArgb(
                 (byte)((gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity : 1)* 0xff)
@@ -136,6 +137,7 @@ namespace RemoteSoccer
                     segment.end.x, segment.end.y,
                     Color.FromArgb(0xff, 0x00, 0x00, 0x00), 1 / scale);
             }
+
 
             var myGoalsScore = gameState.goalsScored;
             gameState.goalsScored = new List<GameState.GoalScored>();
@@ -217,6 +219,24 @@ namespace RemoteSoccer
                     }
 
                     gameState.collisions.Add(collision);
+                }
+            }
+
+
+
+
+            // draw throw preview
+            foreach (var playerPair in gameState.players)
+            {
+                if (playerPair.Value.throwing && gameState.ball.ownerOrNull == playerPair.Value)
+                {
+                    DrawLine(
+                        playerPair.Value.foot.position.x,
+                        playerPair.Value.foot.position.y,
+                        playerPair.Value.foot.position.x + (playerPair.Value.proposedThrow.x * 10),
+                        playerPair.Value.foot.position.y + (playerPair.Value.proposedThrow.y * 10),
+                        Color.FromArgb(0xff, playerPair.Value.foot.r, playerPair.Value.foot.g, playerPair.Value.foot.b),
+                        10 / scale);
                 }
             }
 

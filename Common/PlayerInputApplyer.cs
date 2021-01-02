@@ -73,18 +73,10 @@ namespace Common
             {
                 player.externalVelocity = player.externalVelocity.NewScaled(.8);
 
-                var forceThrow = false;
 
                 // handle inputs
                 if (inputs.TryGetValue(player.id, out var input)) {
 
-
-                    if (player.throwing && !input.Throwing && state.ball.ownerOrNull == player)
-                    {
-                        forceThrow = true;
-                    }
-
-                    player.throwing = input.Throwing;
 
 
                     if (input.ControlScheme == ControlScheme.SipmleMouse)
@@ -289,68 +281,89 @@ namespace Common
 
                         player.foot.velocity = v;
                     }
-                }
 
-                // handle throwing
-                {
 
-                    if (player == state.ball.ownerOrNull)
+                    // throwing 2
+                    if (!player.throwing && input.Throwing)
                     {
-                        state.ball.velocity = player.externalVelocity.NewAdded(player.body.velocity).NewAdded(player.foot.velocity);
+                        player.throwStart = player.foot.position.NewAdded(player.body.position.NewMinus());
                     }
 
-                    var throwV = player.foot.velocity;
+                    player.proposedThrow = player.foot.position.NewAdded(player.body.position.NewMinus()).NewAdded(player.throwStart.NewMinus()).NewScaled(.4);
 
-                    // I think force throw is making throwing harder
-                    if (forceThrow && player == state.ball.ownerOrNull)
+                    if (player.throwing && !input.Throwing && state.ball.ownerOrNull == player)
                     {
-
-                        var newPart = 1;//Math.Max(1, throwV.Length);
-                        var oldPart = 2;// Math.Max(1, ball.proposedThrow.Length);
-
-                        player.proposedThrow = new Vector(
-                                ((throwV.x * newPart) + (player.proposedThrow.x * oldPart)) / (newPart + oldPart),
-                                ((throwV.y * newPart) + (player.proposedThrow.y * oldPart)) / (newPart + oldPart));
-
-                        // throw the ball!
-                        // duplicate code // {C7BF7AF7-2C8E-4094-85F6-E7C19F6F71C9}
                         state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
                         state.ball.ownerOrNull.lastHadBall = state.frame;
                         state.ball.ownerOrNull = null;
-                        forceThrow = false;
                         player.proposedThrow = new Vector();
                     }
-                    else if (player.throwing)
-                    {
 
-                        if (player.proposedThrow.Length > Constants.MimimunThrowingSpped && (throwV.Length * 1.3 < player.proposedThrow.Length || throwV.Dot(player.proposedThrow) < 0) && player.throwing && player == state.ball.ownerOrNull)
-                        {
-                            // throw the ball!
-                            // duplicate code // {C7BF7AF7-2C8E-4094-85F6-E7C19F6F71C9}
-                            state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
-                            state.ball.ownerOrNull.lastHadBall = state.frame;
-                            state.ball.ownerOrNull = null;
-                            forceThrow = false;
-                            player.proposedThrow = new Vector();
-                        }
-                        else if (player.proposedThrow.Length == 0)
-                        {
-                            player.proposedThrow = throwV;
-                        }
-                        else
-                        {
-                            var newPart = 1;//Math.Max(1, throwV.Length);
-                            var oldPart = 4;// Math.Max(1, ball.proposedThrow.Length);
-                            player.proposedThrow = new Vector(
-                                        ((throwV.x * newPart) + (player.proposedThrow.x * oldPart)) / (newPart + oldPart),
-                                        ((throwV.y * newPart) + (player.proposedThrow.y * oldPart)) / (newPart + oldPart));
-                        }
-                    }
-                    else
-                    {
-                        player.proposedThrow = new Vector();
-                    }
+                    player.throwing = input.Throwing;
+
                 }
+
+
+                // handle throwing
+                //{
+
+                //    if (player == state.ball.ownerOrNull)
+                //    {
+                //        state.ball.velocity = player.externalVelocity.NewAdded(player.body.velocity).NewAdded(player.foot.velocity);
+                //    }
+
+                //    var throwV = player.foot.velocity;
+
+                //    // I think force throw is making throwing harder
+                //    if (forceThrow && player == state.ball.ownerOrNull)
+                //    {
+
+                //        var newPart = 1;//Math.Max(1, throwV.Length);
+                //        var oldPart = 2;// Math.Max(1, ball.proposedThrow.Length);
+
+                //        player.proposedThrow = new Vector(
+                //                ((throwV.x * newPart) + (player.proposedThrow.x * oldPart)) / (newPart + oldPart),
+                //                ((throwV.y * newPart) + (player.proposedThrow.y * oldPart)) / (newPart + oldPart));
+
+                //        // throw the ball!
+                //        // duplicate code // {C7BF7AF7-2C8E-4094-85F6-E7C19F6F71C9}
+                //        state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
+                //        state.ball.ownerOrNull.lastHadBall = state.frame;
+                //        state.ball.ownerOrNull = null;
+                //        forceThrow = false;
+                //        player.proposedThrow = new Vector();
+                //    }
+                //    else if (player.throwing)
+                //    {
+
+                //        if (player.proposedThrow.Length > Constants.MimimunThrowingSpped && (throwV.Length * 1.3 < player.proposedThrow.Length || throwV.Dot(player.proposedThrow) < 0) && player.throwing && player == state.ball.ownerOrNull)
+                //        {
+                //            // throw the ball!
+                //            // duplicate code // {C7BF7AF7-2C8E-4094-85F6-E7C19F6F71C9}
+                //            state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
+                //            state.ball.ownerOrNull.lastHadBall = state.frame;
+                //            state.ball.ownerOrNull = null;
+                //            forceThrow = false;
+                //            player.proposedThrow = new Vector();
+                //        }
+                //        else if (player.proposedThrow.Length == 0)
+                //        {
+                //            player.proposedThrow = throwV;
+                //        }
+                //        else
+                //        {
+                //            var newPart = 1;//Math.Max(1, throwV.Length);
+                //            var oldPart = 4;// Math.Max(1, ball.proposedThrow.Length);
+                //            player.proposedThrow = new Vector(
+                //                        ((throwV.x * newPart) + (player.proposedThrow.x * oldPart)) / (newPart + oldPart),
+                //                        ((throwV.y * newPart) + (player.proposedThrow.y * oldPart)) / (newPart + oldPart));
+                //        }
+                //    }
+                //    else
+                //    {
+                //        player.proposedThrow = new Vector();
+                //    }
+                //}
             }
 
             state.frame++;

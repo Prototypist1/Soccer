@@ -86,6 +86,7 @@ namespace Common
             public Vector proposedThrow;
             public int lastHadBall;
             public double mass;
+            internal Vector throwStart;
         }
         public Goal leftGoal, rightGoal;
         public class Goal {
