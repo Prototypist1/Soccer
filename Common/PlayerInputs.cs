@@ -33,8 +33,9 @@ namespace Common
         public double BodyY { get; set; }
         public Guid Id { get; set; }
         public bool Throwing { get; set; }
+        public bool Boost { get; set; }
 
-        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid Id, ControlScheme controlScheme, bool throwing)
+        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid Id, ControlScheme controlScheme, bool throwing, bool boost)
         {
             this.FootX = footX;
             this.FootY = footY;
@@ -43,6 +44,7 @@ namespace Common
             this.Id = Id;
             this.ControlScheme = controlScheme;
             this.Throwing = throwing;
+            this.Boost = boost;
         }
 
         public override string ToString()

@@ -73,6 +73,7 @@ namespace Common
             {
                 player.externalVelocity = player.externalVelocity.NewScaled(.8);
 
+                player.boosts = Math.Min(3, player.boosts + (1 / 300.0));
 
                 // handle inputs
                 if (inputs.TryGetValue(player.id, out var input)) {
@@ -186,6 +187,13 @@ namespace Common
                                 var finalVelocity = f.NewScaled(finalSpeed);
                                 player.body.velocity = finalVelocity;
                             }
+
+                            // 
+                            if (input.Boost && player.boosts >= 1)
+                            {
+                                player.externalVelocity = player.externalVelocity.NewAdded(f.NewScaled(1000));
+                                player.boosts--;
+                            }
                         }
                     }
                     else
@@ -213,7 +221,6 @@ namespace Common
                             v = v.NewUnitized().NewScaled(speedLimit);
                         }
                         player.foot.velocity = v;
-                        
                     }
                     else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                     {

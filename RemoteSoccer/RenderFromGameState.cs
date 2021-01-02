@@ -86,7 +86,7 @@ namespace RemoteSoccer
 
         }
 
-        public void Update(GameState gameState, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
+        public void Update(GameState gameState, CanvasDrawEventArgs args)
         {
             var (playerX, playerY, xPlus, yPlus) = zoomer.Update(Array.Empty<Position>());
 
@@ -101,9 +101,18 @@ namespace RemoteSoccer
             // players bodies
             foreach (var playerPair in gameState.players)
             {
-                DrawFilledCircle(playerPair.Value.body.position.x, playerPair.Value.body.position.y, Constants.footLen, Color.FromArgb(playerPair.Value.body.a, playerPair.Value.body.r, playerPair.Value.body.g, playerPair.Value.body.b));
-                
+                DrawFilledCircle(playerPair.Value.body.position.x, playerPair.Value.body.position.y, Constants.footLen, Color.FromArgb(playerPair.Value.body.a, playerPair.Value.body.r, playerPair.Value.body.g, playerPair.Value.body.b)); 
             }
+
+            // draw number of boosts
+            foreach (var playerPair in gameState.players)
+            {
+                for (int i = 1; i <= playerPair.Value.boosts; i++)
+                {
+                    DrawCircle(playerPair.Value.body.position.x, playerPair.Value.body.position.y, Constants.footLen - (i*6.0/scale), Color.FromArgb(playerPair.Value.body.a, playerPair.Value.body.r, playerPair.Value.body.g, playerPair.Value.body.b), 3 / scale);
+                }
+            }
+
             // has ball highlight
             DrawCircle(gameState.ball.posistion.x, gameState.ball.posistion.y, Constants.BallRadius, 
                 Color.FromArgb((byte)((gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity : 1) * 0xff), 0xff, 0xff, 0xff), 20 / scale);
@@ -113,7 +122,6 @@ namespace RemoteSoccer
             {
                 DrawFilledCircle(playerPair.Value.foot.position.x, playerPair.Value.foot.position.y, Constants.PlayerRadius, Color.FromArgb(playerPair.Value.foot.a, playerPair.Value.foot.r, playerPair.Value.foot.g, playerPair.Value.foot.b));
             }
-
 
             // ball
             DrawFilledCircle(gameState.ball.posistion.x, gameState.ball.posistion.y, Constants.BallRadius, Color.FromArgb(

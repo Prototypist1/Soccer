@@ -42,6 +42,8 @@ namespace RemoteSoccer
 
         bool lastA = false;
 
+        bool lastBoost = false;
+
         public Task<PlayerInputs> Next()
         {
             //if (lockCurser.Thing)
@@ -60,6 +62,17 @@ namespace RemoteSoccer
             {
                 lastA = false;
             }
+
+            var boost = false;
+            if ((snap.Buttons & GamepadButtons.LeftShoulder) == GamepadButtons.LeftShoulder){
+                if (!lastBoost) {
+                    boost = true;
+                }
+                lastBoost = true;
+            } else {
+                lastBoost = false;
+            }
+
             var right = new Vector(snap.RightThumbstickX, -snap.RightThumbstickY);
             if (right.Length > 1) {
                 right = right.NewUnitized();
@@ -70,7 +83,7 @@ namespace RemoteSoccer
                 left = left.NewUnitized();
             }
 
-            return Task.FromResult(new PlayerInputs(right.x, right.y, left.x, left.y, id, ControlScheme.Controller, (snap.Buttons & GamepadButtons.RightShoulder) == GamepadButtons.RightShoulder));
+            return Task.FromResult(new PlayerInputs(right.x, right.y, left.x, left.y, id, ControlScheme.Controller, (snap.Buttons & GamepadButtons.RightShoulder) == GamepadButtons.RightShoulder, boost));
             //}
             //else
             //{

@@ -100,7 +100,7 @@ namespace RemoteSoccer
 
                                 lastX = point.X;
                                 lastY = point.Y;
-                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, id, ControlScheme.SipmleMouse, mouseDown);
+                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, id, ControlScheme.SipmleMouse, mouseDown, false);
 
                             }
                             else
@@ -110,7 +110,7 @@ namespace RemoteSoccer
                                 lastX = point.X;
                                 lastY = point.Y;
 
-                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, id, ControlScheme.SipmleMouse, false);
+                                res = new PlayerInputs(mouseX.thing, mouseY.thing, mouseX.thing, mouseY.thing, id, ControlScheme.SipmleMouse, false, false);
                             }
 
                         });
