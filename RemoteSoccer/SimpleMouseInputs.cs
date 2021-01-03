@@ -9,18 +9,18 @@ using Windows.UI.Xaml;
 
 namespace RemoteSoccer
 {
-    class SimpleMouseInputs : IInputs {
+    class SimpleMouseInputs : IInputs
+    {
         private readonly IReadonlyRef<bool> lockCurser;
-        private readonly IGame game;
+        //private readonly IGame game;
         double lastX = 0, lastY = 0;
         private readonly Guid id;
         private readonly Ref<double> mouseX;
         private readonly Ref<double> mouseY;
 
-        private SimpleMouseInputs(IReadonlyRef<bool> lockCurser, IGame game, Guid id, double mouseStartX, double mouseStartY)
+        private SimpleMouseInputs(IReadonlyRef<bool> lockCurser, Guid id, double mouseStartX, double mouseStartY)
         {
             this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
-            this.game = game ?? throw new ArgumentNullException(nameof(game));
             this.id = id;
             mouseX = new Ref<double>(mouseStartX);
             mouseY = new Ref<double>(mouseStartY);
@@ -28,8 +28,9 @@ namespace RemoteSoccer
         }
 
 
-        public static (SimpleMouseInputs, IReadonlyRef<double>, IReadonlyRef<double>) Create(IReadonlyRef<bool> lockCurser, IGame game, Guid id, double mouseStartX, double mouseStartY) {
-            var res = new SimpleMouseInputs(lockCurser,game, id, mouseStartX, mouseStartY);
+        public static (SimpleMouseInputs, IReadonlyRef<double>, IReadonlyRef<double>) Create(IReadonlyRef<bool> lockCurser, Guid id, double mouseStartX, double mouseStartY)
+        {
+            var res = new SimpleMouseInputs(lockCurser, id, mouseStartX, mouseStartY);
             return (res, res.mouseX, res.mouseY);
         }
 
@@ -77,7 +78,8 @@ namespace RemoteSoccer
                             {
                                 if (coreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
                                 {
-                                    game.ResetGame(new ResetGame(game.GameName));
+                                    // reset
+                                    throw new NotImplementedException();
                                 }
 
                                 //bodyX =
@@ -91,8 +93,8 @@ namespace RemoteSoccer
                                 footX = (point.X - lastX);// * .75;
                                 footY = (point.Y - lastY);// * .75;
 
-                                mouseX.thing += footX*30;
-                                mouseY.thing += footY*30;
+                                mouseX.thing += footX * 30;
+                                mouseY.thing += footY * 30;
 
                                 point = new Point(lastX, lastY);
                                 coreWindow.PointerPosition = point;

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static Common.Game;
+//using static Common.Game;
 
 namespace RemoteSoccer
 {
@@ -28,7 +28,7 @@ namespace RemoteSoccer
                 field));
 
             // GameStateTracker is a bit weird
-            this.gameStateTracker = new Game.GameStateTracker(
+            this.gameStateTracker = new GameStateTracker(
                        (x, y) => {
                            gameState.ball.ownerOrNull = null;
                            gameState.ball.posistion = new Physics2.Vector(gameState.CountDownState.X, gameState.CountDownState.Y);

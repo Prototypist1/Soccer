@@ -54,21 +54,21 @@ namespace Common
         //public bool Throwing { get; set; }
     }
 
-    public struct Positions
-    {
-        public Position[] PositionsList { get; set; }
-        public Preview[] Previews { get; set; }
-        public Collision[] Collisions { get; set; }
-        public int Frame { get; set; }
-        public CountDownState CountDownState { get;set;}
+    //public struct Positions
+    //{
+    //    public Position[] PositionsList { get; set; }
+    //    public Preview[] Previews { get; set; }
+    //    public Collision[] Collisions { get; set; }
+    //    public int Frame { get; set; }
+    //    public CountDownState CountDownState { get;set;}
 
-        public Positions(Position[] positionsList, Preview[] previews, int frame, CountDownState countDownState, Collision[] collisions)
-        {
-            this.PositionsList = positionsList ?? throw new ArgumentNullException(nameof(positionsList));
-            this.Previews = previews;
-            Frame = frame;
-            this.CountDownState = countDownState;
-            Collisions = collisions ?? throw new ArgumentNullException(nameof(collisions));
-        }
-    }
+    //    public Positions(Position[] positionsList, Preview[] previews, int frame, CountDownState countDownState, Collision[] collisions)
+    //    {
+    //        this.PositionsList = positionsList ?? throw new ArgumentNullException(nameof(positionsList));
+    //        this.Previews = previews;
+    //        Frame = frame;
+    //        this.CountDownState = countDownState;
+    //        Collisions = collisions ?? throw new ArgumentNullException(nameof(collisions));
+    //    }
+    //}
 }

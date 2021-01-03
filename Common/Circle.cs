@@ -4,16 +4,16 @@ using System.Text;
 
 namespace physics2
 {
-    public class Circle
-    {
-        public Circle(double radius)
-        {
-            Radius = radius;
-        }
+    //public class Circle
+    //{
+    //    public Circle(double radius)
+    //    {
+    //        Radius = radius;
+    //    }
 
-        public double Radius { get; set; }
+    //    public double Radius { get; set; }
 
-    }
+    //}
 
 
 }

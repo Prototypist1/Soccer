@@ -13,16 +13,14 @@ namespace RemoteSoccer
     class MouseKeyboardInputs : IInputs
     {
         private readonly IReadonlyRef<bool> lockCurser;
-        private readonly IGame game;
         double lastX = 0, lastY = 0;
         //private readonly Guid body;
         //private readonly Guid foot;
         private readonly Guid id;
 
-        public MouseKeyboardInputs(IReadonlyRef<bool> lockCurser, IGame game, Guid id)
+        public MouseKeyboardInputs(IReadonlyRef<bool> lockCurser, Guid id)
         {
             this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
-            this.game = game ?? throw new ArgumentNullException(nameof(game));
             this.id = id;
         }
 
@@ -69,7 +67,8 @@ namespace RemoteSoccer
                             {
                                 if (coreWindow.GetKeyState(VirtualKey.R).HasFlag(CoreVirtualKeyStates.Down))
                                 {
-                                    game.ResetGame(new ResetGame(game.GameName));
+                                    // reset 
+                                    throw new NotImplementedException();
                                 }
 
                                 bodyX =
@@ -100,7 +99,7 @@ namespace RemoteSoccer
                                 lastX = point.X;
                                 lastY = point.Y;
 
-                                res = new PlayerInputs(0, 0, 0, 0, id, ControlScheme.MouseAndKeyboard, false,false);
+                                res = new PlayerInputs(0, 0, 0, 0, id, ControlScheme.MouseAndKeyboard, false, false);
                             }
 
                         });

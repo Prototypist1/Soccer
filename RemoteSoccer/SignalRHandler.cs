@@ -244,17 +244,17 @@ namespace RemoteSoccer
 
             }
 
-            public void SetCallBacks(IGameView  gameView) {
+            //public void SetCallBacks(IGameView  gameView) {
 
-                connection.On<ObjectsCreated>(nameof(ObjectsCreated), gameView.HandleObjectsCreated);
-                connection.On< ObjectsRemoved>(nameof(ObjectsRemoved), gameView.HandleObjectsRemoved);
-                connection.On< UpdateScore>(nameof(UpdateScore), gameView.HandleUpdateScore);
-                connection.On< ColorChanged>(nameof(ColorChanged), gameView.HandleColorChanged);
-                connection.On< NameChanged>(nameof(NameChanged), gameView.HandleNameChanged);
-                connection.Closed += (x) => { 
-                    return Task.CompletedTask; 
-                };
-            }
+            //    connection.On<ObjectsCreated>(nameof(ObjectsCreated), gameView.HandleObjectsCreated);
+            //    connection.On< ObjectsRemoved>(nameof(ObjectsRemoved), gameView.HandleObjectsRemoved);
+            //    connection.On< UpdateScore>(nameof(UpdateScore), gameView.HandleUpdateScore);
+            //    connection.On< ColorChanged>(nameof(ColorChanged), gameView.HandleColorChanged);
+            //    connection.On< NameChanged>(nameof(NameChanged), gameView.HandleNameChanged);
+            //    connection.Closed += (x) => { 
+            //        return Task.CompletedTask; 
+            //    };
+            //}
 
             public async void Send(string game,
                 CreatePlayer createPlayer)
@@ -347,10 +347,10 @@ namespace RemoteSoccer
                 {
                 }
             }
-            public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
-            {
-                return connection.StreamAsync<Positions>(nameof(JoinChannel), joinChannel);
-            }
+            //public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
+            //{
+            //    return connection.StreamAsync<Positions>(nameof(JoinChannel), joinChannel);
+            //}
         }
     }
 }
