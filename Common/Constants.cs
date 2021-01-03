@@ -17,7 +17,7 @@
 
 
         public const double goalLen = 6000;
-        public const double footLen = 4000;
+        public const double footLen = 5000;
         public const int PlayerRadius = 900 ;//750;//750;// 500;//300;
         public const int BallRadius = 650;//150;//250;//30;//
         public const double BallMass = 1;
@@ -42,8 +42,10 @@
         // fastest you can move your foot
         public const double speedLimit = 1200;
         // firction on the ball
-        public const double FrictionDenom = 700;
+        public const double FrictionDenom = 1000;
         public const int bodyStartAt = 50;
-        public const int bodySpeedLimit = 150;
+        public const int bodySpeedLimit = 120;
+        public const double BoostPower = 800;
+        public const double ThrowScale = .12;
     }
 }

@@ -191,7 +191,7 @@ namespace Common
                             // 
                             if (input.Boost && player.boosts >= 1)
                             {
-                                player.externalVelocity = player.externalVelocity.NewAdded(f.NewScaled(1000));
+                                player.externalVelocity = player.externalVelocity.NewAdded(f.NewScaled(Constants.BoostPower));
                                 player.boosts--;
                             }
                         }
@@ -296,10 +296,11 @@ namespace Common
                         player.throwStart = player.foot.position.NewAdded(player.body.position.NewMinus());
                     }
 
-                    player.proposedThrow = player.foot.position.NewAdded(player.body.position.NewMinus()).NewAdded(player.throwStart.NewMinus()).NewScaled(.4);
+                    player.proposedThrow = player.foot.position.NewAdded(player.body.position.NewMinus()).NewAdded(player.throwStart.NewMinus()).NewScaled(Constants.ThrowScale);
 
                     if (player.throwing && !input.Throwing && state.ball.ownerOrNull == player)
                     {
+                        player.body.velocity = player.body.velocity.NewScaled(2);
                         state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
                         state.ball.ownerOrNull.lastHadBall = state.frame;
                         state.ball.ownerOrNull = null;

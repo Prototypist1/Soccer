@@ -453,7 +453,7 @@ namespace physics2
                             parameter.start,
                             parameter.end,
                             new Vector(0, 0),
-                            Constants.BallRadius,
+                            Constants.PlayerRadius,
                             out var time))
                         {
                             events.Add(new UpdateAction
@@ -467,13 +467,17 @@ namespace physics2
                                     var normal = PhysicsMath2.NormalUnit(parameter.start, parameter.end, directionalUnit);
 
                                     var collisionLocation = player.foot.position.NewAdded(normal.NewScaled(-Constants.PlayerRadius));
-                                    var force = normal.NewScaled(2 * player.foot.velocity.NewAdded(player.body.velocity).NewAdded(player.externalVelocity).Dot(normal));
+                                    var force = normal.NewScaled(2 * player.foot.velocity.NewAdded(player.body.velocity).NewAdded(player.externalVelocity.NewScaled(.75)).Dot(normal));
                                     gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.frame));
-                                    
+
                                     // half the foot and body velocity becomes external so you bounce a bit
-                                    player.externalVelocity = player.externalVelocity.NewAdded( PhysicsMath2.HitWall(player.foot.velocity.NewScaled(.5).NewAdded(player.body.velocity.NewScaled(.5)).NewAdded(player.externalVelocity), parameter.start, parameter.end));
-                                    player.body.velocity = player.body.velocity.NewAdded(PhysicsMath2.HitWall(player.body.velocity.NewScaled(.5), parameter.start, parameter.end));
-                                    player.foot.velocity = player.foot.velocity.NewAdded(PhysicsMath2.HitWall(player.foot.velocity.NewScaled(.5), parameter.start, parameter.end));
+                                    // some of the external for is lost so you can't loose the ball bounce off the wall and get it back
+                                    player.externalVelocity = player.externalVelocity
+                                        .NewAdded(normal.NewScaled(player.body.velocity.Dot(normal)).NewMinus())
+                                        .NewAdded(normal.NewScaled(player.foot.velocity.Dot(normal)).NewMinus())
+                                        .NewAdded(normal.NewScaled(player.externalVelocity.Dot(normal)).NewScaled(1.5).NewMinus());
+                                    player.body.velocity = player.body.velocity.NewAdded(normal.NewScaled(player.body.velocity.Dot(normal)).NewMinus());
+                                    player.foot.velocity = player.foot.velocity.NewAdded(normal.NewScaled(player.foot.velocity.Dot(normal)).NewMinus());
 
                                 }
                             });

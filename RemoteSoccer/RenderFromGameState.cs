@@ -241,8 +241,8 @@ namespace RemoteSoccer
                     DrawLine(
                         playerPair.Value.foot.position.x,
                         playerPair.Value.foot.position.y,
-                        playerPair.Value.foot.position.x + (playerPair.Value.proposedThrow.x * 10),
-                        playerPair.Value.foot.position.y + (playerPair.Value.proposedThrow.y * 10),
+                        playerPair.Value.foot.position.x + (playerPair.Value.proposedThrow.x * 20),
+                        playerPair.Value.foot.position.y + (playerPair.Value.proposedThrow.y * 20),
                         Color.FromArgb(0xff, playerPair.Value.foot.r, playerPair.Value.foot.g, playerPair.Value.foot.b),
                         10 / scale);
                 }

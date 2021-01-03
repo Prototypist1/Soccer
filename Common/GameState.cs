@@ -143,7 +143,7 @@ namespace Common
                 new GameState.PerimeterSegment(new  Vector(0, 0),new  Vector(evnt.fieldDimensions.xMax, 0)),
                 new GameState.PerimeterSegment(new  Vector(0, evnt.fieldDimensions.yMax),new  Vector(0, 0)),
                 new GameState.PerimeterSegment(new  Vector(evnt.fieldDimensions.xMax,evnt.fieldDimensions.yMax),new  Vector(0,evnt.fieldDimensions.yMax)),
-                new GameState.PerimeterSegment(new  Vector(evnt.fieldDimensions.xMax,evnt.fieldDimensions.yMax),new  Vector(evnt.fieldDimensions.xMax,0))
+                new GameState.PerimeterSegment(new  Vector(evnt.fieldDimensions.xMax,0),new  Vector(evnt.fieldDimensions.xMax,evnt.fieldDimensions.yMax))
             };
 
         }
