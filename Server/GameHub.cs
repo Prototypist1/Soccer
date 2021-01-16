@@ -1,18 +1,67 @@
 ﻿using Common;
 using Microsoft.AspNetCore.SignalR;
+using physics2;
 using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Server
 {
+
+    public class RemoteGame {
+        public readonly Game2 game2 = new Game2();
+
+        public TaskCompletionSource<bool> next = new TaskCompletionSource<bool>();
+        
+        internal async IAsyncEnumerable<GameStateUpdate> GetReader()
+        {
+            while (true)
+            {
+                await next.Task;
+                next = new TaskCompletionSource<bool>();
+                yield return game2.gameState.GetGameStateUpdate();
+            }
+
+        }
+
+        private ConcurrentIndexed<Guid, ConcurrentLinkedList<PlayerInputs>> recieved = new ConcurrentIndexed<Guid, ConcurrentLinkedList<PlayerInputs>>();
+
+        internal void PlayerInputs(PlayerInputs item)
+        {
+            recieved
+                .GetOrAdd(item.Id, new ConcurrentLinkedList<PlayerInputs>())
+                .Add(item);
+
+            var sum = recieved.Sum(x => x.Value.Count);
+            if (sum >= game2.gameState.players.Count) {
+                var inputs = new Dictionary<Guid, PlayerInputs>();
+                foreach (var pair in recieved)
+                {
+                    if (pair.Value.TryGetFirst(out var first)) {
+                        inputs[pair.Key] = first;
+                    }
+                }
+                game2.ApplyInputs(inputs);
+                try
+                {
+                    next.SetResult(true);
+                }
+                catch (System.InvalidOperationException) { 
+                    // oh well, it already has a result
+                }
+            }
+        }
+    }
+
+
     public class GameHubState {
 
         // I don't really like how I am storing this data
-        public readonly ConcurrentIndexed<string, Game> games = new ConcurrentIndexed<string, Game>();
+        public readonly ConcurrentIndexed<string, RemoteGame> games = new ConcurrentIndexed<string, RemoteGame>();
         public readonly ConcurrentIndexed<string, string> connectionIdToGameName = new ConcurrentIndexed<string, string>();
         public readonly IHubContext<GameHub> connectionManager;
 
@@ -37,28 +86,28 @@ namespace Server
             state.connectionManager.Clients.Group(id).SendAsync(nameof(UpdateScore), x);
         };
 
-        public void ResetGame(ResetGame resetGame)
-        {
-            if (state.games.TryGetValue(resetGame.Id , out var value))
-            {
-                // this is why () should not be the method call syntax
-                // .Invoke included for readablity
-                getOnUpdateScore(resetGame.Id).Invoke(value.Reset());
-            }
-        }
+        //public void ResetGame(ResetGame resetGame)
+        //{
+        //    if (state.games.TryGetValue(resetGame.Id , out var value))
+        //    {
+        //        // this is why () should not be the method call syntax
+        //        // .Invoke included for readablity
+        //        getOnUpdateScore(resetGame.Id).Invoke(value.Reset());
+        //    }
+        //}
 
-        public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel) {
+        public IAsyncEnumerable<GameStateUpdate> JoinChannel(JoinChannel joinChannel) {
             return state.games.GetOrThrow(joinChannel.Id).GetReader();
         }
 
         public async Task CreateOrJoinGame(CreateOrJoinGame createOrJoinGame)
         {
-            var myGame = new Game();
+            var myGame = new RemoteGame();
             var game = state.games.GetOrAdd(createOrJoinGame.Id, myGame);
 
-            if (myGame == game) {
-                myGame.Init(getOnUpdateScore(createOrJoinGame.Id), createOrJoinGame.FieldDimensions);
-            }
+            //if (myGame == game) {
+            //    myGame.Init(getOnUpdateScore(createOrJoinGame.Id), createOrJoinGame.FieldDimensions);
+            //}
 
             if (!state.connectionIdToGameName.TryAdd(Context.ConnectionId, createOrJoinGame.Id)) {
                 // error!
@@ -88,21 +137,21 @@ namespace Server
         }
 
 
-        public async Task ColorChanged(string game, ColorChanged colorChanged)
-        {
-            // update the players color
-            state.games[game].ColorChanged(colorChanged);
-            // tell the other players
-            await Clients.Group(game).SendAsync(nameof(ColorChanged), colorChanged);
-        }
+        //public async Task ColorChanged(string game, ColorChanged colorChanged)
+        //{
+        //    // update the players color
+        //    state.games[game].(colorChanged);
+        //    // tell the other players
+        //    await Clients.Group(game).SendAsync(nameof(ColorChanged), colorChanged);
+        //}
 
-        public async Task NameChanged(string game, NameChanged nameChanged)
-        {
-            // update the players color
-            state.games[game].NameChanged(nameChanged);
-            // tell the other players
-            await Clients.Group(game).SendAsync(nameof(NameChanged), nameChanged);
-        }
+        //public async Task NameChanged(string game, NameChanged nameChanged)
+        //{
+        //    // update the players color
+        //    state.games[game].NameChanged(nameChanged);
+        //    // tell the other players
+        //    await Clients.Group(game).SendAsync(nameof(NameChanged), nameChanged);
+        //}
 
         public async Task PlayerInputs(string game, IAsyncEnumerable<PlayerInputs> playerInputs)
         {
@@ -153,9 +202,6 @@ namespace Server
             catch (Exception e)
             {
 #pragma warning restore CS0168 // Variable is declared but never used
-#pragma warning disable CS0219 // Variable is assigned but its value is never used
-                var db = 0;
-#pragma warning restore CS0219 // Variable is assigned but its value is never used
             }
         }
     }

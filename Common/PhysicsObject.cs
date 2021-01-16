@@ -1,10 +1,75 @@
-﻿using Physics2;
+﻿using Common;
+using Physics2;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace physics2
 {
+    public class Game2
+    {
+
+        public readonly GameState gameState;
+        private readonly GameStateTracker gameStateTracker;
+
+        public Game2()
+        {
+            FieldDimensions field = FieldDimensions.Default;
+
+
+            gameState = new GameState();
+
+            gameState.Handle(new InitGameStateEvent(
+                new Physics2.Vector(field.xMax / 2.0, field.yMax / 2.0),
+                new Physics2.Vector(0, 0),
+                new Physics2.Vector(0, field.yMax / 2.0),
+                new Physics2.Vector(field.xMax, field.yMax / 2.0),
+                field));
+
+            // GameStateTracker is a bit weird
+            this.gameStateTracker = new GameStateTracker(
+                       (x, y) => {
+                           gameState.GameBall.OwnerOrNull = null;
+                           gameState.GameBall.Posistion = new Physics2.Vector(gameState.CountDownState.X, gameState.CountDownState.Y);
+                           gameState.GameBall.Velocity = new Physics2.Vector(0, 0);
+                       },
+                        (field.xMax / 2.0) + Constants.footLen,
+                        (field.xMax / 2.0) - Constants.footLen,
+                        field.yMax - Constants.footLen,
+                        Constants.footLen);
+        }
+
+        //internal void OnDisconnect(Func<Exception, Task> onDisconnect)
+        //{
+
+        //}
+
+        //IAsyncEnumerable does not really make sense here
+        public void ApplyInputs(Dictionary<Guid, PlayerInputs> inputs)
+        {
+            gameState.Handle(gameStateTracker.UpdateGameState());
+            PlayerInputApplyer.Apply(gameState, inputs);
+
+            gameState.Simulate(gameStateTracker);
+        }
+
+
+        public void CreatePlayer(AddPlayerEvent createPlayer)
+        {
+            gameState.Handle(createPlayer);
+        }
+
+        public void LeaveGame(RemovePlayerEvent removePlayerEvent)
+        {
+            gameState.Handle(removePlayerEvent);
+        }
+
+        public void UpdatePlayer(UpdatePlayerEvent updatePlayerEvent)
+        {
+            gameState.Handle(updatePlayerEvent);
+        }
+    }
+
 
     //public class PhysicsObject : IPhysicsObject, IUpdatePosition
     //{
