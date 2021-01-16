@@ -30,9 +30,9 @@ namespace RemoteSoccer
             // GameStateTracker is a bit weird
             this.gameStateTracker = new GameStateTracker(
                        (x, y) => {
-                           gameState.ball.ownerOrNull = null;
-                           gameState.ball.posistion = new Physics2.Vector(gameState.CountDownState.X, gameState.CountDownState.Y);
-                           gameState.ball.velocity = new Physics2.Vector(0, 0);
+                           gameState.GameBall.OwnerOrNull = null;
+                           gameState.GameBall.Posistion = new Physics2.Vector(gameState.CountDownState.X, gameState.CountDownState.Y);
+                           gameState.GameBall.Velocity = new Physics2.Vector(0, 0);
                         },
                         (field.xMax / 2.0) + Constants.footLen,
                         (field.xMax / 2.0) - Constants.footLen,

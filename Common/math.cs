@@ -498,44 +498,44 @@ namespace Physics2
 
         internal static void TryPushBallLine(GameState.Ball ball, GameState.PerimeterSegment perimeterSegment)
         {
-            var directionalUnit = DirectionalUnit(perimeterSegment.start, perimeterSegment.end);
-            var normalUnit = NormalUnit(perimeterSegment.start, perimeterSegment.end, directionalUnit);
+            var directionalUnit = DirectionalUnit(perimeterSegment.Start, perimeterSegment.End);
+            var normalUnit = NormalUnit(perimeterSegment.Start, perimeterSegment.End, directionalUnit);
 
-            var normalDistance = ball.posistion.Dot(normalUnit);
-            var lineNormalDistance = perimeterSegment.start.Dot(normalUnit);
+            var normalDistance = ball.Posistion.Dot(normalUnit);
+            var lineNormalDistance = perimeterSegment.Start.Dot(normalUnit);
 
             var violation = Math.Abs(lineNormalDistance - normalDistance) - Constants.BallRadius;
             if (violation < 0)
             {
                 var violationVector = normalUnit.NewScaled(violation * Math.Sign(lineNormalDistance - normalDistance));
-                ball.velocity = ball.velocity.NewAdded(violationVector);
+                ball.Velocity = ball.Velocity.NewAdded(violationVector);
             }
         }
         internal static void TryPushBallLine(GameState.Player player, GameState.PerimeterSegment perimeterSegment)
         {
-            var directionalUnit = DirectionalUnit(perimeterSegment.start, perimeterSegment.end);
-            var normalUnit = NormalUnit(perimeterSegment.start, perimeterSegment.end, directionalUnit);
+            var directionalUnit = DirectionalUnit(perimeterSegment.Start, perimeterSegment.End);
+            var normalUnit = NormalUnit(perimeterSegment.Start, perimeterSegment.End, directionalUnit);
 
-            var normalDistance = player.foot.position.Dot(normalUnit);
-            var lineNormalDistance = perimeterSegment.start.Dot(normalUnit);
+            var normalDistance = player.PlayerFoot.Position.Dot(normalUnit);
+            var lineNormalDistance = perimeterSegment.Start.Dot(normalUnit);
 
             var violation = Math.Abs(lineNormalDistance - normalDistance) - Constants.BallRadius;
             if (violation < 0)
             {
                 var violationVector = normalUnit.NewScaled(violation * Math.Sign(lineNormalDistance - normalDistance));
-                player.externalVelocity = player.externalVelocity.NewAdded(violationVector);
+                player.ExternalVelocity = player.ExternalVelocity.NewAdded(violationVector);
             }
         }
 
         internal static void TryPushBallWall(GameState.Player player, (double x, double y, double radius) ballwall)
         {
-            var dis = player.foot.position.NewAdded(new Vector(-ballwall.x, -ballwall.y));
+            var dis = player.PlayerFoot.Position.NewAdded(new Vector(-ballwall.x, -ballwall.y));
 
 
             if (dis.Length < Constants.PlayerRadius + ballwall.radius)
             {
                 var violationVector = (dis.Length == 0 ? new Vector(1,0) : dis.NewUnitized()).NewScaled((Constants.PlayerRadius + ballwall.radius) - dis.Length);
-                player.externalVelocity = player.externalVelocity.NewAdded(violationVector);
+                player.ExternalVelocity = player.ExternalVelocity.NewAdded(violationVector);
             }
         }
 

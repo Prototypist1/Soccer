@@ -2,8 +2,10 @@
 
 namespace Common
 {
-    public struct CountDownState
+    public class CountDownState
     {
+
+        public CountDownState() { }
         public CountDownState(bool countdown, double x, double y, double radius, double strokeThickness, double ballOpacity)
         {
             Countdown = countdown;
