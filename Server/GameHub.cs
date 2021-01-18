@@ -42,6 +42,8 @@ namespace Server
                 foreach (var pair in recieved)
                 {
                     if (pair.Value.TryGetFirst(out var first)) {
+                        // TODO TryGetFirst and RemoveStart should be combined
+                        pair.Value.RemoveStart();
                         inputs[pair.Key] = first;
                     }
                 }
@@ -63,6 +65,7 @@ namespace Server
         // I don't really like how I am storing this data
         public readonly ConcurrentIndexed<string, RemoteGame> games = new ConcurrentIndexed<string, RemoteGame>();
         public readonly ConcurrentIndexed<string, string> connectionIdToGameName = new ConcurrentIndexed<string, string>();
+        public readonly ConcurrentIndexed<string, Guid> connectionIdToPlayerId = new ConcurrentIndexed<string, Guid>();
         public readonly IHubContext<GameHub> connectionManager;
 
         public GameHubState(IHubContext<GameHub> connectionManager)
@@ -125,33 +128,11 @@ namespace Server
         }
 
 
-        public async Task CreatePlayer(string game, CreatePlayer createPlayer)
+        public void AddPlayerEvent(string game, AddPlayerEvent createPlayer)
         {
-            // create the player
-            // tell the other players
-            await Clients.Group(game).SendAsync(nameof(ObjectsCreated), state.games[game].CreatePlayer(Context.ConnectionId, createPlayer));
-            // tell the new player about everyone
-            await Clients.Caller.SendAsync(nameof(ObjectsCreated), state.games[game].GetObjectsCreated());
-            // add the player to the group
-            await Groups.AddToGroupAsync(Context.ConnectionId, game);
+            state.connectionIdToPlayerId[Context.ConnectionId] = createPlayer.id;
+            state.games.GetOrThrow(game).game2.gameState.Handle(createPlayer);
         }
-
-
-        //public async Task ColorChanged(string game, ColorChanged colorChanged)
-        //{
-        //    // update the players color
-        //    state.games[game].(colorChanged);
-        //    // tell the other players
-        //    await Clients.Group(game).SendAsync(nameof(ColorChanged), colorChanged);
-        //}
-
-        //public async Task NameChanged(string game, NameChanged nameChanged)
-        //{
-        //    // update the players color
-        //    state.games[game].NameChanged(nameChanged);
-        //    // tell the other players
-        //    await Clients.Group(game).SendAsync(nameof(NameChanged), nameChanged);
-        //}
 
         public async Task PlayerInputs(string game, IAsyncEnumerable<PlayerInputs> playerInputs)
         {
@@ -163,17 +144,17 @@ namespace Server
             }
         }
 
-        public async Task LeaveGame(LeaveGame leaveGame) {
-            await LeaveGame(Context.ConnectionId);
+        public void LeaveGame(LeaveGame leaveGame) {
+            LeaveGame(Context.ConnectionId);
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            await LeaveGame(Context.ConnectionId);
+            LeaveGame(Context.ConnectionId);
             await base.OnDisconnectedAsync(exception);
         }
 
-        private async Task LeaveGame(string connection)
+        private void LeaveGame(string connection)
         {
             try
             {
@@ -181,19 +162,9 @@ namespace Server
                 {
                     if (state.games.TryGetValue(gameName, out var game))
                     {
-                        if (game.TryDisconnect(connection, out var objectRemoveds))
+                        if (state.connectionIdToPlayerId.TryRemove(connection, out var guid))
                         {
-
-                            // tell the other players
-                            await Clients.Group(gameName).SendAsync(nameof(ObjectsRemoved), new ObjectsRemoved(objectRemoveds.ToArray()));
-                            var dontwait = Task.Run(async () =>
-                            {
-                                await Task.Delay(5000);
-                                if (game.LastInputUTC.AddMinutes(5) < DateTime.Now)
-                                {
-                                    state.games.TryRemove(gameName, out var _);
-                                }
-                            });
+                            game.game2.gameState.Handle(new RemovePlayerEvent(guid));
                         }
                     }
                 }

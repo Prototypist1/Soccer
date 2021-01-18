@@ -137,7 +137,6 @@
     </Compile>
     <Compile Include="ControllerInputes.cs" />
     <Compile Include="FullField.cs" />
-    <Compile Include="Game2.cs" />
     <Compile Include="GameInfo.cs" />
     <Compile Include="IGameView.cs" />
     <Compile Include="IInputs.cs" />
@@ -157,6 +156,9 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="MouseKeyboardInputs.cs" />
+    <Compile Include="OnlineGame.xaml.cs">
+      <DependentUpon>OnlineGame.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RemoteGame.cs" />
     <Compile Include="RemoteWithPreviewGame.cs" />
@@ -210,6 +212,10 @@
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="OnlineGame.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>

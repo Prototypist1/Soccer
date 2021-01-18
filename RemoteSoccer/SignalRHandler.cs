@@ -24,7 +24,7 @@ namespace RemoteSoccer
         }
 
         // I need to go around protection all of these
-        public static async Task<SignalRHandler> GetOrThrow()
+        public static async Task<SignalRHandler> GetOrThrowAsync()
         {
             var res = instance;
             if (instance == null)
@@ -32,6 +32,20 @@ namespace RemoteSoccer
                 throw new Exception("oh no! we don't have a signal r handler!");
             }
             return await res;
+        }
+
+        public static SignalRHandler GetOrThrow()
+        {
+            var res = instance;
+            if (instance == null)
+            {
+                throw new Exception("oh no! we don't have a signal r handler!");
+            }
+            if (res.IsCompleted)
+            {
+                return res.Result;
+            }
+            throw new Exception("res should be complete");
         }
 
         public class Getter
@@ -244,6 +258,11 @@ namespace RemoteSoccer
 
             }
 
+            public void SubscribeToGameStateUpdates(Action<GameStateUpdate> updateGameState) {
+                connection.Remove(nameof(GameStateUpdate));
+                connection.On(nameof(GameStateUpdate), updateGameState);
+            }
+
             //public void SetCallBacks(IGameView  gameView) {
 
             //    connection.On<ObjectsCreated>(nameof(ObjectsCreated), gameView.HandleObjectsCreated);
@@ -257,11 +276,11 @@ namespace RemoteSoccer
             //}
 
             public async void Send(string game,
-                CreatePlayer createPlayer)
+                AddPlayerEvent createPlayer)
             {
                 try
                 {
-                    await connection.InvokeAsync(nameof(CreatePlayer), game, createPlayer);
+                    await connection.InvokeAsync(nameof(AddPlayerEvent), game, createPlayer);
                 }
                 catch (TimeoutException)
                 {
@@ -306,47 +325,47 @@ namespace RemoteSoccer
                 }
             }
 
-            public async void Send(ResetGame inputs)
-            {
-                try
-                {
-                    await connection.InvokeAsync(nameof(ResetGame), inputs);
-                }
-                catch (TimeoutException)
-                {
-                }
-                catch (InvalidOperationException)
-                {
-                }
-            }
+            //public async void Send(ResetGame inputs)
+            //{
+            //    try
+            //    {
+            //        await connection.InvokeAsync(nameof(ResetGame), inputs);
+            //    }
+            //    catch (TimeoutException)
+            //    {
+            //    }
+            //    catch (InvalidOperationException)
+            //    {
+            //    }
+            //}
 
-            public async void Send(string game, ColorChanged colorChanged)
-            {
-                try
-                {
-                    await connection.InvokeAsync(nameof(ColorChanged), game, colorChanged);
-                }
-                catch (TimeoutException)
-                {
-                }
-                catch (InvalidOperationException)
-                {
-                }
-            }
+            //public async void Send(string game, ColorChanged colorChanged)
+            //{
+            //    try
+            //    {
+            //        await connection.InvokeAsync(nameof(ColorChanged), game, colorChanged);
+            //    }
+            //    catch (TimeoutException)
+            //    {
+            //    }
+            //    catch (InvalidOperationException)
+            //    {
+            //    }
+            //}
 
-            public async void Send(string game, NameChanged nameChanged)
-            {
-                try
-                {
-                    await connection.InvokeAsync(nameof(NameChanged), game, nameChanged);
-                }
-                catch (TimeoutException)
-                {
-                }
-                catch (InvalidOperationException)
-                {
-                }
-            }
+            //public async void Send(string game, NameChanged nameChanged)
+            //{
+            //    try
+            //    {
+            //        await connection.InvokeAsync(nameof(NameChanged), game, nameChanged);
+            //    }
+            //    catch (TimeoutException)
+            //    {
+            //    }
+            //    catch (InvalidOperationException)
+            //    {
+            //    }
+            //}
             //public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
             //{
             //    return connection.StreamAsync<Positions>(nameof(JoinChannel), joinChannel);

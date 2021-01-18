@@ -1,5 +1,6 @@
 ﻿using Common;
 using Microsoft.Graphics.Canvas.UI.Xaml;
+using physics2;
 using Prototypist.TaskChain;
 using System;
 using System.Collections.Concurrent;
@@ -196,13 +197,13 @@ namespace RemoteSoccer
         }
 
 
-        private async IAsyncEnumerable<PlayerInputs> InterseptInputs(IAsyncEnumerable<PlayerInputs> x)
-        {
-            await foreach(var item in x)
-            {
-                yield return item;
-            }
-        }
+        //private async IAsyncEnumerable<PlayerInputs> InterseptInputs(IAsyncEnumerable<PlayerInputs> x)
+        //{
+        //    await foreach(var item in x)
+        //    {
+        //        yield return item;
+        //    }
+        //}
 
         private void Gamepad_GamepadRemoved(object sender, Windows.Gaming.Input.Gamepad e)
         {

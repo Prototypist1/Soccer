@@ -27,12 +27,20 @@ namespace Common
 
         public CountDownState UpdateGameState()
         {
-            var res = new CountDownState();
-            res.Countdown = false;
+
             if (gameState != play)
             {
                 gameState++;
             }
+            return GetCountDownState();
+        }
+
+        public CountDownState GetCountDownState()
+        {
+            var res = new CountDownState()
+            {
+                Countdown = false
+            };
             if (gameState == resetBall)
             {
                 resetBallAction(ballStartX, ballStartY);
@@ -59,7 +67,6 @@ namespace Common
             }
             return res;
         }
-
 
         private const int play = -1;
         private const int startGrowingCircle = 0;

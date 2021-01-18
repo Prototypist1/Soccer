@@ -99,7 +99,7 @@ namespace RemoteSoccer
                             LoadingText.Text = "Starting Game";
                             LoadingSpinner.IsActive = true;
                         });
-                    var handler = await SingleSignalRHandler.GetOrThrow();
+                    var handler = await SingleSignalRHandler.GetOrThrowAsync();
                     var res = await handler.Send(new CreateOrJoinGame(name, FieldDimensions.Default));
                     if (res.Is1(out var gameCreated))
                     {
@@ -107,10 +107,10 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         async () =>
                         {
-                            var handler = (await SingleSignalRHandler.GetOrThrow());
+                            var handler = (await SingleSignalRHandler.GetOrThrowAsync());
                             handler.SetOnClosed(null);
                             handler.ClearCallBacks();
-                            this.Frame.Navigate(typeof(MainPage), new GameInfo( gameCreated.Id, Mouse.IsChecked.Value ? ControlScheme.SipmleMouse: ControlScheme.MouseAndKeyboard));
+                            this.Frame.Navigate(typeof(OnlineGame), new GameInfo( gameCreated.Id, Mouse.IsChecked.Value ? ControlScheme.SipmleMouse: ControlScheme.MouseAndKeyboard));
                         });
                     }
                     else if (res.Is2(out var joined))
@@ -119,10 +119,10 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         async () =>
                         {
-                            var handler = (await SingleSignalRHandler.GetOrThrow());
+                            var handler = (await SingleSignalRHandler.GetOrThrowAsync());
                             handler.SetOnClosed(null);
                             handler.ClearCallBacks();
-                            this.Frame.Navigate(typeof(MainPage), new GameInfo(joined.Id, Mouse.IsChecked.Value ? ControlScheme.SipmleMouse : ControlScheme.MouseAndKeyboard));
+                            this.Frame.Navigate(typeof(OnlineGame), new GameInfo(joined.Id, Mouse.IsChecked.Value ? ControlScheme.SipmleMouse : ControlScheme.MouseAndKeyboard));
                         });
                     }
                     else if (res.Is3(out var exception))

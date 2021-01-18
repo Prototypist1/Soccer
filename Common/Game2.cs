@@ -9,13 +9,16 @@ namespace physics2
     public class Game2
     {
 
+        // this is a bit weird
+        // GameState and GameStateTracker
+        // why is my game state in two classes?
+        // what is gameStateTracker for?
         public readonly GameState gameState;
         private readonly GameStateTracker gameStateTracker;
 
         public Game2()
         {
-            FieldDimensions field = FieldDimensions.Default;
-
+            var field = FieldDimensions.Default;
 
             gameState = new GameState();
 
@@ -37,6 +40,8 @@ namespace physics2
                         (field.xMax / 2.0) - Constants.footLen,
                         field.yMax - Constants.footLen,
                         Constants.footLen);
+
+            gameState.Handle(gameStateTracker.GetCountDownState());
         }
 
         //internal void OnDisconnect(Func<Exception, Task> onDisconnect)

@@ -66,8 +66,8 @@ namespace RemoteSoccer
                     // When the navigation stack isn't restored navigate to the first page,
                     // configuring the new page by passing required information as a navigation
                     // parameter
-                    rootFrame.Navigate(typeof(MainPage), new GameInfo( "local", Common.ControlScheme.Controller));
-                    //rootFrame.Navigate(typeof(LandingPage));
+                    //rootFrame.Navigate(typeof(MainPage), new GameInfo( "local", Common.ControlScheme.Controller));
+                    rootFrame.Navigate(typeof(LandingPage));
                 }
                 // Ensure the current window is active
                 Window.Current.Activate();
