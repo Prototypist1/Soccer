@@ -224,39 +224,63 @@ namespace Common
                     }
                     else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                     {
-
-                        var tx = (input.FootX) + player.PlayerFoot.Position.x;
-                        var ty = (input.FootY) + player.PlayerFoot.Position.y;
-
-
-                        var dx = tx - player.PlayerBody.Position.x;
-                        var dy = ty - player.PlayerBody.Position.y;
-
-                        var d = new Vector(dx, dy);
-
-                        if (d.Length > max)
+                        if (false)
                         {
-                            d = d.NewUnitized().NewScaled(max);
+                            var tx = (input.FootX) + player.PlayerFoot.Position.x;
+                            var ty = (input.FootY) + player.PlayerFoot.Position.y;
+
+
+                            var dx = tx - player.PlayerBody.Position.x;
+                            var dy = ty - player.PlayerBody.Position.y;
+
+                            var d = new Vector(dx, dy);
+
+                            if (d.Length > max)
+                            {
+                                d = d.NewUnitized().NewScaled(max);
+                            }
+
+                            var validTx = d.x + player.PlayerBody.Position.x;
+                            var validTy = d.y + player.PlayerBody.Position.y;
+
+                            var vx = validTx - player.PlayerFoot.Position.x;
+                            var vy = validTy - player.PlayerFoot.Position.y;
+
+                            var v = new Vector(vx, vy);
+
+                            // there is a speed limit things moving too fast are bad for online play
+                            // you can get hit before you have time to respond 
+                            var len = v.Length;
+                            if (len != 0)
+                            {
+                                var speedLimit = SpeedLimit(len);
+                                v = v.NewUnitized().NewScaled(speedLimit);
+                            }
+
+                            player.PlayerFoot.Velocity = v;
                         }
+                        else {
+                            var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
 
-                        var validTx = d.x + player.PlayerBody.Position.x;
-                        var validTy = d.y + player.PlayerBody.Position.y;
+                            var move = new Vector(input.FootX, input.FootY);
 
-                        var vx = validTx - player.PlayerFoot.Position.x;
-                        var vy = validTy - player.PlayerFoot.Position.y;
+                            //if (move.Length != 0)
+                            //{
+                            //    var speedLimit = SpeedLimit(move.Length);
+                            //    move = move.NewUnitized().NewScaled(speedLimit);
+                            //}
 
-                        var v = new Vector(vx, vy);
+                            //var partYou = diff.Length > max ?
+                            //    1.0 /(1.0 + ((diff.Length - max) / max))://0.0: //
+                            //    1.0;
 
-                        // there is a speed limit things moving too fast are bad for online play
-                        // you can get hit before you have time to respond 
-                        var len = v.Length;
-                        if (len != 0)
-                        {
-                            var speedLimit = SpeedLimit(len);
-                            v = v.NewUnitized().NewScaled(speedLimit);
+                            player.PlayerFoot.Velocity = move;//.NewScaled(partYou);//player.PlayerFoot.Velocity//.NewScaled(.2)
+                                //.NewAdded(move);//.NewScaled(partYou)
+                            if (diff.Length > max) {
+                                player.PlayerFoot.Velocity = player.PlayerFoot.Velocity
+                                    .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max)/4.0));// .NewScaled((1.0- partYou)/100.0)
+                            } 
                         }
-
-                        player.PlayerFoot.Velocity = v;
                     }
                     else if (input.ControlScheme == ControlScheme.SipmleMouse)
                     {

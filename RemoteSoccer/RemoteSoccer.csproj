@@ -25,7 +25,7 @@
     <PackageCertificateThumbprint>A9CB40DA9A1CADC9037E7C8AA2C22CDC02FFB4AF</PackageCertificateThumbprint>
     <AppInstallerUpdateFrequency>0</AppInstallerUpdateFrequency>
     <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>
-    <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+    <AppxSymbolPackageEnabled>True</AppxSymbolPackageEnabled>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
@@ -144,19 +144,19 @@
     <Compile Include="IScaler.cs" />
     <Compile Include="ISignalRHandler.cs" />
     <Compile Include="IZoomer.cs" />
-    <Compile Include="LandingPage.xaml.cs">
+    <Compile Include="Pages\LandingPage.xaml.cs">
       <DependentUpon>LandingPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="LocalGame.cs" />
-    <Compile Include="LocalLanding.xaml.cs">
+    <Compile Include="Pages\LocalLanding.xaml.cs">
       <DependentUpon>LocalLanding.xaml</DependentUpon>
     </Compile>
     <Compile Include="LocalSettingsKeys.cs" />
-    <Compile Include="MainPage.xaml.cs">
+    <Compile Include="Pages\MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="MouseKeyboardInputs.cs" />
-    <Compile Include="OnlineGame.xaml.cs">
+    <Compile Include="Pages\OnlineGame.xaml.cs">
       <DependentUpon>OnlineGame.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -201,19 +201,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="LandingPage.xaml">
+    <Page Include="Pages\LandingPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="LocalLanding.xaml">
+    <Page Include="Pages\LocalLanding.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainPage.xaml">
+    <Page Include="Pages\MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="OnlineGame.xaml">
+    <Page Include="Pages\OnlineGame.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

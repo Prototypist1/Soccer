@@ -153,7 +153,7 @@ namespace RemoteSoccer
 
 
             // goals scored
-            foreach (var goalScored in gameState.GoalsScored)
+            foreach (var goalScored in gameState.GoalsScored.Except(goalScoreds))
             {
                 Task.Run(() =>
                 {
@@ -164,7 +164,6 @@ namespace RemoteSoccer
                 goalScoreds.Add(goalScored);
             }
 
-            gameState.GoalsScored = new List<GameState.GoalScored>();
             var goalAnimationLength = 120.0;
             goalScoreds = goalScoreds.Where(x => gameState.Frame - x.Frame < goalAnimationLength).ToList();
             foreach (var goalSocred in goalScoreds)
@@ -178,7 +177,7 @@ namespace RemoteSoccer
             }
 
             // collisions
-            foreach (var collision in gameState.collisions)
+            foreach (var collision in gameState.collisions.Except(collisions))
             {
                 if (collision.Force.Length > 100)
                 {
@@ -196,7 +195,6 @@ namespace RemoteSoccer
                 collisions.Add(collision);
             }
 
-            gameState.collisions = new List<GameState.Collision>();
             var timeDenom = 100.0;
             collisions = collisions.Where(x => gameState.Frame - x.Frame < x.Force.Length / timeDenom).ToList();
             foreach (var collision in collisions)
@@ -235,13 +233,14 @@ namespace RemoteSoccer
             {
                 if (playerPair.Value.Throwing && gameState.GameBall.OwnerOrNull == playerPair.Key)
                 {
+                    var toThrow = playerPair.Value.ProposedThrow.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.ExternalVelocity);
                     DrawLine(
                         playerPair.Value.PlayerFoot.Position.x,
                         playerPair.Value.PlayerFoot.Position.y,
-                        playerPair.Value.PlayerFoot.Position.x + (playerPair.Value.ProposedThrow.x * 20),
-                        playerPair.Value.PlayerFoot.Position.y + (playerPair.Value.ProposedThrow.y * 20),
+                        playerPair.Value.PlayerFoot.Position.x + (toThrow.x * 30),
+                        playerPair.Value.PlayerFoot.Position.y + (toThrow.y * 30),
                         Color.FromArgb(0xff, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
-                        10 / scale);
+                        1 / scale);
                 }
             }
 

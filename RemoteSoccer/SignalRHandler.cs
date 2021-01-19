@@ -94,10 +94,10 @@ namespace RemoteSoccer
         {
 
             var connection = new HubConnectionBuilder()
-                //.WithUrl(@"https://soccerserver.azurewebsites.net/GameHub", x=>
+                .WithUrl(@"https://soccerserver.azurewebsites.net/GameHub", x=>
                 //.WithUrl(@"http://Pyrite:5000/GameHub", x =>
                 //.WithUrl(@"http://192.168.1.7:5000/GameHub", x =>
-                .WithUrl(@"http://localhost:5000/GameHub", x =>
+                //.WithUrl(@"http://localhost:5000/GameHub", x =>
                 {
                     // for some reason this seems to break azure signal r service
                     //x.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
@@ -258,10 +258,10 @@ namespace RemoteSoccer
 
             }
 
-            public void SubscribeToGameStateUpdates(Action<GameStateUpdate> updateGameState) {
-                connection.Remove(nameof(GameStateUpdate));
-                connection.On(nameof(GameStateUpdate), updateGameState);
-            }
+            //public void SubscribeToGameStateUpdates(Action<GameStateUpdate> updateGameState) {
+            //    connection.Remove(nameof(GameStateUpdate));
+            //    connection.On(nameof(GameStateUpdate), updateGameState);
+            //}
 
             //public void SetCallBacks(IGameView  gameView) {
 
@@ -366,10 +366,10 @@ namespace RemoteSoccer
             //    {
             //    }
             //}
-            //public IAsyncEnumerable<Positions> JoinChannel(JoinChannel joinChannel)
-            //{
-            //    return connection.StreamAsync<Positions>(nameof(JoinChannel), joinChannel);
-            //}
+            public IAsyncEnumerable<GameStateUpdate> JoinChannel(JoinChannel joinChannel)
+            {
+                return connection.StreamAsync<GameStateUpdate>(nameof(JoinChannel), joinChannel);
+            }
         }
     }
 }

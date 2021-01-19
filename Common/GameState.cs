@@ -49,14 +49,27 @@ namespace Common
             public Vector Position { get; set; }
             public Vector Force { get; set; }
             public int Frame { get; set; }
+            public Guid Id { get; set; }
 
             public Collision() { }
 
-            public Collision(Vector position, Vector force, int frame)
+            public Collision(Vector position, Vector force, int frame, Guid id)
             {
                 this.Position = position;
                 this.Force = force;
                 this.Frame = frame;
+                Id = id;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is Collision collision &&
+                       Id.Equals(collision.Id);
+            }
+
+            public override int GetHashCode()
+            {
+                return 2108858624 + Id.GetHashCode();
             }
         }
         public List<GoalScored> GoalsScored { get; set; } = new List<GoalScored>();
@@ -66,14 +79,27 @@ namespace Common
             public bool LeftScored { get; set; }
             public Vector Surface { get; set; }
             public int Frame { get; set; }
+            public Guid Id { get; set; }
 
             public GoalScored() { }
-            public GoalScored(Vector posistion, bool leftScored, Vector surface, int frame)
+            public GoalScored(Vector posistion, bool leftScored, Vector surface, int frame, Guid id)
             {
                 this.Posistion = posistion;
                 this.LeftScored = leftScored;
                 this.Surface = surface;
                 this.Frame = frame;
+                Id = id;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is GoalScored scored &&
+                       Id.Equals(scored.Id);
+            }
+
+            public override int GetHashCode()
+            {
+                return 2108858624 + Id.GetHashCode();
             }
         }
 
@@ -140,7 +166,7 @@ namespace Common
             public Vector ProposedThrow { get; set; }
             public int LastHadBall { get; set; }
             public double Mass { get; set; }
-            internal Vector ThrowStart { get; set; }
+            public Vector ThrowStart { get; set; }
             public double Boosts { get; set; } = 3;
 
         }

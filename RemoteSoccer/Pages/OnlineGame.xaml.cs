@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -34,6 +35,7 @@ namespace RemoteSoccer
         }
 
 
+        private Ref<bool> lockCurser = new Ref<bool>(false);
         private RenderGameState2 renderGameState;
         private Game2 game;
         private FullField zoomer;
@@ -45,11 +47,15 @@ namespace RemoteSoccer
         {
             base.OnNavigatedTo(e);
 
+
+            Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
+            ToggleCurser();
+
             var gameInfo = (GameInfo)e.Parameter;
 
             var gameName = gameInfo.gameName;
 
-            var inputs = new MouseKeyboardInputs(new Ref<bool>(false), playerId);
+            var inputs = new MouseKeyboardInputs(lockCurser, playerId);
 
             game = new Game2();
 
@@ -76,16 +82,44 @@ namespace RemoteSoccer
                 signalRHandler.Send(gameName, Inputs(inputs));
             });
 
-            signalRHandler.SubscribeToGameStateUpdates(x =>
+            var dontWait = MainLoop(signalRHandler.JoinChannel(new JoinChannel(gameName)));
+        }
+
+        private void Menu_KeyUp(CoreWindow sender, KeyEventArgs e)
+        {
+            if (e.VirtualKey == VirtualKey.Escape)
             {
-                game.gameState.Handle(x);
-                var dontWait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                ToggleCurser();
+            }
+        }
+
+
+        private void ToggleCurser()
+        {
+            lockCurser.thing = !lockCurser.Thing;
+            if (lockCurser.thing)
+            {
+                Window.Current.CoreWindow.PointerPosition = new Windows.Foundation.Point(
+                    (Window.Current.CoreWindow.Bounds.Left + Window.Current.CoreWindow.Bounds.Right) / 2.0,
+                    (Window.Current.CoreWindow.Bounds.Top + Window.Current.CoreWindow.Bounds.Bottom) / 2.0);
+                Window.Current.CoreWindow.PointerCursor = null;
+            }
+            else
+            {
+                Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
+            }
+        }
+
+        async Task MainLoop(IAsyncEnumerable<GameStateUpdate> enumerable) {
+            await foreach (var item in enumerable) {
+                game.gameState.Handle(item);
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                     CoreDispatcherPriority.Normal,
                     () =>
                     {
                         Canvas.Invalidate();
                     });
-            });
+            }
         }
 
         private static byte[] GetColor()
@@ -111,7 +145,19 @@ namespace RemoteSoccer
             {
                 yield return await mouseKeyboardInputs.Next();
                 counter++;
-                await Task.Delay((int)(((counter * 1000) /60.0) - stopWatch.ElapsedMilliseconds));
+
+
+                while ((1000.0 * counter / 60.0) > stopWatch.ElapsedMilliseconds)
+                {
+                }
+                //try
+                //{
+                //    await Task.Delay((int)(((counter * 1000) / 60.0) - stopWatch.ElapsedMilliseconds));
+                //}
+                //catch (ArgumentOutOfRangeException) { 
+                //    // we asked it to delay a negetive time
+                //    // oh well
+                //}
             }
         }
 

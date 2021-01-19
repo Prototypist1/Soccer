@@ -412,7 +412,7 @@ namespace physics2
 
                                     var collisionLocation = gameState.GameBall.Posistion.NewAdded(normal.NewScaled(-Constants.BallRadius));
 
-                                    gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame));
+                                    gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame, Guid.NewGuid()));
                                 }
                             });
                         }
@@ -468,7 +468,7 @@ namespace physics2
 
                                     var collisionLocation = player.PlayerFoot.Position.NewAdded(normal.NewScaled(-Constants.PlayerRadius));
                                     var force = normal.NewScaled(2 * player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity.NewScaled(.75)).Dot(normal));
-                                    gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame));
+                                    gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame, Guid.NewGuid()));
 
                                     // half the foot and body velocity becomes external so you bounce a bit
                                     // some of the external for is lost so you can't loose the ball bounce off the wall and get it back
@@ -563,7 +563,7 @@ namespace physics2
                                 var collisionLocation = p1.PlayerFoot.Position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
 
                                 // add a collision 
-                                gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame));
+                                gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame, Guid.NewGuid()));
                             }
                         });
                     }
@@ -592,7 +592,7 @@ namespace physics2
                                     // add a collision 
                                     var collisionLocation = player.PlayerFoot.Position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
                                     var force = normal.NewScaled(2 * player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).Dot(normal));
-                                    gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame));
+                                    gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame, Guid.NewGuid()));
 
                                     // half the foot and body velocity becomes external so you bounce a bit
                                     player.ExternalVelocity = player.ExternalVelocity.NewAdded(normal.NewScaled(-1 * player.ExternalVelocity.NewScaled(2).NewAdded(player.PlayerFoot.Velocity).NewAdded(player.PlayerBody.Velocity).Dot(normal)));
@@ -628,11 +628,10 @@ namespace physics2
 
                                         var position = goal.Posistion.NewAdded(normal.NewScaled(Constants.goalLen));
 
-                                        GameStateUpdater.Handle(gameState, new GameState.GoalScored(position, goal.LeftGoal, new Vector(normal.y,-normal.x), gameState.Frame));
+                                        GameStateUpdater.Handle(gameState, new GameState.GoalScored(position, goal.LeftGoal, new Vector(normal.y,-normal.x), gameState.Frame, Guid.NewGuid()));
 
                                         gameStateTracker.Scored();
                                     }
-
                                 }
                             });
                         }

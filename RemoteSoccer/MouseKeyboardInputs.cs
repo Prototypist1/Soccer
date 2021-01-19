@@ -18,6 +18,8 @@ namespace RemoteSoccer
         //private readonly Guid foot;
         private readonly Guid id;
 
+        bool lastBoost = false;
+
         public MouseKeyboardInputs(IReadonlyRef<bool> lockCurser, Guid id)
         {
             this.lockCurser = lockCurser ?? throw new ArgumentNullException(nameof(lockCurser));
@@ -86,10 +88,23 @@ namespace RemoteSoccer
                                 point = new Point(lastX, lastY);
                                 coreWindow.PointerPosition = point;
 
+                                var boost = false;
+                                if (coreWindow.GetKeyState(VirtualKey.Space).HasFlag(CoreVirtualKeyStates.Down))
+                                {
+                                    if (!lastBoost)
+                                    {
+                                        boost = true;
+                                    }
+                                    lastBoost = true;
+                                }
+                                else
+                                {
+                                    lastBoost = false;
+                                }
 
                                 lastX = point.X;
                                 lastY = point.Y;
-                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, id, ControlScheme.MouseAndKeyboard, mouseDown, false);
+                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, id, ControlScheme.MouseAndKeyboard, mouseDown, boost);
 
                             }
                             else
