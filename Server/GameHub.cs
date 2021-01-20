@@ -14,47 +14,93 @@ namespace Server
 
     public class RemoteGame {
         public readonly Game2 game2 = new Game2();
+        private Node lastUpdate;
+        //public TaskCompletionSource<bool> next = new TaskCompletionSource<bool>();
 
-        public TaskCompletionSource<bool> next = new TaskCompletionSource<bool>();
-        
-        internal async IAsyncEnumerable<GameStateUpdate> GetReader()
+        public RemoteGame() {
+            lastUpdate = new Node(game2.gameState.GetGameStateUpdate());
+        }
+
+        private class Node
         {
-            while (true)
+            public readonly GameStateUpdate positions;
+            public readonly TaskCompletionSource<Node> next = new TaskCompletionSource<Node>();
+
+            public Node(GameStateUpdate positions)
             {
-                await next.Task;
-                next = new TaskCompletionSource<bool>();
-                yield return game2.gameState.GetGameStateUpdate();
+                this.positions = positions;
             }
+        }
+
+        private class AsyncNodeWalker : IAsyncEnumerable<GameStateUpdate>, IAsyncEnumerator<GameStateUpdate>
+        {
+            private Node node;
+
+            public AsyncNodeWalker(Node node)
+            {
+                this.node = node;
+            }
+
+            public GameStateUpdate Current
+            {
+                get; private set;
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                return new ValueTask();
+            }
+
+            public IAsyncEnumerator<GameStateUpdate> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+            {
+                return this;
+            }
+
+            public async ValueTask<bool> MoveNextAsync()
+            {
+                node = await node.next.Task;
+                Current = node.positions;
+                return true;
+            }
+        }
+
+
+        internal IAsyncEnumerable<GameStateUpdate> GetReader()
+        {
+            return new AsyncNodeWalker(lastUpdate);
 
         }
 
         private ConcurrentIndexed<Guid, ConcurrentLinkedList<PlayerInputs>> recieved = new ConcurrentIndexed<Guid, ConcurrentLinkedList<PlayerInputs>>();
 
+        int going = 0;
         internal void PlayerInputs(PlayerInputs item)
         {
             recieved
                 .GetOrAdd(item.Id, new ConcurrentLinkedList<PlayerInputs>())
                 .Add(item);
 
-            var sum = recieved.Sum(x => x.Value.Count);
-            if (sum >= game2.gameState.players.Count) {
-                var inputs = new Dictionary<Guid, PlayerInputs>();
-                foreach (var pair in recieved)
+            if (Interlocked.CompareExchange(ref going, 1, 0) == 0)
+            {
+                while (recieved.Sum(x => x.Value.Count) >= game2.gameState.players.Count)
                 {
-                    if (pair.Value.TryGetFirst(out var first)) {
-                        // TODO TryGetFirst and RemoveStart should be combined
-                        pair.Value.RemoveStart();
-                        inputs[pair.Key] = first;
+                    var inputs = new Dictionary<Guid, PlayerInputs>();
+                    foreach (var pair in recieved)
+                    {
+                        if (pair.Value.TryGetFirst(out var first))
+                        {
+                            // TODO TryGetFirst and RemoveStart should be combined
+                            pair.Value.RemoveStart();
+                            inputs[pair.Key] = first;
+                        }
                     }
+                    game2.ApplyInputs(inputs);
+                    
                 }
-                game2.ApplyInputs(inputs);
-                try
-                {
-                    next.SetResult(true);
-                }
-                catch (System.InvalidOperationException) { 
-                    // oh well, it already has a result
-                }
+                var update = new Node(game2.gameState.GetGameStateUpdate());
+                lastUpdate.next.SetResult(update);
+                lastUpdate = update;
+                going = 0;
             }
         }
     }
