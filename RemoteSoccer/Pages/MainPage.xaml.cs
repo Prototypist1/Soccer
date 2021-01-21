@@ -141,7 +141,6 @@ namespace RemoteSoccer
         {
             base.OnNavigatedTo(e);
 
-
             Window.Current.CoreWindow.KeyUp += Menu_KeyUp;
 
             //zoomer = new ShowAllPositions(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions);
@@ -165,8 +164,6 @@ namespace RemoteSoccer
 
             var gameName = gameInfo.gameName;
 
-            var controlScheme = gameInfo.controlScheme;
-
             game = new Game2();
 
             zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
@@ -177,9 +174,23 @@ namespace RemoteSoccer
             {
                 try
                 {
+
+                    if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
+                    {
+
+                        var body = Guid.NewGuid();
+                        var inputs = new MouseKeyboardInputs(lockCurser, body);
+                        await inputs.Init();
+                        await CreatePlayer(body, inputs);
+                    }
+
+
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
                     {
-                        await CreatePlayer(gamePad);
+                        var body = Guid.NewGuid();
+                        var inputs = CreateController(gamePad, body);
+                        await inputs.Init();
+                        await CreatePlayer(body, inputs);
                     }
 
                     Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
@@ -225,7 +236,20 @@ namespace RemoteSoccer
 
         private void Gamepad_GamepadAdded(object sender, Windows.Gaming.Input.Gamepad e)
         {
-            CreatePlayer(e);
+            var body = Guid.NewGuid();
+            var inputs = CreateController(e, body);
+            inputs.Init().ContinueWith(_ => CreatePlayer(body, inputs));
+        }
+
+        private ControllerInputes CreateController(Gamepad e, Guid body)
+        {
+            var inputs = new ControllerInputes(/*lockCurser,*/ body, /*foot,*/ e,
+            () =>
+            {
+                var color = GetColor();
+                game.UpdatePlayer(new UpdatePlayerEvent(body, "", BodyA, color[0], color[1], color[2], 0xff, color[0], color[1], color[2]));
+            });
+            return inputs;
         }
 
         // these do not really work with multiple players
@@ -301,18 +325,8 @@ namespace RemoteSoccer
         //            ));
         //}
 
-        private async Task CreatePlayer(Windows.Gaming.Input.Gamepad gamepad)
+        private async Task CreatePlayer(Guid body, IInputs inputs)
         {
-            var body = Guid.NewGuid();
-
-            var inputs = new ControllerInputes(/*lockCurser,*/ body, /*foot,*/ gamepad,
-                () =>
-                {
-                    var color = GetColor();
-                    game.UpdatePlayer(new UpdatePlayerEvent(body, "", BodyA, color[0], color[1], color[2], 0xff, color[0], color[1], color[2]));
-                });
-
-            await inputs.Init();
 
             var newPlayer = new PlayerInfo(inputs, body);
 

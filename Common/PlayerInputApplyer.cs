@@ -159,6 +159,13 @@ namespace Common
                             var t = (-b + Math.Sqrt(Math.Pow(b, 2) - (4 * a * c))) / (2 * a);
 
                             player.PlayerBody.Velocity = new Vector( (damp * player.PlayerBody.Velocity.x) + (t * input.BodyX),(damp * player.PlayerBody.Velocity.y) + (t * input.BodyY));// / 2.0;
+
+
+                            if (input.Boost && player.Boosts >= 1)
+                            {
+                                player.ExternalVelocity = player.ExternalVelocity.NewAdded(f.NewScaled(Constants.BoostPower));
+                                player.Boosts--;
+                            }
                         }
                         else if (input.ControlScheme == ControlScheme.Controller)
                         {
