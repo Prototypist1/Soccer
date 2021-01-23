@@ -681,8 +681,9 @@ namespace physics2
             // move ball
             if (gameState.GameBall.OwnerOrNull != null)
             {
-                gameState.GameBall.Posistion = gameState.players[ gameState.GameBall.OwnerOrNull.Value].PlayerFoot.Position;
-                gameState.GameBall.Velocity = gameState.players[gameState.GameBall.OwnerOrNull.Value].PlayerFoot.Velocity;
+                var carrier = gameState.players[gameState.GameBall.OwnerOrNull.Value];
+                gameState.GameBall.Posistion = carrier.PlayerFoot.Position;
+                gameState.GameBall.Velocity = carrier.PlayerFoot.Velocity.NewAdded(carrier.PlayerBody.Velocity).NewAdded(carrier.ExternalVelocity);
             }
             else
             {

@@ -25,9 +25,31 @@ namespace RemoteSoccer
 
         public Task Init() => Task.CompletedTask;
 
+        bool needsNewDirection = true;
+        Vector lastDirection;
         public Task<PlayerInputs> Next()
         {
+            var r = new Random();
+            if (needsNewDirection || r.NextDouble() < (1 / 30.0))
+            {
+                needsNewDirection = false;
+                lastDirection = GenerateDirection();
+            }
+            return Task<PlayerInputs>.FromResult(new PlayerInputs
+            {
+                ControlScheme = ControlScheme.Controller,
+                Boost = false,
+                FootX = 0,
+                FootY = 0,
+                Id = self,
+                Throwing = false,
+                BodyX = lastDirection.x,
+                BodyY = lastDirection.y
+            });
+        }
 
+        private Vector GenerateDirection()
+        {
             var myPosition = gameState.players[self].PlayerBody.Position;
 
 
@@ -49,21 +71,12 @@ namespace RemoteSoccer
 
             direction = myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus());
 
-            if (direction.Length != 0) {
+            if (direction.Length != 0)
+            {
                 direction = direction.NewUnitized();
             }
 
-            return Task<PlayerInputs>.FromResult(new PlayerInputs
-            {
-                ControlScheme = ControlScheme.Controller,
-                Boost = false,
-                FootX = 0,
-                FootY = 0,
-                Id = self,
-                Throwing = false,
-                BodyX = direction.x,
-                BodyY = direction.y
-            });
+            return direction;
         }
 
         // positive is good 
@@ -138,7 +151,38 @@ namespace RemoteSoccer
 
             }
 
+            // this is mostly just annoying
+            // stay away from edges
+            res = res.NewAdded(TowardsXWithIn(myPosition, new Vector(0,0), -1, Constants.footLen));
+            res = res.NewAdded(TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Constants.footLen));
+
+            res = res.NewAdded(TowardsYWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
+            res = res.NewAdded(TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Constants.footLen));
+
             return res;
+        }
+
+        private Vector TowardsXWithIn(Vector us, Vector them, double scale, double whenWithIn) {
+
+            var startWith = them.NewAdded(us.NewMinus());
+            var len = Math.Abs( startWith.x);
+            if (len > 0 && len < whenWithIn)
+            {
+                return new Vector(startWith.x,0).NewUnitized().NewScaled(scale * (whenWithIn - len));
+            }
+            return new Vector(0, 0);
+        }
+
+        private Vector TowardsYWithIn(Vector us, Vector them, double scale, double whenWithIn)
+        {
+
+            var startWith = them.NewAdded(us.NewMinus());
+            var len = Math.Abs(startWith.y);
+            if (len > 0 && len < whenWithIn)
+            {
+                return new Vector(0, startWith.y).NewUnitized().NewScaled(scale * (whenWithIn - len));
+            }
+            return new Vector(0, 0);
         }
 
         private Vector Towards(Vector us, Vector them, double scale) {

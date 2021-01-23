@@ -318,7 +318,6 @@ namespace Common
                         player.PlayerFoot.Velocity = v;
                     }
 
-
                     // throwing 2
                     if (!player.Throwing && input.Throwing)
                     {

@@ -32,15 +32,15 @@ namespace physics2
 
             // GameStateTracker is a bit weird
             this.gameStateTracker = new GameStateTracker(
-                       (x, y) => {
-                           gameState.GameBall.OwnerOrNull = null;
-                           gameState.GameBall.Posistion = new Physics2.Vector(gameState.CountDownState.X, gameState.CountDownState.Y);
-                           gameState.GameBall.Velocity = new Physics2.Vector(0, 0);
-                       },
-                        (field.xMax / 2.0) + Constants.footLen,
-                        (field.xMax / 2.0) - Constants.footLen,
-                        field.yMax - Constants.footLen,
-                        Constants.footLen);
+                (x, y) => {
+                    gameState.GameBall.OwnerOrNull = null;
+                    gameState.GameBall.Posistion = new Physics2.Vector(gameState.CountDownState.X, gameState.CountDownState.Y);
+                    gameState.GameBall.Velocity = new Physics2.Vector(0, 0);
+                },
+                (field.xMax / 2.0) + Constants.footLen,
+                (field.xMax / 2.0) - Constants.footLen,
+                field.yMax - Constants.footLen,
+                Constants.footLen);
 
             gameState.Handle(gameStateTracker.GetCountDownState());
         }
