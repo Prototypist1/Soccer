@@ -81,13 +81,10 @@ namespace RemoteSoccer
             var random = new Random();
             for (int i = 0; i < 10; i++)
             {
-
                 var player = new MediaPlayer();
                 player.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/hit{random.Next(1, 4)}.wav"));
                 collisionSounds.AddLast(player);
-
             }
-
         }
 
         public void Update(GameState gameState, CanvasDrawEventArgs args)

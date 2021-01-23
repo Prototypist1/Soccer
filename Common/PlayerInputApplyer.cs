@@ -145,9 +145,7 @@ namespace Common
                                 player.PlayerBody.Velocity = new Vector( withVector.x + notWithScald.x,withVector.y + notWithScald.y);
                             }
 
-
                             var damp = .98;
-
 
                             var engeryAdd = player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 

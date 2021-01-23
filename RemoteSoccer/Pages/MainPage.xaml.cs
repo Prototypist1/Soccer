@@ -184,6 +184,14 @@ namespace RemoteSoccer
                         await CreatePlayer(body, inputs);
                     }
 
+                    var theirTeam = new Guid[3].Select(x => Guid.NewGuid()).ToArray();
+                    
+                    foreach (var body in theirTeam)
+                    {
+                        var inputs = new AIInputs(game.gameState, body, theirTeam, fieldDimensions);
+                        await inputs.Init();
+                        await CreatePlayer(body, inputs);
+                    }
 
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
                     {
