@@ -188,7 +188,7 @@ namespace RemoteSoccer
                     
                     foreach (var body in theirTeam)
                     {
-                        var inputs = new AIInputs(game.gameState, body, theirTeam, fieldDimensions);
+                        var inputs = new AIInputs(game.gameState, body, theirTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions);
                         await inputs.Init();
                         await CreatePlayer(body, inputs);
                     }

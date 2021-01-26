@@ -148,7 +148,6 @@ namespace RemoteSoccer
                     Color.FromArgb(0xff, 0x00, 0x00, 0x00), 1 / scale);
             }
 
-
             // goals scored
             foreach (var goalScored in gameState.GoalsScored.Except(goalScoreds))
             {
@@ -193,7 +192,7 @@ namespace RemoteSoccer
             }
 
             var timeDenom = 100.0;
-            collisions = collisions.Where(x => gameState.Frame - x.Frame < x.Force.Length / timeDenom).ToList();
+            collisions = collisions.Where(x => gameState.Frame - x.Frame < x.Force.Length / timeDenom).Take(10).ToList();
             foreach (var collision in collisions)
             {
                 DrawLine(

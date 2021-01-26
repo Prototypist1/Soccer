@@ -1,4 +1,5 @@
 ﻿using Physics2;
+using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +17,9 @@ namespace Common
     /// </summary>
     public class GameStateUpdate
     {
-        public List<Collision> Collisions { get; set; } = new List<Collision>();
-        public List<GoalScored> GoalsScored { get; set; } = new List<GoalScored>();
-        public List<Player> Players { get; set; } = new List<Player>();
+        public Collision[] Collisions { get; set; } = new Collision[] { };
+        public GoalScored[] GoalsScored { get; set; } = new GoalScored[] { };
+        public Player[] Players { get; set; } = new Player[] { };
         public Ball Ball { get; set; }
         public int Frame { get; set; }
         public CountDownState CountDownState { get; set; }
@@ -27,7 +28,7 @@ namespace Common
 
         public GameStateUpdate() { }
 
-        public GameStateUpdate(List<Collision> collisions, List<GoalScored> goalsScored, List<Player> players, Ball ball, int frame, CountDownState countDownState, int leftScore, int rightScore)
+        public GameStateUpdate(Collision[] collisions, GoalScored[] goalsScored, Player[] players, Ball ball, int frame, CountDownState countDownState, int leftScore, int rightScore)
         {
             this.Collisions = collisions ?? throw new ArgumentNullException(nameof(collisions));
             this.GoalsScored = goalsScored ?? throw new ArgumentNullException(nameof(goalsScored));
@@ -43,7 +44,7 @@ namespace Common
     public class GameState
     {
         // these arn't really state
-        public List<Collision> collisions = new List<Collision>();
+        public ConcurrentLinkedList<Collision> collisions = new ConcurrentLinkedList<Collision>();
         public class Collision
         {
             public Vector Position { get; set; }
@@ -72,7 +73,7 @@ namespace Common
                 return 2108858624 + Id.GetHashCode();
             }
         }
-        public List<GoalScored> GoalsScored { get; set; } = new List<GoalScored>();
+        public ConcurrentLinkedList<GoalScored> GoalsScored { get; set; } = new ConcurrentLinkedList<GoalScored>();
         public class GoalScored
         {
             public Vector Posistion { get; set; }
@@ -103,7 +104,7 @@ namespace Common
             }
         }
 
-        public Dictionary<Guid, Player> players = new Dictionary<Guid, Player>();
+        public ConcurrentIndexed<Guid, Player> players = new ConcurrentIndexed<Guid, Player>();
         // these velocities are private
         // foot really move at foot.velocity.x + body.velocity.x + externalVelocity.x
         public class Player
@@ -247,17 +248,32 @@ namespace Common
         {
             gameState.Frame = gameStateUpdate.Frame;
             gameState.GameBall = gameStateUpdate.Ball;
-            gameState.collisions = gameStateUpdate.Collisions;
+            var nextCollisions = new ConcurrentLinkedList<Collision>();
+            foreach (var item in gameStateUpdate.Collisions)
+            {
+                nextCollisions.Add(item);
+            }
+            gameState.collisions = nextCollisions;
             gameState.CountDownState = gameStateUpdate.CountDownState;
-            gameState.GoalsScored = gameStateUpdate.GoalsScored;
-            gameState.players = gameStateUpdate.Players.ToDictionary(x => x.Id, x => x);
+            var nextGoalsScores = new ConcurrentLinkedList<GoalScored>();
+            foreach (var item in gameStateUpdate.GoalsScored)
+            {
+                nextGoalsScores.Add(item);
+            }
+            gameState.GoalsScored = nextGoalsScores;
+            var nextPlayers = new ConcurrentIndexed<Guid, Player>();
+            foreach (var item in gameStateUpdate.Players)
+            {
+                nextPlayers[item.Id] = item;
+            }
+            gameState.players = nextPlayers;
             gameState.RightScore = gameStateUpdate.RightScore;
             gameState.LeftScore = gameStateUpdate.LeftScore;
         }
 
         public static GameStateUpdate GetGameStateUpdate(this GameState gameState)
         {
-            return new GameStateUpdate(gameState.collisions, gameState.GoalsScored, gameState.players.Values.ToList(), gameState.GameBall, gameState.Frame, gameState.CountDownState, gameState.LeftScore, gameState.RightScore);
+            return new GameStateUpdate(gameState.collisions.ToArray(), gameState.GoalsScored.ToArray(), gameState.players.Values.ToArray(), gameState.GameBall, gameState.Frame, gameState.CountDownState, gameState.LeftScore, gameState.RightScore);
         }
 
 
@@ -278,7 +294,7 @@ namespace Common
         }
         public static void Handle(this GameState gameState, AddPlayerEvent evnt)
         {
-            gameState.players.Add(evnt.id, new GameState.Player
+            gameState.players.TryAdd(evnt.id, new GameState.Player
             {
                 Id = evnt.id,
                 Name = evnt.Name,
@@ -290,7 +306,7 @@ namespace Common
         }
         public static void Handle(this GameState gameState, RemovePlayerEvent evnt)
         {
-            gameState.players.Remove(evnt.id);
+            gameState.players.TryRemove(evnt.id, out _);
         }
         public static void Handle(this GameState gameState, ResetGameEvent evnt)
         {

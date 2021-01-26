@@ -21,7 +21,8 @@ namespace Common
     public enum ControlScheme { 
         MouseAndKeyboard,
         SipmleMouse,
-        Controller
+        Controller,
+        AI
     }
 
     public struct PlayerInputs

@@ -42,7 +42,7 @@
         // fastest you can move your foot
         public const double speedLimit = 3000;
         // firction on the ball
-        public const double FrictionDenom = 1000;
+        public const double FrictionDenom = 100;
         public const int bodyStartAt = 50;
         public const int bodySpeedLimit = 120;
         public const double BoostPower = 800;

@@ -54,12 +54,12 @@ namespace Common
             // if the ball is not being held apply friction to it
             if (state.GameBall.OwnerOrNull == null)
             {
-                if (state.GameBall.Velocity.Length > 0)
-                {
-                    var friction = state.GameBall.Velocity.NewUnitized().NewScaled(-state.GameBall.Velocity.Length * state.GameBall.Velocity.Length * state.GameBall.Mass / (175.0 * 175));
-                    state.GameBall.Velocity = state.GameBall.Velocity.NewAdded(friction);
+                //if (state.GameBall.Velocity.Length > 0)
+                //{
+                //    var friction = state.GameBall.Velocity.NewUnitized().NewScaled(-state.GameBall.Velocity.Length * state.GameBall.Velocity.Length * state.GameBall.Mass / (175.0 * 175));
+                //    state.GameBall.Velocity = state.GameBall.Velocity.NewAdded(friction);
 
-                }
+                //}
 
                 if (state.GameBall.Velocity.Length > 0)
                 {
@@ -165,7 +165,7 @@ namespace Common
                                 player.Boosts--;
                             }
                         }
-                        else if (input.ControlScheme == ControlScheme.Controller)
+                        else if (input.ControlScheme == ControlScheme.Controller || input.ControlScheme == ControlScheme.AI)
                         {
                             // base velocity becomes the part of the velocity in the direction of the players movement
                             var f = new Vector(input.BodyX, input.BodyY).NewUnitized();
@@ -209,34 +209,93 @@ namespace Common
 
                     var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
 
-                    if (input.ControlScheme == ControlScheme.Controller)
+                    if (!input.Throwing)
                     {
-                        var tx = (input.FootX * max) + player.PlayerBody.Position.x;
-                        var ty = (input.FootY * max) + player.PlayerBody.Position.y;
-
-                        var vector = new Vector(tx - player.PlayerFoot.Velocity.x, ty - player.PlayerFoot.Velocity.y);
-
-
-                        var v = new Vector(tx - player.PlayerFoot.Position.x, ty - player.PlayerFoot.Position.y);
-
-                        var len = v.Length;
-                        if (len != 0)
+                        if (input.ControlScheme == ControlScheme.Controller)
                         {
-                            var speedLimit = SpeedLimit(len);
-                            v = v.NewUnitized().NewScaled(speedLimit);
+                            var tx = (input.FootX * max) + player.PlayerBody.Position.x;
+                            var ty = (input.FootY * max) + player.PlayerBody.Position.y;
+
+                            var vector = new Vector(tx - player.PlayerFoot.Velocity.x, ty - player.PlayerFoot.Velocity.y);
+
+
+                            var v = new Vector(tx - player.PlayerFoot.Position.x, ty - player.PlayerFoot.Position.y);
+
+                            var len = v.Length;
+                            if (len != 0)
+                            {
+                                var speedLimit = SpeedLimit(len);
+                                v = v.NewUnitized().NewScaled(speedLimit);
+                            }
+                            player.PlayerFoot.Velocity = v;
                         }
-                        player.PlayerFoot.Velocity = v;
-                    }
-                    else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
-                    {
-                        if (false)
+                        else if (input.ControlScheme == ControlScheme.MouseAndKeyboard || input.ControlScheme == ControlScheme.AI)
                         {
-                            var tx = (input.FootX) + player.PlayerFoot.Position.x;
-                            var ty = (input.FootY) + player.PlayerFoot.Position.y;
+                            if (false)
+                            {
+                                var tx = (input.FootX) + player.PlayerFoot.Position.x;
+                                var ty = (input.FootY) + player.PlayerFoot.Position.y;
 
 
-                            var dx = tx - player.PlayerBody.Position.x;
-                            var dy = ty - player.PlayerBody.Position.y;
+                                var dx = tx - player.PlayerBody.Position.x;
+                                var dy = ty - player.PlayerBody.Position.y;
+
+                                var d = new Vector(dx, dy);
+
+                                if (d.Length > max)
+                                {
+                                    d = d.NewUnitized().NewScaled(max);
+                                }
+
+                                var validTx = d.x + player.PlayerBody.Position.x;
+                                var validTy = d.y + player.PlayerBody.Position.y;
+
+                                var vx = validTx - player.PlayerFoot.Position.x;
+                                var vy = validTy - player.PlayerFoot.Position.y;
+
+                                var v = new Vector(vx, vy);
+
+                                // there is a speed limit things moving too fast are bad for online play
+                                // you can get hit before you have time to respond 
+                                var len = v.Length;
+                                if (len != 0)
+                                {
+                                    var speedLimit = SpeedLimit(len);
+                                    v = v.NewUnitized().NewScaled(speedLimit);
+                                }
+
+                                player.PlayerFoot.Velocity = v;
+                            }
+                            else
+                            {
+                                var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
+
+                                var move = new Vector(input.FootX, input.FootY);
+
+                                //if (move.Length != 0)
+                                //{
+                                //    var speedLimit = SpeedLimit(move.Length);
+                                //    move = move.NewUnitized().NewScaled(speedLimit);
+                                //}
+
+                                //var partYou = diff.Length > max ?
+                                //    1.0 /(1.0 + ((diff.Length - max) / max))://0.0: //
+                                //    1.0;
+
+                                player.PlayerFoot.Velocity = move;//.NewScaled(partYou);//player.PlayerFoot.Velocity//.NewScaled(.2)
+                                                                  //.NewAdded(move);//.NewScaled(partYou)
+                                if (diff.Length > max)
+                                {
+                                    player.PlayerFoot.Velocity = player.PlayerFoot.Velocity
+                                        .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max) / 2.0));// .NewScaled((1.0- partYou)/100.0)
+                                }
+                            }
+                        }
+                        else if (input.ControlScheme == ControlScheme.SipmleMouse)
+                        {
+
+                            var dx = input.FootX - player.PlayerBody.Position.x;
+                            var dy = input.FootY - player.PlayerBody.Position.y;
 
                             var d = new Vector(dx, dy);
 
@@ -253,78 +312,70 @@ namespace Common
 
                             var v = new Vector(vx, vy);
 
-                            // there is a speed limit things moving too fast are bad for online play
-                            // you can get hit before you have time to respond 
+                            // simple mouse drive the speed limit when it needs to
                             var len = v.Length;
-                            if (len != 0)
+                            if (len > Constants.speedLimit)
                             {
-                                var speedLimit = SpeedLimit(len);
-                                v = v.NewUnitized().NewScaled(speedLimit);
+                                v = v.NewUnitized().NewScaled(Constants.speedLimit);
                             }
 
                             player.PlayerFoot.Velocity = v;
                         }
-                        else {
+                    }
+                    else {
+                        if (input.ControlScheme == ControlScheme.Controller)
+                        {
+                            player.PlayerFoot.Velocity = new Vector(0, 0);
+                        }
+                        else if (input.ControlScheme == ControlScheme.MouseAndKeyboard || input.ControlScheme == ControlScheme.AI)
+                        {
                             var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
-
-                            var move = new Vector(input.FootX, input.FootY);
-
-                            //if (move.Length != 0)
-                            //{
-                            //    var speedLimit = SpeedLimit(move.Length);
-                            //    move = move.NewUnitized().NewScaled(speedLimit);
-                            //}
-
-                            //var partYou = diff.Length > max ?
-                            //    1.0 /(1.0 + ((diff.Length - max) / max))://0.0: //
-                            //    1.0;
-
-                            player.PlayerFoot.Velocity = move;//.NewScaled(partYou);//player.PlayerFoot.Velocity//.NewScaled(.2)
-                                //.NewAdded(move);//.NewScaled(partYou)
-                            if (diff.Length > max) {
+                            if (diff.Length > max)
+                            {
                                 player.PlayerFoot.Velocity = player.PlayerFoot.Velocity
-                                    .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max)/4.0));// .NewScaled((1.0- partYou)/100.0)
-                            } 
+                                    .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max) / 2.0));// .NewScaled((1.0- partYou)/100.0)
+                            }
+                            else {
+                                player.PlayerFoot.Velocity = new Vector(0, 0);
+                            }
+                        }
+                        else {
+                            throw new NotImplementedException("zzzzzzzzzzzz");
                         }
                     }
-                    else if (input.ControlScheme == ControlScheme.SipmleMouse)
-                    {
 
-                        var dx = input.FootX - player.PlayerBody.Position.x;
-                        var dy = input.FootY - player.PlayerBody.Position.y;
 
-                        var d = new Vector(dx, dy);
-
-                        if (d.Length > max)
-                        {
-                            d = d.NewUnitized().NewScaled(max);
-                        }
-
-                        var validTx = d.x + player.PlayerBody.Position.x;
-                        var validTy = d.y + player.PlayerBody.Position.y;
-
-                        var vx = validTx - player.PlayerFoot.Position.x;
-                        var vy = validTy - player.PlayerFoot.Position.y;
-
-                        var v = new Vector(vx, vy);
-
-                        // simple mouse drive the speed limit when it needs to
-                        var len = v.Length;
-                        if (len > Constants.speedLimit)
-                        {
-                            v = v.NewUnitized().NewScaled(Constants.speedLimit);
-                        }
-
-                        player.PlayerFoot.Velocity = v;
-                    }
-
+   
                     // throwing 2
                     if (!player.Throwing && input.Throwing)
                     {
-                        player.ThrowStart = player.PlayerFoot.Position.NewAdded(player.PlayerBody.Position.NewMinus());
+                        player.ProposedThrow = new Vector(0, 0);
                     }
+                    var maxThrowPower = 500;
+                    if (input.Throwing)
+                    {
+                        if (input.ControlScheme == ControlScheme.Controller)
+                        {
+                            player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(maxThrowPower);
+                        } 
+                        else if (input.ControlScheme == ControlScheme.AI) 
+                        {
+                            player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(maxThrowPower).NewAdded(player.PlayerBody.Velocity.NewMinus());
+                        }
+                        else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
+                        {
+                            player.ProposedThrow = player.ProposedThrow.NewAdded(new Vector(input.FootX, input.FootY).NewScaled(.25));
 
-                    player.ProposedThrow = player.PlayerFoot.Position.NewAdded(player.PlayerBody.Position.NewMinus()).NewAdded(player.ThrowStart.NewMinus()).NewScaled(Constants.ThrowScale);
+                            if (player.ProposedThrow.Length > maxThrowPower)
+                            {
+                                player.ProposedThrow = player.ProposedThrow.NewUnitized().NewScaled(maxThrowPower);
+                            }
+                        }
+                        else if (input.ControlScheme == ControlScheme.SipmleMouse)
+                        {
+                            throw new NotImplementedException();
+                        }
+                    }
 
                     if (player.Throwing && !input.Throwing && state.GameBall.OwnerOrNull == player.Id)
                     {
@@ -334,7 +385,7 @@ namespace Common
                         state.GameBall.OwnerOrNull = null;
                         player.ProposedThrow = new Vector();
                     }
-
+                    
                     player.Throwing = input.Throwing;
 
                 }

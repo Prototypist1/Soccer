@@ -1,5 +1,6 @@
 ﻿using Common;
 using Physics2;
+using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,8 +27,8 @@ namespace physics2
             gameState.Handle(new InitGameStateEvent(
                 new Physics2.Vector(field.xMax / 2.0, field.yMax / 2.0),
                 new Physics2.Vector(0, 0),
-                new Physics2.Vector(0, field.yMax / 2.0),
-                new Physics2.Vector(field.xMax, field.yMax / 2.0),
+                new Physics2.Vector(Constants.goalLen + Constants.footLen*2, field.yMax / 2.0),
+                new Physics2.Vector(field.xMax - (Constants.goalLen + Constants.footLen * 2), field.yMax / 2.0),
                 field));
 
             // GameStateTracker is a bit weird
@@ -59,8 +60,18 @@ namespace physics2
             gameState.Simulate(gameStateTracker);
 
             // clear out effects after a few frames
-            gameState.collisions = gameState.collisions.Where(x => x.Frame  + 3> gameState.Frame).ToList();
-            gameState.GoalsScored = gameState.GoalsScored.Where(x => x.Frame + 3> gameState.Frame ).ToList();
+            var nextCollisions = new ConcurrentLinkedList<GameState.Collision>();
+            foreach (var item in gameState.collisions.Where(x => x.Frame + 3 > gameState.Frame))
+            {
+                nextCollisions.Add(item);
+            }
+            gameState.collisions = nextCollisions;
+            var nextGoalsScored = new ConcurrentLinkedList<GameState.GoalScored>();
+            foreach (var item in gameState.GoalsScored.Where(x => x.Frame + 3 > gameState.Frame))
+            {
+                nextGoalsScored.Add(item);
+            }
+            gameState.GoalsScored = nextGoalsScored;
         }
 
 
