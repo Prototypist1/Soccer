@@ -71,7 +71,7 @@ namespace Common
             // loop over the players and update them
             foreach (var player in state.players.Values)
             {
-                player.ExternalVelocity = player.ExternalVelocity.NewScaled(.8);
+                player.ExternalVelocity = player.ExternalVelocity.NewScaled(.75);
 
                 player.Boosts = Math.Min(3, player.Boosts + (1 / 300.0));
 
@@ -272,11 +272,11 @@ namespace Common
 
                                 var move = new Vector(input.FootX, input.FootY);
 
-                                //if (move.Length != 0)
-                                //{
-                                //    var speedLimit = SpeedLimit(move.Length);
-                                //    move = move.NewUnitized().NewScaled(speedLimit);
-                                //}
+                                if (move.Length != 0)
+                                {
+                                    var speedLimit = SpeedLimit(move.Length);
+                                    move = move.NewUnitized().NewScaled(speedLimit);
+                                }
 
                                 //var partYou = diff.Length > max ?
                                 //    1.0 /(1.0 + ((diff.Length - max) / max))://0.0: //
@@ -351,7 +351,7 @@ namespace Common
                     {
                         player.ProposedThrow = new Vector(0, 0);
                     }
-                    var maxThrowPower = 500;
+                    var maxThrowPower = 800;
                     if (input.Throwing)
                     {
                         if (input.ControlScheme == ControlScheme.Controller)
