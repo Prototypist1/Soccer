@@ -102,23 +102,29 @@ namespace RemoteSoccer
             var sw = new Stopwatch();
             sw.Start();
 
+            var x = 0;
+
             while (sending)
             {
                 game.ApplyInputs( 
                     (await Task.WhenAll(localPlayers.Read().Select(x=>(x.input.Next())).ToArray())).ToDictionary(x=>x.Id, x=>x));
-                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                    CoreDispatcherPriority.Normal,
-                    () =>
-                    {
-                        Canvas.Invalidate();
+
+                //if (frame.thing% 10 == 0)
+                //{
+                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        CoreDispatcherPriority.Normal,
+                        () =>
+                        {
+                            Canvas.Invalidate();
                         //renderGameState.Update(game.gameState);
                     });
+                //}
 
                 frame.thing++;
 
-                while ((1000.0 * frame.thing / 120.0) > sw.ElapsedMilliseconds)
-                {
-                }
+                //while ((1000.0 * frame.thing / 120.0) > sw.ElapsedMilliseconds)
+                //{
+                //}
 
                 //await Task.Delay(1);
                 // let someone else have a go
@@ -175,22 +181,30 @@ namespace RemoteSoccer
                 try
                 {
 
-                    if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
-                    {
+                    var ourTeam = new Guid[2].Select(x => Guid.NewGuid()).ToArray();
+                    //if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
+                    //{
 
-                        var body = Guid.NewGuid();
-                        var inputs = new MouseKeyboardInputs(lockCurser, body);
+                    //    var body = ourTeam.First();
+                    //    var inputs = new MouseKeyboardInputs(lockCurser, body);
+                    //    await inputs.Init();
+                    //    await CreatePlayer(body, inputs);
+                    //}
+
+                    foreach (var body in ourTeam)//.Skip(1))
+                    {
+                        var inputs = new AIInputs2(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
                         await inputs.Init();
-                        await CreatePlayer(body, inputs);
+                        await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00,0xff});
                     }
 
-                    var theirTeam = new Guid[3].Select(x => Guid.NewGuid()).ToArray();
+                    var theirTeam = new Guid[2].Select(x => Guid.NewGuid()).ToArray();
                     
                     foreach (var body in theirTeam)
                     {
-                        var inputs = new AIInputs(game.gameState, body, theirTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions);
+                        var inputs = new AIInputs(game.gameState, body, theirTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, true);
                         await inputs.Init();
-                        await CreatePlayer(body, inputs);
+                        await CreatePlayer(body, inputs, new byte[3] { 0xff, 0x00, 0x00 });
                     }
 
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
@@ -336,6 +350,12 @@ namespace RemoteSoccer
         private async Task CreatePlayer(Guid body, IInputs inputs)
         {
 
+            var color = GetColor();
+            await CreatePlayer(body, inputs, color);
+        }
+
+        private async Task CreatePlayer(Guid body, IInputs inputs, byte[] color)
+        {
             var newPlayer = new PlayerInfo(inputs, body);
 
             var added = false;
@@ -353,7 +373,6 @@ namespace RemoteSoccer
             }
 
             //var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-            var color = GetColor();
             //}
 
             //var name = "";
