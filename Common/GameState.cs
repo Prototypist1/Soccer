@@ -114,6 +114,7 @@ namespace Common
             public Body PlayerBody { get; set; }
             public bool Throwing { get; set; }
 
+
             public class Body
             {
                 public Vector Position { get; set; }
@@ -168,6 +169,7 @@ namespace Common
             public int LastHadBall { get; set; }
             public double Mass { get; set; }
             public Vector ThrowStart { get; set; }
+            public double FramesOfBoost { get; set; }
             public double Boosts { get; set; } = 3;
 
         }

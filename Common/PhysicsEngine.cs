@@ -436,7 +436,7 @@ namespace physics2
                                 time = time,
                                 action = () =>
                                 {
-                                    player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewScaled(.5);
+                                    //player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewScaled(.5);
                                     gameState.GameBall.OwnerOrNull = player.Id;
                                     gameState.GameBall.Posistion = player.PlayerFoot.Position;
                                     gameState.GameBall.Velocity = player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity);

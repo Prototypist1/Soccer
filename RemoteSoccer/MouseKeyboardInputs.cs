@@ -35,23 +35,28 @@ namespace RemoteSoccer
                     var pointer = CoreWindow.GetForCurrentThread().PointerPosition;
 
 
-                    CoreWindow.GetForCurrentThread().PointerPressed += MouseKeyboardInputs_PointerPressed;
-                    CoreWindow.GetForCurrentThread().PointerReleased += MouseKeyboardInputs_PointerReleased;
+                    // this is a gross hack
+                    // and inputs will probably lost if the curser ever doesn't move 😢
+                    CoreWindow.GetForCurrentThread().PointerMoved += MouseKeyboardInputs_PointerPressed;
+                    //CoreWindow.GetForCurrentThread().PointerReleased += MouseKeyboardInputs_PointerReleased;
 
                     lastX = pointer.X;
                     lastY = pointer.Y;
                 });
         }
 
-        bool mouseDown = false;
+        bool throwing = false;
+        bool boostPressed = false;
 
-        private void MouseKeyboardInputs_PointerReleased(CoreWindow sender, PointerEventArgs args)
-        {
-            mouseDown = false;
-        }
+        //private void MouseKeyboardInputs_PointerReleased(CoreWindow sender, PointerEventArgs args)
+        //{
+        //    throwing = args.CurrentPoint.Properties.IsLeftButtonPressed;
+        //    boostPressed = args.CurrentPoint.Properties.IsRightButtonPressed;
+        //}
         private void MouseKeyboardInputs_PointerPressed(CoreWindow sender, PointerEventArgs args)
         {
-            mouseDown = true;
+            throwing = args.CurrentPoint.Properties.IsLeftButtonPressed;
+            boostPressed = args.CurrentPoint.Properties.IsRightButtonPressed;
         }
 
         public async Task<PlayerInputs> Next()
@@ -89,7 +94,7 @@ namespace RemoteSoccer
                                 coreWindow.PointerPosition = point;
 
                                 var boost = false;
-                                if (coreWindow.GetKeyState(VirtualKey.Space).HasFlag(CoreVirtualKeyStates.Down))
+                                if (boostPressed)
                                 {
                                     if (!lastBoost)
                                     {
@@ -104,7 +109,7 @@ namespace RemoteSoccer
 
                                 lastX = point.X;
                                 lastY = point.Y;
-                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, id, ControlScheme.MouseAndKeyboard, mouseDown, boost);
+                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, id, ControlScheme.MouseAndKeyboard, throwing, boost);
 
                             }
                             else

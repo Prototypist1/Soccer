@@ -95,7 +95,7 @@ namespace Common
                             var with = v.Dot(f);
                             var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
 
-                            var engeryAdd = player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
+                            var engeryAdd = /*player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 :*/ Constants.EnergyAdd;
 
                             //
                             var finalE = VtoE(Math.Sqrt(Math.Pow(baseValocity.x, 2) + Math.Pow(baseValocity.y, 2))) + engeryAdd;
@@ -147,7 +147,7 @@ namespace Common
 
                             var damp = .98;
 
-                            var engeryAdd = player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
+                            var engeryAdd = /*player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 :*/ Constants.EnergyAdd;
 
                             var R0 = EtoV(VtoE(Math.Sqrt(Math.Pow(player.PlayerBody.Velocity.x, 2) + Math.Pow(player.PlayerBody.Velocity.y, 2))) + engeryAdd);
                             var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
@@ -158,12 +158,6 @@ namespace Common
 
                             player.PlayerBody.Velocity = new Vector( (damp * player.PlayerBody.Velocity.x) + (t * input.BodyX),(damp * player.PlayerBody.Velocity.y) + (t * input.BodyY));// / 2.0;
 
-
-                            if (input.Boost && player.Boosts >= 1)
-                            {
-                                player.ExternalVelocity = player.ExternalVelocity.NewAdded(f.NewScaled(Constants.BoostPower));
-                                player.Boosts--;
-                            }
                         }
                         else if (input.ControlScheme == ControlScheme.Controller || input.ControlScheme == ControlScheme.AI)
                         {
@@ -289,6 +283,17 @@ namespace Common
                                     player.PlayerFoot.Velocity = player.PlayerFoot.Velocity
                                         .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max) / 2.0));// .NewScaled((1.0- partYou)/100.0)
                                 }
+
+                                // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
+                                if (input.Boost && player.Boosts >= 1) 
+                                {
+                                    player.FramesOfBoost += 10;
+                                    player.Boosts--;
+                                }
+                                if (player.FramesOfBoost > 0) {
+                                    player.FramesOfBoost--;
+                                    player.ExternalVelocity = player.ExternalVelocity.NewAdded(move.NewScaled(Constants.BoostPower));
+                                }
                             }
                         }
                         else if (input.ControlScheme == ControlScheme.SipmleMouse)
@@ -329,6 +334,26 @@ namespace Common
                         }
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard || input.ControlScheme == ControlScheme.AI)
                         {
+                            // you can boost and throw
+                            var move = new Vector(input.FootX, input.FootY);
+
+                            if (move.Length != 0)
+                            {
+                                var speedLimit = SpeedLimit(move.Length);
+                                move = move.NewUnitized().NewScaled(speedLimit);
+                            }
+                            // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
+                            if (input.Boost && player.Boosts >= 1)
+                            {
+                                player.FramesOfBoost += 10;
+                                player.Boosts--;
+                            }
+                            if (player.FramesOfBoost > 0)
+                            {
+                                player.FramesOfBoost--;
+                                player.ExternalVelocity = player.ExternalVelocity.NewAdded(move.NewScaled(Constants.BoostPower));
+                            }
+
                             var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
                             if (diff.Length > max)
                             {
@@ -379,8 +404,8 @@ namespace Common
 
                     if (player.Throwing && !input.Throwing && state.GameBall.OwnerOrNull == player.Id)
                     {
-                        player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewScaled(2);
                         state.GameBall.Velocity = player.ProposedThrow.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity);
+                        //player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewScaled(2);
                         state.players[state.GameBall.OwnerOrNull.Value].LastHadBall = state.Frame;
                         state.GameBall.OwnerOrNull = null;
                         player.ProposedThrow = new Vector();
