@@ -181,7 +181,7 @@ namespace RemoteSoccer
                 try
                 {
 
-                    var ourTeam = new Guid[2].Select(x => Guid.NewGuid()).ToArray();
+                    var ourTeam = new Guid[4].Select(x => Guid.NewGuid()).ToArray();
                     //if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
                     //{
 
@@ -198,7 +198,7 @@ namespace RemoteSoccer
                         await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00,0xff});
                     }
 
-                    var theirTeam = new Guid[2].Select(x => Guid.NewGuid()).ToArray();
+                    var theirTeam = new Guid[4].Select(x => Guid.NewGuid()).ToArray();
                     
                     foreach (var body in theirTeam)
                     {

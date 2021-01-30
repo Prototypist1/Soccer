@@ -73,7 +73,7 @@ namespace Common
         private const int stopGrowingCircle = 100;
         private const int resetBall = 100;
         private const int startCountDown = 0;
-        private const int endCountDown = 600;
+        private const int endCountDown = 1800;
 
         private int gameState = play;
 
