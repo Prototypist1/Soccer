@@ -38,7 +38,9 @@ namespace RemoteSoccer
                     // this is a gross hack
                     // and inputs will probably lost if the curser ever doesn't move 😢
                     CoreWindow.GetForCurrentThread().PointerMoved += MouseKeyboardInputs_PointerPressed;
-                    //CoreWindow.GetForCurrentThread().PointerReleased += MouseKeyboardInputs_PointerReleased;
+                    CoreWindow.GetForCurrentThread().PointerReleased += MouseKeyboardInputs_PointerPressed;
+                    CoreWindow.GetForCurrentThread().PointerPressed += MouseKeyboardInputs_PointerPressed;
+
 
                     lastX = pointer.X;
                     lastY = pointer.Y;

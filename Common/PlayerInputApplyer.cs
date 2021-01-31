@@ -376,24 +376,23 @@ namespace Common
                     {
                         player.ProposedThrow = new Vector(0, 0);
                     }
-                    var maxThrowPower = 800;
                     if (input.Throwing)
                     {
                         if (input.ControlScheme == ControlScheme.Controller)
                         {
-                            player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(maxThrowPower);
+                            player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(Constants.maxThrowPower);
                         } 
                         else if (input.ControlScheme == ControlScheme.AI) 
                         {
-                            player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(maxThrowPower).NewAdded(player.PlayerBody.Velocity.NewMinus());
+                            player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(Constants.maxThrowPower).NewAdded(player.PlayerBody.Velocity.NewMinus());
                         }
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                         {
                             player.ProposedThrow = player.ProposedThrow.NewAdded(new Vector(input.FootX, input.FootY).NewScaled(.5));
 
-                            if (player.ProposedThrow.Length > maxThrowPower)
+                            if (player.ProposedThrow.Length > Constants.maxThrowPower)
                             {
-                                player.ProposedThrow = player.ProposedThrow.NewUnitized().NewScaled(maxThrowPower);
+                                player.ProposedThrow = player.ProposedThrow.NewUnitized().NewScaled(Constants.maxThrowPower);
                             }
                         }
                         else if (input.ControlScheme == ControlScheme.SipmleMouse)

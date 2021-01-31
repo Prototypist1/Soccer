@@ -35,7 +35,7 @@
         public const int ThrowTimeout = 5;
         public const int MaxDeltaV = 40;
 
-        public const double EnergyAdd = 1;//250_000 ;//400;
+        public const double EnergyAdd = .5;//250_000 ;//400;
         //public const double SpeedScale = 1;
         //public const double Add = 100;
         //public const double ToThe = 2;//1.9;
@@ -44,8 +44,9 @@
         // firction on the ball
         public const double FrictionDenom = 100;
         public const int bodyStartAt = 200;
-        public const int bodySpeedLimit = 600;
+        public const int bodySpeedLimit = 400;
         public const double BoostPower = .1;
         public const double ThrowScale = .12;
+        public const double maxThrowPower = 1000;
     }
 }
