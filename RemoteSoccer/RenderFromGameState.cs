@@ -61,8 +61,8 @@ namespace RemoteSoccer
         private readonly TextBlock leftScore, rightScore;
 
 
-        private readonly MediaPlayer bell;
-        private readonly LinkedList<MediaPlayer> collisionSounds = new LinkedList<MediaPlayer>();
+        //private readonly MediaPlayer bell;
+        //private readonly LinkedList<MediaPlayer> collisionSounds = new LinkedList<MediaPlayer>();
 
         private List<GameState.GoalScored> goalScoreds = new List<GameState.GoalScored>();
         private List<GameState.Collision> collisions = new List<GameState.Collision>();
@@ -75,16 +75,16 @@ namespace RemoteSoccer
             this.rightScore = rightScore ?? throw new ArgumentNullException(nameof(rightScore));
 
 
-            bell = new MediaPlayer();
-            bell.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/bell.wav"));
+            //bell = new MediaPlayer();
+            //bell.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/bell.wav"));
 
-            var random = new Random();
-            for (int i = 0; i < 10; i++)
-            {
-                var player = new MediaPlayer();
-                player.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/hit{random.Next(1, 4)}.wav"));
-                collisionSounds.AddLast(player);
-            }
+            //var random = new Random();
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    var player = new MediaPlayer();
+            //    player.Source = MediaSource.CreateFromUri(new Uri($"ms-appx:///Assets/hit{random.Next(1, 4)}.wav"));
+            //    collisionSounds.AddLast(player);
+            //}
         }
 
         public void Update(GameState gameState, CanvasDrawEventArgs args)
@@ -151,12 +151,12 @@ namespace RemoteSoccer
             // goals scored
             foreach (var goalScored in gameState.GoalsScored.Except(goalScoreds))
             {
-                Task.Run(() =>
-                {
-                    bell.Volume = 3;
-                    bell.AudioBalance = goalScored.LeftScored ? 0 : 1;
-                    bell.Play();
-                });
+                //Task.Run(() =>
+                //{
+                //    bell.Volume = 3;
+                //    bell.AudioBalance = goalScored.LeftScored ? 0 : 1;
+                //    bell.Play();
+                //});
                 goalScoreds.Add(goalScored);
             }
 
@@ -177,16 +177,16 @@ namespace RemoteSoccer
             {
                 if (collision.Force.Length > 100)
                 {
-                    Task.Run(() =>
-                {
-                    var item = collisionSounds.First.Value;
-                    collisionSounds.RemoveFirst();
-                    collisionSounds.AddLast(item);
+                    //    Task.Run(() =>
+                    //{
+                    //var item = collisionSounds.First.Value;
+                    //collisionSounds.RemoveFirst();
+                    //collisionSounds.AddLast(item);
 
-                    item.Volume = (collision.Force.Length * collision.Force.Length / 100.0);
-                    item.AudioBalance = collision.Position.x / FieldDimensions.Default.xMax;
-                    item.Play();
-                });
+                    //    item.Volume = (collision.Force.Length * collision.Force.Length / 100.0);
+                    //    item.AudioBalance = collision.Position.x / FieldDimensions.Default.xMax;
+                    //    item.Play();
+                    //});
                 }
                 collisions.Add(collision);
             }

@@ -122,9 +122,9 @@ namespace RemoteSoccer
 
                 frame.thing++;
 
-                //while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
-                //{
-                //}
+                while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
+                {
+                }
 
                 //await Task.Delay(1);
                 // let someone else have a go
