@@ -5,9 +5,20 @@ using System.Collections.Generic;
 namespace Common
 {
     public static class PlayerInputApplyer {
-        
 
-        
+
+        public static double HowQuicklyCanAPlayerMove(double length) {
+            return length / Constants.bodySpeedLimit;
+        }
+
+        public static double HowHardToThrow(double length, int time) {
+            // this is a sum
+            // sum v*(Constants.FrictionDenom - 1)/ Constants.FrictionDenom)^t for t in time  = lenght
+            // v * Constants.FrictionDenom - (Constants.FrictionDenom - 1)/ Constants.FrictionDenom)^t * v * Constants.FrictionDenom = length
+            // (1 - ((Constants.FrictionDenom - 1)/ Constants.FrictionDenom))^t) * v * Constants.FrictionDenom = length
+            // v = length / ((1 - ((Constants.FrictionDenom - 1)/ Constants.FrictionDenom))^t)  * Constants.FrictionDenom)
+            return length / ((1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)) * Constants.FrictionDenom);
+        }
 
         private static double VtoE(double v)
         {
