@@ -383,6 +383,8 @@ namespace RemoteSoccer
             //    name = (string)savedName;
             //}
 
+            Random r = new Random();
+
             game.CreatePlayer(
                 new AddPlayerEvent(body,
                     "",
@@ -394,7 +396,7 @@ namespace RemoteSoccer
                     color[0],
                     color[1],
                     color[2],
-                    new Physics2.Vector(fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0)
+                    new Physics2.Vector(fieldDimensions.xMax * r.NextDouble(), fieldDimensions.yMax * r.NextDouble())
                     ));
         }
 
