@@ -12,6 +12,10 @@ namespace Common
         }
 
         public static double HowHardToThrow(double length, int time) {
+            if (length == 0) {
+                return 0;
+            }
+
             // this is a sum
             // sum v*(Constants.FrictionDenom - 1)/ Constants.FrictionDenom)^t for t in time  = lenght
             // v * Constants.FrictionDenom - (Constants.FrictionDenom - 1)/ Constants.FrictionDenom)^t * v * Constants.FrictionDenom = length
