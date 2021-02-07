@@ -95,23 +95,9 @@ namespace RemoteSoccer
                                 point = new Point(lastX, lastY);
                                 coreWindow.PointerPosition = point;
 
-                                var boost = false;
-                                if (boostPressed)
-                                {
-                                    if (!lastBoost)
-                                    {
-                                        boost = true;
-                                    }
-                                    lastBoost = true;
-                                }
-                                else
-                                {
-                                    lastBoost = false;
-                                }
-
                                 lastX = point.X;
                                 lastY = point.Y;
-                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, id, ControlScheme.MouseAndKeyboard, throwing, boost);
+                                res = new PlayerInputs(footX * 10, footY * 10, bodyX, bodyY, id, ControlScheme.MouseAndKeyboard, throwing, boostPressed);
 
                             }
                             else

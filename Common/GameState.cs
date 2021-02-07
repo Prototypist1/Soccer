@@ -104,7 +104,7 @@ namespace Common
             }
         }
 
-        public ConcurrentIndexed<Guid, Player> players = new ConcurrentIndexed<Guid, Player>();
+        public RawConcurrentIndexed<Guid, Player> players = new RawConcurrentIndexed<Guid, Player>();
         // these velocities are private
         // foot really move at foot.velocity.x + body.velocity.x + externalVelocity.x
         public class Player
@@ -165,11 +165,11 @@ namespace Common
             // these things are really for playerInputApplyer + physicsEngine
             // most consumers of GameState are not interested in them 
             public Vector ExternalVelocity { get; set; }
+            public Vector BoostVelocity { get; set; }
             public Vector ProposedThrow { get; set; }
             public int LastHadBall { get; set; }
             public double Mass { get; set; }
             public Vector ThrowStart { get; set; }
-            public double FramesOfBoost { get; set; }
             public double Boosts { get; set; } = 3;
 
         }
@@ -263,10 +263,10 @@ namespace Common
                 nextGoalsScores.Add(item);
             }
             gameState.GoalsScored = nextGoalsScores;
-            var nextPlayers = new ConcurrentIndexed<Guid, Player>();
+            var nextPlayers = new RawConcurrentIndexed<Guid, Player>();
             foreach (var item in gameStateUpdate.Players)
             {
-                nextPlayers[item.Id] = item;
+                nextPlayers.TryAdd(item.Id,item);
             }
             gameState.players = nextPlayers;
             gameState.RightScore = gameStateUpdate.RightScore;
@@ -301,6 +301,7 @@ namespace Common
                 Id = evnt.id,
                 Name = evnt.Name,
                 ExternalVelocity = new Vector(0, 0),
+                BoostVelocity = new Vector(0, 0),
                 PlayerBody = new GameState.Player.Body(evnt.posistion, new Vector(0, 0), evnt.bodyA, evnt.bodyR, evnt.bodyG, evnt.bodyB),
                 PlayerFoot = new GameState.Player.Foot(evnt.posistion, new Vector(0, 0), evnt.footA, evnt.footR, evnt.footG, evnt.footB),
                 Mass = 1,

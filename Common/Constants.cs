@@ -17,19 +17,20 @@
 
 
         public const double goalLen = 6000;
-        public const double footLen = 4000;
-        public const int PlayerRadius = 700 ;//750;//750;// 500;//300;
-        public const int BallRadius = 450;//150;//250;//30;//
+        public const double footLen = 750;//6000;//
+        public const int PlayerRadius = 750 ;//750;//750;// 500;//300;
+        public const int BallRadius = 500;//150;//250;//30;//
         public const double BallMass = 1;
 
         //public const double speedLimit = 500;
 
         public const double MaxLean = 0;
 
-        public const double MimimunThrowingSpped = 150;
+        //public const double MimimunThrowingSpped = 150;
 
         public const double MinPlayerCollisionForce = 100;//= 600;
         public const double ExtraBallTakeForce = 100;//= 1000;
+        public const double BallTakeForce = 1000;
 
 
         public const int ThrowTimeout = 5;
@@ -40,13 +41,14 @@
         //public const double Add = 100;
         //public const double ToThe = 2;//1.9;
         // fastest you can move your foot
-        public const double speedLimit = 3000;
+        public const double speedLimit = 2000;//3000;
         // firction on the ball
-        public const double FrictionDenom = 120;
+        public const double FrictionDenom = 80;
         public const int bodyStartAt = 200;
         public const int bodySpeedLimit = 400;
-        public const double BoostPower = .1;
+        public const double BoostPower = 1;
         public const double ThrowScale = .12;
-        public const double maxThrowPower = 1000;
+        public const double maxThrowPower = 1200;
+        public const double BoostConsumption = .0002;
     }
 }

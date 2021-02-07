@@ -100,18 +100,15 @@ namespace RemoteSoccer
                 gameState.RightGoal.Posistion.x, gameState.RightGoal.Posistion.y, Constants.goalLen, Color.FromArgb(0xff, 0xff, 0xff, 0xff));
 
             // players bodies
-            foreach (var playerPair in gameState.players)
-            {
-                DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
-            }
+            //foreach (var playerPair in gameState.players)
+            //{
+            //    DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
+            //}
 
             // draw number of boosts
             foreach (var playerPair in gameState.players)
-            {
-                for (int i = 1; i <= playerPair.Value.Boosts; i++)
-                {
-                    DrawCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen - (i * 6.0 / scale), Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B), 3 / scale);
-                }
+            { 
+                DrawCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B), (float) (playerPair.Value.Boosts*10.0 / scale));
             }
 
             // has ball highlight
@@ -229,7 +226,7 @@ namespace RemoteSoccer
             {
                 if (playerPair.Value.Throwing && gameState.GameBall.OwnerOrNull == playerPair.Key)
                 {
-                    var toThrow = playerPair.Value.ProposedThrow.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.ExternalVelocity);
+                    var toThrow = playerPair.Value.ProposedThrow.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
                     DrawLine(
                         playerPair.Value.PlayerFoot.Position.x,
                         playerPair.Value.PlayerFoot.Position.y,
