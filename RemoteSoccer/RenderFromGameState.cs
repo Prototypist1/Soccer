@@ -226,7 +226,7 @@ namespace RemoteSoccer
             {
                 if (playerPair.Value.Throwing && gameState.GameBall.OwnerOrNull == playerPair.Key)
                 {
-                    var toThrow = playerPair.Value.ProposedThrow.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
+                    var toThrow = playerPair.Value.ProposedThrow;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
                     DrawLine(
                         playerPair.Value.PlayerFoot.Position.x,
                         playerPair.Value.PlayerFoot.Position.y,
@@ -260,254 +260,254 @@ namespace RemoteSoccer
         }
     }
 
-    class RenderGameState
-    {
+    //class RenderGameState
+    //{
 
-        private Canvas gameArea;
-        private FullField gameView;
-        private readonly TextBlock leftScore, rightScore;
+    //    private Canvas gameArea;
+    //    private FullField gameView;
+    //    private readonly TextBlock leftScore, rightScore;
 
-        private Dictionary<Guid, PlayerExtension> players = new Dictionary<Guid, PlayerExtension>();
-        private BallExtension ballExtension;
-        private GoalExtension leftGoal;
-        private GoalExtension rightGoal;
-        private BallWallExtension ballWallExtension;
-        private List<ParameterExtension> parameter;
+    //    private Dictionary<Guid, PlayerExtension> players = new Dictionary<Guid, PlayerExtension>();
+    //    private BallExtension ballExtension;
+    //    private GoalExtension leftGoal;
+    //    private GoalExtension rightGoal;
+    //    private BallWallExtension ballWallExtension;
+    //    private List<ParameterExtension> parameter;
 
-        public RenderGameState(Canvas gameArea, FullField gameView, TextBlock leftScore, TextBlock rightScore)
-        {
-            this.gameArea = gameArea ?? throw new ArgumentNullException(nameof(gameArea));
-            this.gameView = gameView ?? throw new ArgumentNullException(nameof(gameView));
-            this.leftScore = leftScore ?? throw new ArgumentNullException(nameof(leftScore));
-            this.rightScore = rightScore ?? throw new ArgumentNullException(nameof(rightScore));
-        }
+    //    public RenderGameState(Canvas gameArea, FullField gameView, TextBlock leftScore, TextBlock rightScore)
+    //    {
+    //        this.gameArea = gameArea ?? throw new ArgumentNullException(nameof(gameArea));
+    //        this.gameView = gameView ?? throw new ArgumentNullException(nameof(gameView));
+    //        this.leftScore = leftScore ?? throw new ArgumentNullException(nameof(leftScore));
+    //        this.rightScore = rightScore ?? throw new ArgumentNullException(nameof(rightScore));
+    //    }
 
-        public void Init()
-        {
+    //    public void Init()
+    //    {
 
-        }
+    //    }
 
-        private void MoveTo(FrameworkElement element, double x, double y)
-        {
-            element.TransformMatrix =
-                        // first we center
-                        new Matrix4x4(
-                            1, 0, 0, 0,
-                            0, 1, 0, 0,
-                            0, 0, 1, 0,
-                            (float)(-element.Width / 2.0), (float)(-element.Height / 2.0), 0, 1)
-                        *
-                        // then we move to the right spot
-                        new Matrix4x4(
-                            1, 0, 0, 0,
-                            0, 1, 0, 0,
-                            0, 0, 1, 0,
-                            (float)x, (float)y, 0, 1);
-        }
+    //    private void MoveTo(FrameworkElement element, double x, double y)
+    //    {
+    //        element.TransformMatrix =
+    //                    // first we center
+    //                    new Matrix4x4(
+    //                        1, 0, 0, 0,
+    //                        0, 1, 0, 0,
+    //                        0, 0, 1, 0,
+    //                        (float)(-element.Width / 2.0), (float)(-element.Height / 2.0), 0, 1)
+    //                    *
+    //                    // then we move to the right spot
+    //                    new Matrix4x4(
+    //                        1, 0, 0, 0,
+    //                        0, 1, 0, 0,
+    //                        0, 0, 1, 0,
+    //                        (float)x, (float)y, 0, 1);
+    //    }
 
-        public void Update(GameState gameState)
-        {
-            #region players
-            foreach (var playerPair in gameState.players)
-            {
-                if (players.TryGetValue(playerPair.Key, out var currentPlayer))
-                {
-                    //update
-                    MoveTo(currentPlayer.body, playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y);
-                    MoveTo(currentPlayer.text, playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y);
-                    MoveTo(currentPlayer.foot, playerPair.Value.PlayerFoot.Position.x, playerPair.Value.PlayerFoot.Position.y);
-                    ((SolidColorBrush)currentPlayer.body.Fill).Color = Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B);
-                    ((SolidColorBrush)currentPlayer.foot.Fill).Color = Color.FromArgb(playerPair.Value.PlayerFoot.A, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B);
-                    currentPlayer.text.Text = playerPair.Value.Name;
-                }
-                else
-                {
-                    // add
-                    var body = new Ellipse()
-                    {
-                        Height = 2 * Constants.footLen,
-                        Width = 2 * Constants.footLen
-                    };
-                    var foot = new Ellipse()
-                    {
-                        Height = 2 * Constants.PlayerRadius,
-                        Width = 2 * Constants.PlayerRadius
-                    };
-                    var text = new TextBlock()
-                    {
-                        FontSize = 1600,
-                    };
+    //    public void Update(GameState gameState)
+    //    {
+    //        #region players
+    //        foreach (var playerPair in gameState.players)
+    //        {
+    //            if (players.TryGetValue(playerPair.Key, out var currentPlayer))
+    //            {
+    //                //update
+    //                MoveTo(currentPlayer.body, playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y);
+    //                MoveTo(currentPlayer.text, playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y);
+    //                MoveTo(currentPlayer.foot, playerPair.Value.PlayerFoot.Position.x, playerPair.Value.PlayerFoot.Position.y);
+    //                ((SolidColorBrush)currentPlayer.body.Fill).Color = Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B);
+    //                ((SolidColorBrush)currentPlayer.foot.Fill).Color = Color.FromArgb(playerPair.Value.PlayerFoot.A, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B);
+    //                currentPlayer.text.Text = playerPair.Value.Name;
+    //            }
+    //            else
+    //            {
+    //                // add
+    //                var body = new Ellipse()
+    //                {
+    //                    Height = 2 * Constants.footLen,
+    //                    Width = 2 * Constants.footLen
+    //                };
+    //                var foot = new Ellipse()
+    //                {
+    //                    Height = 2 * Constants.PlayerRadius,
+    //                    Width = 2 * Constants.PlayerRadius
+    //                };
+    //                var text = new TextBlock()
+    //                {
+    //                    FontSize = 1600,
+    //                };
 
-                    MoveTo(body, playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y);
-                    MoveTo(text, playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y);
-                    MoveTo(foot, playerPair.Value.PlayerFoot.Position.x, playerPair.Value.PlayerFoot.Position.y);
+    //                MoveTo(body, playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y);
+    //                MoveTo(text, playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y);
+    //                MoveTo(foot, playerPair.Value.PlayerFoot.Position.x, playerPair.Value.PlayerFoot.Position.y);
 
-                    Canvas.SetZIndex(body, Constants.bodyZ);
-                    Canvas.SetZIndex(foot, Constants.footZ);
-                    Canvas.SetZIndex(text, Constants.textZ);
+    //                Canvas.SetZIndex(body, Constants.bodyZ);
+    //                Canvas.SetZIndex(foot, Constants.footZ);
+    //                Canvas.SetZIndex(text, Constants.textZ);
 
-                    body.Fill = new SolidColorBrush(Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
-                    foot.Fill = new SolidColorBrush(Color.FromArgb(playerPair.Value.PlayerFoot.A, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B));
-                    text.Foreground = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff));
+    //                body.Fill = new SolidColorBrush(Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
+    //                foot.Fill = new SolidColorBrush(Color.FromArgb(playerPair.Value.PlayerFoot.A, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B));
+    //                text.Foreground = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff));
 
-                    gameArea.Children.Add(body);
-                    gameArea.Children.Add(foot);
-                    gameArea.Children.Add(text);
+    //                gameArea.Children.Add(body);
+    //                gameArea.Children.Add(foot);
+    //                gameArea.Children.Add(text);
 
-                    players.Add(playerPair.Key, new PlayerExtension(foot, body, text));
-                }
-            }
+    //                players.Add(playerPair.Key, new PlayerExtension(foot, body, text));
+    //            }
+    //        }
 
-            var toRemove = new List<Guid>();
+    //        var toRemove = new List<Guid>();
 
-            foreach (var currentPlayer in players)
-            {
-                if (!gameState.players.ContainsKey(currentPlayer.Key))
-                {
-                    // remove
-                    toRemove.Add(currentPlayer.Key);
-                    gameArea.Children.Remove(currentPlayer.Value.body);
-                    gameArea.Children.Remove(currentPlayer.Value.foot);
-                    gameArea.Children.Remove(currentPlayer.Value.text);
-                }
-            }
-            foreach (var removing in toRemove)
-            {
-                players.Remove(removing);
-            }
-            #endregion
-
-
-            #region ball
-            if (ballExtension == null)
-            {
-                // create ball
-                var ball = new Ellipse()
-                {
-                    Height = 2 * Constants.BallRadius,
-                    Width = 2 * Constants.BallRadius,
-                    Fill = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00))
-                };
-
-                MoveTo(ball, gameState.GameBall.Posistion.x, gameState.GameBall.Posistion.y);
-
-                Canvas.SetZIndex(ball, Constants.ballZ);
-
-                gameArea.Children.Add(ball);
-
-                ballExtension = new BallExtension
-                {
-                    ellipse = ball
-                };
-            }
-            else
-            {
-                // move
-                MoveTo(ballExtension.ellipse, gameState.GameBall.Posistion.x, gameState.GameBall.Posistion.y);
-            }
-            #endregion
+    //        foreach (var currentPlayer in players)
+    //        {
+    //            if (!gameState.players.ContainsKey(currentPlayer.Key))
+    //            {
+    //                // remove
+    //                toRemove.Add(currentPlayer.Key);
+    //                gameArea.Children.Remove(currentPlayer.Value.body);
+    //                gameArea.Children.Remove(currentPlayer.Value.foot);
+    //                gameArea.Children.Remove(currentPlayer.Value.text);
+    //            }
+    //        }
+    //        foreach (var removing in toRemove)
+    //        {
+    //            players.Remove(removing);
+    //        }
+    //        #endregion
 
 
-            #region goals
-            if (leftGoal == null)
-            {
-                leftGoal = new GoalExtension
-                {
-                    ellipse = MakeGoal(gameState.LeftGoal)
-                };
-            }
-            if (rightGoal == null)
-            {
-                rightGoal = new GoalExtension
-                {
-                    ellipse = MakeGoal(gameState.RightGoal)
-                };
-            }
-            #endregion
+    //        #region ball
+    //        if (ballExtension == null)
+    //        {
+    //            // create ball
+    //            var ball = new Ellipse()
+    //            {
+    //                Height = 2 * Constants.BallRadius,
+    //                Width = 2 * Constants.BallRadius,
+    //                Fill = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00))
+    //            };
 
-            #region ball wall
-            if (ballWallExtension == null)
-            {
+    //            MoveTo(ball, gameState.GameBall.Posistion.x, gameState.GameBall.Posistion.y);
 
-                var ballWall = new Ellipse
-                {
-                    Visibility = Visibility.Collapsed,
-                    Stroke = new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff)),
-                };
-                Canvas.SetZIndex(ballWall, Constants.footZ);
-                this.gameArea.Children.Add(ballWall);
-                ballWallExtension = new BallWallExtension
-                {
-                    ellipse = ballWall
-                };
-            }
-            ballWallExtension.ellipse.Visibility = gameState.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
-            ballWallExtension.ellipse.Width = gameState.CountDownState.Radius * 2;
-            ballWallExtension.ellipse.Height = gameState.CountDownState.Radius * 2;
-            ballExtension.ellipse.Opacity = gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity : 1;
-            MoveTo(ballWallExtension.ellipse, gameState.CountDownState.X, gameState.CountDownState.Y);
-            ballWallExtension.ellipse.StrokeThickness = gameState.CountDownState.StrokeThickness;
-            #endregion
+    //            Canvas.SetZIndex(ball, Constants.ballZ);
 
-            #region score
-            leftScore.Text = gameState.LeftScore + "";
-            rightScore.Text = gameState.RightScore + "";
-            #endregion
+    //            gameArea.Children.Add(ball);
 
-            #region Walls
-            if (parameter == null)
-            {
-                parameter = new List<ParameterExtension>();
-                foreach (var segment in gameState.PerimeterSegments)
-                {
-                    var line = new Line
-                    {
-                        Stroke = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00)),
-                        X1 = segment.Start.x,
-                        Y1 = segment.Start.y,
-                        X2 = segment.End.x,
-                        Y2 = segment.End.y,
-                        StrokeThickness = 100
-                    };
-                    var parameterPart = new ParameterExtension
-                    {
-                        line = line
-                    };
+    //            ballExtension = new BallExtension
+    //            {
+    //                ellipse = ball
+    //            };
+    //        }
+    //        else
+    //        {
+    //            // move
+    //            MoveTo(ballExtension.ellipse, gameState.GameBall.Posistion.x, gameState.GameBall.Posistion.y);
+    //        }
+    //        #endregion
 
-                    parameter.Add(parameterPart);
-                    Canvas.SetZIndex(line, Constants.footZ);
-                    this.gameArea.Children.Add(line);
-                }
-            }
-            #endregion
 
-            var (playerX, playerY, xPlus, yPlus) = gameView.Update(Array.Empty<Position>());
+    //        #region goals
+    //        if (leftGoal == null)
+    //        {
+    //            leftGoal = new GoalExtension
+    //            {
+    //                ellipse = MakeGoal(gameState.LeftGoal)
+    //            };
+    //        }
+    //        if (rightGoal == null)
+    //        {
+    //            rightGoal = new GoalExtension
+    //            {
+    //                ellipse = MakeGoal(gameState.RightGoal)
+    //            };
+    //        }
+    //        #endregion
 
-            this.gameArea.TransformMatrix = new Matrix4x4(
-                (float)(gameView.GetTimes()), 0, 0, 0,
-                0, (float)(gameView.GetTimes()), 0, 0,
-                0, 0, 1, 0,
-                (float)xPlus, (float)yPlus, 0, 1);
-        }
+    //        #region ball wall
+    //        if (ballWallExtension == null)
+    //        {
 
-        // maybe this should just be a "make thing"
-        private Ellipse MakeGoal(GameState.Goal gameStateGoal)
-        {
-            var goal = new Ellipse()
-            {
-                Height = 2 * Constants.goalLen,
-                Width = 2 * Constants.goalLen
-            };
+    //            var ballWall = new Ellipse
+    //            {
+    //                Visibility = Visibility.Collapsed,
+    //                Stroke = new SolidColorBrush(Color.FromArgb(0x88, 0xff, 0xff, 0xff)),
+    //            };
+    //            Canvas.SetZIndex(ballWall, Constants.footZ);
+    //            this.gameArea.Children.Add(ballWall);
+    //            ballWallExtension = new BallWallExtension
+    //            {
+    //                ellipse = ballWall
+    //            };
+    //        }
+    //        ballWallExtension.ellipse.Visibility = gameState.CountDownState.Countdown ? Visibility.Visible : Visibility.Collapsed;
+    //        ballWallExtension.ellipse.Width = gameState.CountDownState.Radius * 2;
+    //        ballWallExtension.ellipse.Height = gameState.CountDownState.Radius * 2;
+    //        ballExtension.ellipse.Opacity = gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity : 1;
+    //        MoveTo(ballWallExtension.ellipse, gameState.CountDownState.X, gameState.CountDownState.Y);
+    //        ballWallExtension.ellipse.StrokeThickness = gameState.CountDownState.StrokeThickness;
+    //        #endregion
 
-            MoveTo(goal, gameStateGoal.Posistion.x, gameStateGoal.Posistion.y);
+    //        #region score
+    //        leftScore.Text = gameState.LeftScore + "";
+    //        rightScore.Text = gameState.RightScore + "";
+    //        #endregion
 
-            goal.Fill = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff));
+    //        #region Walls
+    //        if (parameter == null)
+    //        {
+    //            parameter = new List<ParameterExtension>();
+    //            foreach (var segment in gameState.PerimeterSegments)
+    //            {
+    //                var line = new Line
+    //                {
+    //                    Stroke = new SolidColorBrush(Color.FromArgb(0xff, 0x00, 0x00, 0x00)),
+    //                    X1 = segment.Start.x,
+    //                    Y1 = segment.Start.y,
+    //                    X2 = segment.End.x,
+    //                    Y2 = segment.End.y,
+    //                    StrokeThickness = 100
+    //                };
+    //                var parameterPart = new ParameterExtension
+    //                {
+    //                    line = line
+    //                };
 
-            Canvas.SetZIndex(goal, Constants.goalZ);
+    //                parameter.Add(parameterPart);
+    //                Canvas.SetZIndex(line, Constants.footZ);
+    //                this.gameArea.Children.Add(line);
+    //            }
+    //        }
+    //        #endregion
 
-            gameArea.Children.Add(goal);
+    //        var (playerX, playerY, xPlus, yPlus) = gameView.Update(Array.Empty<Position>());
 
-            return goal;
-        }
-    }
+    //        this.gameArea.TransformMatrix = new Matrix4x4(
+    //            (float)(gameView.GetTimes()), 0, 0, 0,
+    //            0, (float)(gameView.GetTimes()), 0, 0,
+    //            0, 0, 1, 0,
+    //            (float)xPlus, (float)yPlus, 0, 1);
+    //    }
+
+    //    // maybe this should just be a "make thing"
+    //    private Ellipse MakeGoal(GameState.Goal gameStateGoal)
+    //    {
+    //        var goal = new Ellipse()
+    //        {
+    //            Height = 2 * Constants.goalLen,
+    //            Width = 2 * Constants.goalLen
+    //        };
+
+    //        MoveTo(goal, gameStateGoal.Posistion.x, gameStateGoal.Posistion.y);
+
+    //        goal.Fill = new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0xff));
+
+    //        Canvas.SetZIndex(goal, Constants.goalZ);
+
+    //        gameArea.Children.Add(goal);
+
+    //        return goal;
+    //    }
+    //}
 }

@@ -3,12 +3,335 @@ using Physics2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RemoteSoccer
 {
+
+    class AITeam {
+
+        private static Random r = new Random();
+        private readonly IReadOnlyDictionary<Guid, AITeamMember> team;
+        private readonly GameState gameState;
+        private readonly FieldDimensions fieldDimensions;
+        private readonly bool leftGoal;
+        private int updating = 0;
+
+        public IEnumerable<(Guid, IInputs)> GetPlayers() {
+            return team.Select(x=>(x.Key,(IInputs)x.Value));
+        }
+
+        public AITeam(GameState gameState, Guid[] teammates, FieldDimensions fieldDimensions, bool leftGoal) {
+            team = teammates.ToDictionary(x => x, x => new AITeamMember(this,x));
+            this.gameState = gameState;
+            this.fieldDimensions = fieldDimensions;
+            this.leftGoal = leftGoal;
+
+        }
+
+        private class AITeamMember: IInputs
+        {
+            private readonly AITeam aITeam;
+            public PlayerInputs inputs;
+
+            public AITeamMember(AITeam aITeam, Guid id) {
+                this.aITeam = aITeam;
+                inputs = new PlayerInputs(0, 0, 0, 0, id, ControlScheme.AI, false, false);
+            }
+
+            public Task Init() => Task.CompletedTask;
+
+            public Task<PlayerInputs> Next()
+            {
+                aITeam.RequestUpdate();
+                return Task.FromResult(inputs);
+            }
+        }
+
+        private void RequestUpdate()
+        {
+            if (Interlocked.CompareExchange(ref updating, 1, 0) == 0)
+            {
+                Task.Run(() => {
+                    try
+                    {
+                        Update();
+                    }
+                    catch (Exception e)
+                    {
+                    }
+                    finally
+                    {
+                        updating = 0;
+                    }
+                });
+            }
+        }
+
+        private void Update()
+        {
+
+            //if (gameState.GameBall.OwnerOrNull == null)// no one has the ball
+            //{
+
+            //}
+            //else if (team.ContainsKey((Guid)gameState.GameBall.OwnerOrNull)) // we have the ball
+            //{
+                
+            //}
+            //else // they have the ball
+            //{
+                var toAssign = team.ToList();
+
+                {
+                    var goalie = toAssign
+                        .Select(pair => (pair, gameState.players[pair.Key].PlayerBody.Position.NewAdded(GoalTheyScoreOn().NewMinus()).Length))
+                        .OrderBy(pair => pair.Length)
+                        .First();
+
+                    toAssign.Remove(goalie.pair);
+
+                    var goalieGenerators = GetPositionGenerators(goalie.pair.Key)
+                        .Select(pos => (generator: pos.generator, score: GoalieEvaluator(pos.pos)))
+                        .OrderByDescending(pair => pair.score)
+                        .ToList();
+
+                    if (goalieGenerators.Any())
+                    {
+                        UpdateDirection(goalie.pair.Value, goalieGenerators.First().generator);
+                    }
+                    else
+                    {
+                        UpdateDirection(goalie.pair.Value, (GameState gs) => new Vector(0.0, 0.0));
+                    }
+
+                }
+
+                {
+                    var getTheBall = toAssign
+                       .Select(pair => (pair, gameState.players[pair.Key].PlayerBody.Position.NewAdded(gameState.GameBall.Posistion.NewMinus()).Length))
+                       .OrderBy(pair => pair.Length)
+                       .First();
+
+                    toAssign.Remove(getTheBall.pair);
+
+                    var getTheBallGenerators = GetPositionGenerators(getTheBall.pair.Key)
+                        .Select(pos => (generator: pos.generator, score: GetTheBallEvaluator(pos.pos)))
+                        .OrderByDescending(pair => pair.score)
+                        .ToList();
+
+                    if (getTheBallGenerators.Any())
+                    {
+                        UpdateDirection(getTheBall.pair.Value, getTheBallGenerators.First().generator);
+                    }
+                    else
+                    {
+                        UpdateDirection(getTheBall.pair.Value, (GameState gs) => new Vector(0.0, 0.0));
+                    }
+                }
+
+                {
+                    foreach (var (baddie, _) in gameState.players.Values
+                      .Where(x => !team.ContainsKey(x.Id) && x.Id != gameState.GameBall.OwnerOrNull.GetValueOrDefault(Guid.NewGuid()))
+                      .Select(x => (x, x.PlayerBody.Position.NewAdded(GoalTheyScoreOn().NewMinus()).Length))
+                      .OrderBy(x => x.Length))
+                    {
+
+                        var getTheBaddies = toAssign
+                           .Select(pair => (pair, gameState.players[pair.Key].PlayerBody.Position.NewAdded(baddie.PlayerBody.Position.NewMinus()).Length))
+                           .OrderBy(pair => pair.Length)
+                           .ToList();
+
+                        if (!getTheBaddies.Any())
+                        {
+                            continue;
+                        }
+
+                        var getTheBaddie = getTheBaddies.First();
+
+                        toAssign.Remove(getTheBaddie.pair);
+
+                        var guardGenerators = GetPositionGenerators(getTheBaddie.pair.Key)
+                            .Select(pos => (generator: pos.generator, score: GuardPlayerEvaluator(baddie.Id)(pos.pos)))
+                            .OrderByDescending(pair => pair.score)
+                            .ToList();
+
+                        if (guardGenerators.Any())
+                        {
+                            UpdateDirection(getTheBaddie.pair.Value, guardGenerators.First().generator);
+                        }
+                        else
+                        {
+                            UpdateDirection(getTheBaddie.pair.Value, (GameState gs) => new Vector(0.0, 0.0));
+                        }
+                    }
+                }
+            //}
+        }
+
+        private void UpdateDirection( AITeamMember  goalie, Func<GameState, Vector> generator)
+        {
+            var concreteTarget = generator(gameState);
+            if (concreteTarget.Length > 1)
+            {
+                concreteTarget = concreteTarget.NewUnitized();
+            }
+            goalie.inputs.BodyX = concreteTarget.x;
+            goalie.inputs.BodyY = concreteTarget.y;
+        }
+
+        private List<(Func<GameState, Vector> generator, Vector pos)> GetPositionGenerators(Guid self) {
+            var myPosition = gameState.players[self].PlayerBody.Position;
+
+            var getOtherPlayers = gameState.players
+                .Where(x => !team.ContainsKey( x.Key) )
+                .Select(x => (Func<GameState, Vector>)((GameState gs) => gs.players[x.Key].PlayerBody.Position.NewAdded(gs.players[self].PlayerBody.Position.NewMinus())));
+
+            var getBall = new[] {
+                (Func<GameState, Vector>)((GameState gs) => gs.GameBall.Posistion.NewAdded(gs.players[self].PlayerBody.Position.NewMinus()))
+            };
+
+            var getGoalie = new[] {
+                (Func<GameState, Vector>)((GameState gs) => gs.GameBall.Posistion.NewAdded(GoalTheyScoreOn()).NewScaled(.5).NewAdded(gs.players[self].PlayerBody.Position.NewMinus()))
+            };
+
+            var random = new int[100]
+                .Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Constants.goalLen * r.NextDouble()))
+                .Select(vec => (Func<GameState, Vector>)((GameState _) => vec));
+
+            return random
+                .Union(getBall)
+                .Union(getOtherPlayers)
+                .Union(getGoalie)
+                .Select(generator =>
+                {
+                    var dir = generator(gameState);
+                    if (dir.Length > Constants.goalLen)
+                    {
+                        dir = dir.NewUnitized().NewScaled(Constants.goalLen);
+                    }
+                    var prospect = myPosition.NewAdded(dir);
+
+                    return (generator, pos: prospect);
+                })
+                .Where(pair => pair.pos.x < fieldDimensions.xMax && pair.pos.x > 0 && pair.pos.y < fieldDimensions.yMax && pair.pos.y > 0)
+                .ToList();
+        }
+
+        private double GoalieEvaluator(Vector position) {
+            // TODO 
+            // if the ball is closest to you go ahead and grab it
+            return Towards(position, gameState.GameBall.Posistion.NewAdded(GoalTheyScoreOn()).NewScaled(.5), 4);
+        }
+
+        private double GetTheBallEvaluator(Vector position)
+        {
+            return Towards(position, gameState.GameBall.Posistion, 4);
+        }
+
+        private Func<Vector, double> GuardPlayerEvaluator(Guid playerId) => (Vector position) =>
+        {
+            if (gameState.players.TryGetValue(playerId, out var player))
+            {
+                return Towards(position, player.PlayerBody.Position, 4);
+            }
+            return 0;
+        };
+
+
+        private Vector GoalWeScoreOn()
+        {
+            if (leftGoal)
+            {
+                return gameState.LeftGoal.Posistion;
+            }
+            return gameState.RightGoal.Posistion;
+        }
+
+        private Vector GoalTheyScoreOn()
+        {
+            if (leftGoal)
+            {
+                return gameState.RightGoal.Posistion;
+            }
+            return gameState.LeftGoal.Posistion;
+        }
+
+
+        private Vector TowardsXWithIn(Vector us, Vector them, double scale, double whenWithIn)
+        {
+
+            var startWith = them.NewAdded(us.NewMinus());
+            var len = Math.Abs(startWith.x);
+            if (len > 0 && len < whenWithIn)
+            {
+                return new Vector(startWith.x, 0).NewUnitized().NewScaled(scale * (whenWithIn - len));
+            }
+            return new Vector(0, 0);
+        }
+
+        private Vector TowardsYWithIn(Vector us, Vector them, double scale, double whenWithIn)
+        {
+
+            var startWith = them.NewAdded(us.NewMinus());
+            var len = Math.Abs(startWith.y);
+            if (len > 0 && len < whenWithIn)
+            {
+                return new Vector(0, startWith.y).NewUnitized().NewScaled(scale * (whenWithIn - len));
+            }
+            return new Vector(0, 0);
+        }
+
+        private double Towards(Vector us, Vector them, double scale)
+        {
+            var startWith = them.NewAdded(us.NewMinus());
+            return -startWith.Length * scale;
+        }
+
+
+        private double TowardsWithIn(Vector us, Vector them, double scale, double whenWithIn)
+        {
+
+            var startWith = them.NewAdded(us.NewMinus());
+            var len = startWith.Length;
+            if (len > 0 && len < whenWithIn)
+            {
+                return scale * (whenWithIn - len);
+            }
+            return 0;
+        }
+
+        private double TowardsWithInBody(Vector body, Vector us, Vector them, double scale, double whenWithIn)
+        {
+
+            var startWith = them.NewAdded(body.NewMinus());
+            var len = startWith.Length;
+            if (len > 0 && len < whenWithIn)
+            {
+                return -scale * them.NewAdded(us.NewMinus()).Length;
+            }
+            return 0;
+        }
+
+
+        private double TowardsWithOut(Vector us, Vector them, double scale, double whenWithOut)
+        {
+
+            var startWith = them.NewAdded(us.NewMinus());
+            var len = startWith.Length;
+            if (len > whenWithOut)
+            {
+                return scale * (len - whenWithOut);
+            }
+            return 0;
+        }
+
+    }
+
     class AIInputs2 : IInputs
     {
+        const double Unit = 5000;
         GameState gameState;
         private readonly Guid self;
         private readonly Guid[] teammates;
@@ -32,12 +355,7 @@ namespace RemoteSoccer
         int throwing = 0;
         public Task<PlayerInputs> Next()
         {
-            var inputs = new PlayerInputs()
-            {
-                ControlScheme = ControlScheme.AI,
-                Boost = false,
-                Id = self,
-            };
+            var inputs = new PlayerInputs(0, 0, 0, 0, self, ControlScheme.AI, false, false);
 
             var r = new Random();
             if (r.NextDouble() < (1 / 10.0))
@@ -119,7 +437,7 @@ namespace RemoteSoccer
             var r = new Random();
 
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[100].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Constants.footLen * 10 * r.NextDouble())).ToArray();
+            return new int[100].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 10 * r.NextDouble())).ToArray();
         });
 
         private bool ShouldThrow(out Vector direction)
@@ -138,7 +456,7 @@ namespace RemoteSoccer
             //foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             //{
             //    // bad to be near the badie
-            //    if (myBody.NewAdded(player.Value.PlayerBody.Position.NewMinus()).Length < Constants.footLen)
+            //    if (myBody.NewAdded(player.Value.PlayerBody.Position.NewMinus()).Length < Unit)
             //    {
             //        direction = default;
             //        return false;
@@ -166,7 +484,7 @@ namespace RemoteSoccer
                 .OrderByDescending(x => x.score)
                 .ToArray();
 
-            if (options.Any() && options[0].score > EvaluatePassToSpace(myBody, true).score + (2 * Constants.footLen))
+            if (options.Any() && options[0].score > EvaluatePassToSpace(myBody, true).score + (2 * Unit))
             {
                 direction = options[0].input;
                 return true;
@@ -205,11 +523,11 @@ namespace RemoteSoccer
             // go to the goal
             res += Towards(position, GoalWeScoreOn(), 4);
             // but calcel it out once you are close enough to shoot, we don't really care if you are close or really close
-            res -= TowardsWithIn(position, GoalWeScoreOn(), 4, Constants.footLen * 8);
+            res -= TowardsWithIn(position, GoalWeScoreOn(), 4, Unit * 8);
 
             // go away from our goal
-            res -= TowardsWithIn(position, GoalTheyScoreOn(), 1, Constants.footLen * 12);
-            res -= TowardsWithIn(position, GoalTheyScoreOn(), 10, Constants.footLen * 4);
+            res -= TowardsWithIn(position, GoalTheyScoreOn(), 1, Unit * 12);
+            res -= TowardsWithIn(position, GoalTheyScoreOn(), 10, Unit * 4);
 
             if (goalAdd > 0)
             {
@@ -223,7 +541,7 @@ namespace RemoteSoccer
             // it's bad to be near the other team
             foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             {
-                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 3, Constants.footLen * 5);
+                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 3, Unit * 5);
             }
 
             var ourClosestPlayers = gameState.players
@@ -249,13 +567,13 @@ namespace RemoteSoccer
                 var lead = 8;
                 if (closestPlayer.time + lead > theyllGetThereAt && !evaluateSelf)
                 {
-                    res -= Constants.footLen * (closestPlayer.time + lead - theyllGetThereAt) / 10.0;
+                    res -= Unit * (closestPlayer.time + lead - theyllGetThereAt) / 10.0;
                 }
 
                 // short throws are bad
                 if (closestPlayer.howHard < Constants.maxThrowPower * .5)
                 {
-                    res -= Constants.footLen * 2;
+                    res -= Unit * 2;
                 }
 
                 if (diff.Length > 0)
@@ -268,7 +586,7 @@ namespace RemoteSoccer
             }
             else if (!evaluateSelf)
             {
-                res -= Constants.footLen * 20;
+                res -= Unit * 20;
             }
 
             return (res, diff);
@@ -362,7 +680,7 @@ namespace RemoteSoccer
             var r = new Random();
 
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[25].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Constants.footLen * 3 * r.NextDouble())).ToArray();
+            return new int[25].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 3 * r.NextDouble())).ToArray();
         });
         private Vector lastThrow;
 
@@ -393,9 +711,9 @@ namespace RemoteSoccer
                 // don't go near the other team
                 foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
                 {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Constants.footLen * 2);
-                    //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 4, Constants.footLen * 3);
-                    //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Constants.footLen * 5);
+                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 2);
+                    //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 4, Unit * 3);
+                    //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Unit * 5);
                 }
 
                 // go to the goal
@@ -434,11 +752,11 @@ namespace RemoteSoccer
 
             // this is mostly just annoying
             // stay away from edges
-            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
-            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Constants.footLen));
+            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Unit));
+            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Unit));
 
-            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
-            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Constants.footLen));
+            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Unit));
+            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Unit));
 
             return res;
         }
@@ -509,18 +827,18 @@ namespace RemoteSoccer
             // go towards your goal
             res += Towards(myPosition, GoalTheyScoreOn(), 1);
             // but don't go in it
-            res -= TowardsWithIn(myPosition, GoalTheyScoreOn(), 10, Constants.footLen * 2);
+            res -= TowardsWithIn(myPosition, GoalTheyScoreOn(), 10, Unit * 2);
 
             // go towards the ball
             res += Towards(myPosition, gameState.GameBall.Posistion, 1);
             // go towards the ball hard if you are close
-            res += TowardsWithIn(myPosition, gameState.GameBall.Posistion, 5, Constants.footLen * 4);
+            res += TowardsWithIn(myPosition, gameState.GameBall.Posistion, 5, Unit * 4);
 
 
             var currentVelocity = gameState.players[self].PlayerBody.Velocity;
             if (currentVelocity.Length > 0)
             {
-                res += myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Dot(currentVelocity.NewUnitized()) * Constants.footLen / 1000.0;
+                res += myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Dot(currentVelocity.NewUnitized()) * Unit / 1000.0;
             }
 
             //var goalieForce = Goalie(myPosition, 4);
@@ -533,7 +851,7 @@ namespace RemoteSoccer
             //    // when you are near them
             //    foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             //    {
-            //        var force = TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 5, Constants.footLen * 3);
+            //        var force = TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 5, Unit * 3);
             //        hasTask |= force != 0;
             //        res += force;
             //    }
@@ -546,7 +864,7 @@ namespace RemoteSoccer
             //        .Where(x => !teammates.Contains(x.Key) && x.Key != self)
             //        .Where(x=> !gameState.players
             //            .Where(x => teammates.Contains(x.Key))
-            //            .Where(y=> y.Value.PlayerBody.Position.NewAdded(x.Value.PlayerBody.Position.NewMinus()).Length < Constants.footLen * 3)
+            //            .Where(y=> y.Value.PlayerBody.Position.NewAdded(x.Value.PlayerBody.Position.NewMinus()).Length < Unit * 3)
             //            .Any()))
             //    {
             //        var force = Towards(myPosition, player.Value.PlayerBody.Position, 100);
@@ -554,14 +872,14 @@ namespace RemoteSoccer
             //}
 
             // try and be between them and the goal
-            //res += PassIsBlockedBy(GoalTheyScoreOn(), myPosition) * Constants.footLen * 2;
+            //res += PassIsBlockedBy(GoalTheyScoreOn(), myPosition) * Unit * 2;
 
             // i don't think I need this
             // the force towards the ball will pull them to the ball side of their target
             // try to be between the ball and the other team
             //foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             //{
-            //    res += PassIsBlockedBy(GoalTheyScoreOn(), myPosition) * Constants.footLen;
+            //    res += PassIsBlockedBy(GoalTheyScoreOn(), myPosition) * Unit;
             //}
 
 
@@ -577,28 +895,28 @@ namespace RemoteSoccer
             // stay away from your teammates
             foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
             {
-                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Constants.footLen * 8);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 8);
             }
 
             // don't get to close to the other teams players
             foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             {
-                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Constants.footLen * 8);
-                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Constants.footLen * 3);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Unit * 8);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 3);
             }
 
             // don't hang out where they can't pass to you
-            // PassIsBlockedBy has werid units thus the Constants.footLen
-            res -= PassIsBlockedBy(myPosition) * Constants.footLen * 6;
+            // PassIsBlockedBy has werid units thus the Unit
+            res -= PassIsBlockedBy(myPosition) * Unit * 6;
 
             // don't get too far from the ball
-            res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 3, Constants.footLen * 12);
+            res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 3, Unit * 12);
 
             // we like to go the way we are going
             var currentVelocity = gameState.players[self].PlayerBody.Velocity;
             if (currentVelocity.Length > 0)
             {
-                res += myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Dot(currentVelocity.NewUnitized()) * Constants.footLen / 1000.0;
+                res += myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Dot(currentVelocity.NewUnitized()) * Unit / 1000.0;
             }
 
             return res;
@@ -627,12 +945,12 @@ namespace RemoteSoccer
             }
 
             // really gotards the ball if you are close to it
-            res += TowardsWithIn(myPosition, gameState.GameBall.Posistion, 10, Constants.footLen * 5);
+            res += TowardsWithIn(myPosition, gameState.GameBall.Posistion, 10, Unit * 5);
 
             // spread out ?
             foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
             {
-                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 2, Constants.footLen * 12);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 2, Unit * 12);
             }
 
             res += Goalie(myPosition, 4);
@@ -668,18 +986,18 @@ namespace RemoteSoccer
                 // don't go near the other team
                 foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
                 {
-                    res -= TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 4, Constants.footLen * 1.5);
+                    res -= TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 4, Unit * 1.5);
                 }
 
                 // go to the goal
-                res += TowardsWithInBody(myBody, myPosition, GoalWeScoreOn(), 1, Constants.footLen * 2);
+                res += TowardsWithInBody(myBody, myPosition, GoalWeScoreOn(), 1, Unit * 2);
             }
             else if (gameState.GameBall.OwnerOrNull == null)// when no one has the ball
             {
                 // go towards the ball when it is in play
                 if (!gameState.CountDownState.Countdown)
                 {
-                    res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, Constants.footLen * 1.5);
+                    res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, Unit * 1.5);
                 }
             }
             else if (teammates.Contains((Guid)gameState.GameBall.OwnerOrNull)) // one of you teammates has the ball
@@ -688,13 +1006,13 @@ namespace RemoteSoccer
                 // stay away from your teammates
                 foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
                 {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Constants.footLen * .5);
+                    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Unit * .5);
                 }
 
                 // bop the other team
                 foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
                 {
-                    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 2, Constants.footLen * 1.5);
+                    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 2, Unit * 1.5);
                 }
             }
             else // the other team has the ball
@@ -703,36 +1021,36 @@ namespace RemoteSoccer
                 // stay away from your teammates
                 foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
                 {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Constants.footLen * .5);
+                    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Unit * .5);
                 }
 
                 // go towards the ball hard if you are close
-                res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, Constants.footLen * 1.5);
+                res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, Unit * 1.5);
 
                 // go towards players of the other team
                 foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
                 {
-                    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 1, Constants.footLen * 1.5);
+                    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 1, Unit * 1.5);
                 }
             }
 
             // a small force back towards the center
-            res += TowardsWithIn(myPosition, gameState.players[self].PlayerBody.Position, .5, Constants.footLen / 3.0);
+            res += TowardsWithIn(myPosition, gameState.players[self].PlayerBody.Position, .5, Unit / 3.0);
 
 
             // feet don't like to stay still while extended
-            if (gameState.players[self].PlayerFoot.Position.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Length > Constants.footLen / 2.0)
+            if (gameState.players[self].PlayerFoot.Position.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Length > Unit / 2.0)
             {
-                res -= TowardsWithIn(myPosition, gameState.players[self].PlayerFoot.Position, .5, Constants.footLen / 3.0);
+                res -= TowardsWithIn(myPosition, gameState.players[self].PlayerFoot.Position, .5, Unit / 3.0);
             }
 
             // this is mostly just annoying
             // stay away from edges
-            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
-            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Constants.footLen));
+            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Unit));
+            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Unit));
 
-            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
-            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Constants.footLen));
+            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Unit));
+            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Unit));
 
             return res;
         }
@@ -810,6 +1128,9 @@ namespace RemoteSoccer
     // this should really be in Common
     class AIInputs : IInputs
     {
+        const double Unit=5000;
+
+        private static Random r = new Random();
         GameState gameState;
         private readonly Guid self;
         private readonly Guid[] teammates;
@@ -833,14 +1154,8 @@ namespace RemoteSoccer
         int throwing = 0;
         public Task<PlayerInputs> Next()
         {
-            var inputs = new PlayerInputs()
-            {
-                ControlScheme = ControlScheme.AI,
-                Boost = false,
-                Id = self,
-            };
+            var inputs = new PlayerInputs(0, 0, 0, 0, self, ControlScheme.AI, false, false);
 
-            var r = new Random();
             if (r.NextDouble() < (1 / 10.0))
             {
                 target = GenerateDirection();
@@ -886,7 +1201,12 @@ namespace RemoteSoccer
                 throwing = 0;
             }
 
-            return Task<PlayerInputs>.FromResult(inputs);
+            if (!inputs.Throwing && move.Length > 100)
+            {
+                inputs.Boost = true;
+            }
+
+            return Task.FromResult( inputs);
         }
 
         private Vector GoalWeScoreOn()
@@ -909,18 +1229,14 @@ namespace RemoteSoccer
 
         private Lazy<Vector[]> goalOffsets = new Lazy<Vector[]>(() =>
         {
-            var r = new Random();
-
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
             return new int[10].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Constants.goalLen * r.NextDouble())).ToArray();
         });
 
         private Lazy<Vector[]> throwOffsets = new Lazy<Vector[]>(() =>
         {
-            var r = new Random();
-
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[100].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Constants.footLen * 10 * r.NextDouble())).ToArray();
+            return new int[100].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 10 * r.NextDouble())).ToArray();
         });
 
         private bool ShouldThrow(out Vector direction)
@@ -939,14 +1255,12 @@ namespace RemoteSoccer
             //foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             //{
             //    // bad to be near the badie
-            //    if (myBody.NewAdded(player.Value.PlayerBody.Position.NewMinus()).Length < Constants.footLen)
+            //    if (myBody.NewAdded(player.Value.PlayerBody.Position.NewMinus()).Length < Unit)
             //    {
             //        direction = default;
             //        return false;
             //    }
             //}
-
-            var r = new Random();
 
             // I think we could probably search this space much more efficently 
             var options = throwOffsets.Value
@@ -967,7 +1281,7 @@ namespace RemoteSoccer
                 .OrderByDescending(x => x.score)
                 .ToArray();
 
-            if (options.Any() && options[0].score > EvaluatePassToSpace(myBody, true).score + (2 * Constants.footLen))
+            if (options.Any() && options[0].score > EvaluatePassToSpace(myBody, true).score + (2 * Unit))
             {
                 direction = options[0].input;
                 return true;
@@ -1006,11 +1320,11 @@ namespace RemoteSoccer
             // go to the goal
             res += Towards(position, GoalWeScoreOn(), 4);
             // but calcel it out once you are close enough to shoot, we don't really care if you are close or really close
-            res -= TowardsWithIn(position, GoalWeScoreOn(), 4, Constants.footLen * 8);
+            res -= TowardsWithIn(position, GoalWeScoreOn(), 4, Unit * 8);
 
             // go away from our goal
-            res -= TowardsWithIn(position, GoalTheyScoreOn(), 1, Constants.footLen * 12);
-            res -= TowardsWithIn(position, GoalTheyScoreOn(), 10, Constants.footLen * 4);
+            res -= TowardsWithIn(position, GoalTheyScoreOn(), 1, Unit * 12);
+            res -= TowardsWithIn(position, GoalTheyScoreOn(), 10, Unit * 4);
 
             if (goalAdd > 0)
             {
@@ -1024,7 +1338,7 @@ namespace RemoteSoccer
             // it's bad to be near the other team
             foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             {
-                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 3, Constants.footLen * 5);
+                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 3, Unit * 5);
             }
 
             var ourClosestPlayers = gameState.players
@@ -1050,12 +1364,12 @@ namespace RemoteSoccer
                 var lead = 8;
                 if (closestPlayer.time + lead > theyllGetThereAt && !evaluateSelf)
                 {
-                    res -= Constants.footLen * (closestPlayer.time + lead - theyllGetThereAt) / 10.0;
+                    res -= Unit * (closestPlayer.time + lead - theyllGetThereAt) / 10.0;
                 }
 
                 // short throws are bad
                 if (closestPlayer.howHard < Constants.maxThrowPower * .5) {
-                    res -= Constants.footLen*2;
+                    res -= Unit*2;
                 }
 
                 if (diff.Length > 0)
@@ -1068,7 +1382,7 @@ namespace RemoteSoccer
             }
             else if (!evaluateSelf)
             {
-                res -= Constants.footLen * 20;
+                res -= Unit * 20;
             }
 
             if (diff.Length > 0)
@@ -1119,9 +1433,6 @@ namespace RemoteSoccer
         {
             var myPosition = gameState.players[self].PlayerBody.Position;
 
-            var r = new Random();
-
-
             var getOtherPlayers = gameState.players
                 .Where(x => !teammates.Contains(x.Key) && x.Key != self)
                 .Select(x => (Func<GameState, Vector>)((GameState gs) => gs.players[x.Key].PlayerBody.Position.NewAdded(gs.players[self].PlayerBody.Position.NewMinus())));
@@ -1169,10 +1480,8 @@ namespace RemoteSoccer
 
         private Lazy<Vector[]> footOffsets = new Lazy<Vector[]>(() =>
         {
-            var r = new Random();
-
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[25].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Constants.footLen * 6 * r.NextDouble())).ToArray();
+            return new int[25].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 6 * r.NextDouble())).ToArray();
         });
         private Vector lastThrow;
 
@@ -1183,6 +1492,7 @@ namespace RemoteSoccer
 
             var list = footOffsets.Value
                 .Select(x => myPosition.NewAdded(x))
+                .Union(new[] { myPosition })
                 .Where(pos => pos.x < fieldDimensions.xMax && pos.x > 0 && pos.y < fieldDimensions.yMax && pos.y > 0)
                 .Select(pos => (position: pos, score: GlobalEvaluateFoot(pos)))
                 .OrderByDescending(pair => pair.score)
@@ -1209,9 +1519,9 @@ namespace RemoteSoccer
                 // don't go near the other team
                 foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
                 {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Constants.footLen * 2);
-                    //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 4, Constants.footLen * 3);
-                    //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Constants.footLen * 5);
+                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 2);
+                    //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 4, Unit * 3);
+                    //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Unit * 5);
                 }
 
                 // go to the goal
@@ -1222,7 +1532,7 @@ namespace RemoteSoccer
 
                 var lastHadBall = gameState.players.OrderByDescending(x => x.Value.LastHadBall).First();
                 var framesPassed = gameState.Frame - lastHadBall.Value.LastHadBall;
-                if (lastHadBall.Value.LastHadBall != 0 && framesPassed < 30)
+                if (lastHadBall.Value.LastHadBall != 0 && framesPassed < 30 && !gameState.CountDownState.Countdown)
                 {
                     // res += GlobalEvaluate_UpForGrabs(myPosition) * (30 - framesPassed) / 30.0;
                     if (teammates.Contains(lastHadBall.Key) || lastHadBall.Key == self)
@@ -1250,11 +1560,11 @@ namespace RemoteSoccer
 
             // this is mostly just annoying
             // stay away from edges
-            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
-            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Constants.footLen));
+            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Unit));
+            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Unit));
 
-            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
-            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Constants.footLen));
+            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Unit));
+            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Unit));
 
             return res;
         }
@@ -1301,7 +1611,7 @@ namespace RemoteSoccer
             foreach (var (baddie, _) in gameState.players.Values
                .Where(x => !teammates.Contains(x.Id) && x.Id != self && (!gameState.GameBall.OwnerOrNull.HasValue || x.Id != gameState.players[gameState.GameBall.OwnerOrNull.Value].Id))
                .Select(x => (x, x.PlayerBody.Position.NewAdded(GoalTheyScoreOn().NewMinus()).Length))
-               .OrderByDescending(x => x.Length))
+               .OrderBy(x => x.Length))
             {
                 var getTheBaddie = teamAndSelf
                     .Select(pair => (pair.Id, pair.PlayerBody.Position.NewAdded(baddie.PlayerBody.Position.NewMinus()).Length))
@@ -1320,23 +1630,22 @@ namespace RemoteSoccer
         private double GlobalEvaluate_TheirBall(Vector myPosition)
         {
             var res = GlobalEvaluate_TheirBall_Role(myPosition);
-            // the other team has the ball
 
             // go towards your goal
             res += Towards(myPosition, GoalTheyScoreOn(), 1);
             // but don't go in it
-            res -= TowardsWithIn(myPosition, GoalTheyScoreOn(), 10, Constants.footLen * 2);
+            res -= TowardsWithIn(myPosition, GoalTheyScoreOn(), 10, Unit * 2);
 
             // go towards the ball
             res += Towards(myPosition, gameState.GameBall.Posistion, 1);
             // go towards the ball hard if you are close
-            res += TowardsWithIn(myPosition, gameState.GameBall.Posistion, 5, Constants.footLen * 4);
+            res += TowardsWithIn(myPosition, gameState.GameBall.Posistion, 5, Unit * 4);
 
 
             var currentVelocity = gameState.players[self].PlayerBody.Velocity;
             if (currentVelocity.Length > 0)
             {
-                res += myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Dot(currentVelocity.NewUnitized()) * Constants.footLen / 1000.0;
+                res += myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Dot(currentVelocity.NewUnitized()) * Unit / 1000.0;
             }
 
             //var goalieForce = Goalie(myPosition, 4);
@@ -1349,7 +1658,7 @@ namespace RemoteSoccer
             //    // when you are near them
             //    foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             //    {
-            //        var force = TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 5, Constants.footLen * 3);
+            //        var force = TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 5, Unit * 3);
             //        hasTask |= force != 0;
             //        res += force;
             //    }
@@ -1362,7 +1671,7 @@ namespace RemoteSoccer
             //        .Where(x => !teammates.Contains(x.Key) && x.Key != self)
             //        .Where(x=> !gameState.players
             //            .Where(x => teammates.Contains(x.Key))
-            //            .Where(y=> y.Value.PlayerBody.Position.NewAdded(x.Value.PlayerBody.Position.NewMinus()).Length < Constants.footLen * 3)
+            //            .Where(y=> y.Value.PlayerBody.Position.NewAdded(x.Value.PlayerBody.Position.NewMinus()).Length < Unit * 3)
             //            .Any()))
             //    {
             //        var force = Towards(myPosition, player.Value.PlayerBody.Position, 100);
@@ -1370,14 +1679,14 @@ namespace RemoteSoccer
             //}
 
             // try and be between them and the goal
-            //res += PassIsBlockedBy(GoalTheyScoreOn(), myPosition) * Constants.footLen * 2;
+            //res += PassIsBlockedBy(GoalTheyScoreOn(), myPosition) * Unit * 2;
 
             // i don't think I need this
             // the force towards the ball will pull them to the ball side of their target
             // try to be between the ball and the other team
             //foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             //{
-            //    res += PassIsBlockedBy(GoalTheyScoreOn(), myPosition) * Constants.footLen;
+            //    res += PassIsBlockedBy(GoalTheyScoreOn(), myPosition) * Unit;
             //}
 
 
@@ -1393,28 +1702,28 @@ namespace RemoteSoccer
             // stay away from your teammates
             foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
             {
-                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Constants.footLen * 8);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 8);
             }
 
             // don't get to close to the other teams players
             foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
             {
-                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Constants.footLen * 8);
-                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Constants.footLen * 3);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Unit * 8);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 3);
             }
 
             // don't hang out where they can't pass to you
-            // PassIsBlockedBy has werid units thus the Constants.footLen
-            res -= PassIsBlockedBy(myPosition) * Constants.footLen * 6;
+            // PassIsBlockedBy has werid units thus the Unit
+            res -= PassIsBlockedBy(myPosition) * Unit * 6;
 
             // don't get too far from the ball
-            res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 3, Constants.footLen * 12);
+            res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 3, Unit * 12);
 
             // we like to go the way we are going
             var currentVelocity = gameState.players[self].PlayerBody.Velocity;
             if (currentVelocity.Length > 0)
             {
-                res += myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Dot(currentVelocity.NewUnitized()) * Constants.footLen / 1000.0;
+                res += myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Dot(currentVelocity.NewUnitized()) * Unit / 1000.0;
             }
 
             return res;
@@ -1443,12 +1752,12 @@ namespace RemoteSoccer
             }
 
             // really gotards the ball if you are close to it
-            res += TowardsWithIn(myPosition, gameState.GameBall.Posistion, 10, Constants.footLen * 5);
+            res += TowardsWithIn(myPosition, gameState.GameBall.Posistion, 10, Unit * 5);
 
             // spread out ?
             foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
             {
-                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 2, Constants.footLen * 12);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 2, Unit * 12);
             }
 
             res += Goalie(myPosition, 4);
@@ -1484,71 +1793,71 @@ namespace RemoteSoccer
                 // don't go near the other team
                 foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
                 {
-                    res -= TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 4, Constants.footLen * 1.5);
+                    res -= TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 4, Unit * 1.5);
                 }
 
                 // go to the goal
-                res += TowardsWithInBody(myBody, myPosition, GoalWeScoreOn(), 1, Constants.footLen * 6);
+                res += TowardsWithInBody(myBody, myPosition, GoalWeScoreOn(), 1, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts) - Unit);
             }
             else if (gameState.GameBall.OwnerOrNull == null)// when no one has the ball
             {
                 // go towards the ball when it is in play
                 if (!gameState.CountDownState.Countdown)
                 {
-                    res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, Constants.footLen * 6);
+                    res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts)- Unit);
                 }
             }
             else if (teammates.Contains((Guid)gameState.GameBall.OwnerOrNull)) // one of you teammates has the ball
             {
 
                 // stay away from your teammates
-                foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
-                {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Constants.footLen * .5);
-                }
+                //foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
+                //{
+                //    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Unit * .5);
+                //}
 
-                // bop the other team
-                foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
-                {
-                    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 2, Constants.footLen * 6);
-                }
+                //// bop the other team
+                //foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
+                //{
+                //    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 2, Unit * 6);
+                //}
             }
             else // the other team has the ball
             {
 
                 // stay away from your teammates
-                foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
-                {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Constants.footLen * .5);
-                }
+                //foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
+                //{
+                //    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Unit * .5);
+                //}
 
                 // go towards the ball hard if you are close
-                res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, Constants.footLen * 6);
+                res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts) - Unit);
 
                 // go towards players of the other team
-                foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
-                {
-                    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 1, Constants.footLen * 6);
-                }
+                //foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
+                //{
+                //    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 1, Unit * 6);
+                //}
             }
 
             // a small force back towards the center
-            res += TowardsWithIn(myPosition, gameState.players[self].PlayerBody.Position, .5, Constants.footLen / 3.0);
+            res += Towards(myPosition, gameState.players[self].PlayerBody.Position, .1);
 
 
-            // feet don't like to stay still while extended
-            if (gameState.players[self].PlayerFoot.Position.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Length > Constants.footLen / 2.0)
-            {
-                res -= TowardsWithIn(myPosition, gameState.players[self].PlayerFoot.Position, .5, Constants.footLen / 3.0);
-            }
+            //// feet don't like to stay still while extended
+            //if (gameState.players[self].PlayerFoot.Position.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Length > Unit / 2.0)
+            //{
+            //    res -= TowardsWithIn(myPosition, gameState.players[self].PlayerFoot.Position, .5, Unit / 3.0);
+            //}
 
             // this is mostly just annoying
             // stay away from edges
-            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
-            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Constants.footLen));
+            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Unit));
+            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Unit));
 
-            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Constants.footLen));
-            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Constants.footLen));
+            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Unit));
+            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Unit));
 
             return res;
         }

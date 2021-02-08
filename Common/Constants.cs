@@ -30,7 +30,7 @@
 
         public const double MinPlayerCollisionForce = 100;//= 600;
         public const double ExtraBallTakeForce = 100;//= 1000;
-        public const double BallTakeForce = 1000;
+        public const double BallTakeForce = 200;
 
 
         public const int ThrowTimeout = 5;

@@ -104,21 +104,25 @@ namespace RemoteSoccer
 
             var x = 0;
 
+            var didIt = true;
+
             while (sending)
             {
                 game.ApplyInputs( 
                     (await Task.WhenAll(localPlayers.Read().Select(x=>(x.input.Next())).ToArray())).ToDictionary(x=>x.Id, x=>x));
 
-                //if (frame.thing% 10 == 0)
-                //{
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                if (didIt)
+                {
+                    didIt = false;
+                    var dontwait =  CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
                         () =>
                         {
                             Canvas.Invalidate();
+                            didIt = true;
                         //renderGameState.Update(game.gameState);
                     });
-                //}
+                }
 
                 frame.thing++;
 
@@ -182,29 +186,38 @@ namespace RemoteSoccer
                 {
 
                     var ourTeam = new Guid[4].Select(x => Guid.NewGuid()).ToArray();
-                    if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
-                    {
+                    //if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
+                    //{
 
-                        var body = ourTeam.First();
-                        var inputs = new MouseKeyboardInputs(lockCurser, body);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
-                    }
+                    //    var body = ourTeam.First();
+                    //    var inputs = new MouseKeyboardInputs(lockCurser, body);
+                    //    await inputs.Init();
+                    //    await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
+                    //}
 
-                    foreach (var body in ourTeam.Skip(1))//)//
+                    foreach (var body in ourTeam)//.Skip(1)
                     {
-                        var inputs = new AIInputs2(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
+                        var inputs = new AIInputs(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
                         await inputs.Init();
                         await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00, 0xff });
                     }
 
                     var theirTeam = new Guid[4].Select(x => Guid.NewGuid()).ToArray();
 
-                    foreach (var body in theirTeam)
+                    //foreach (var body in theirTeam)
+                    //{
+                    //    var inputs = new AIInputs(game.gameState, body, theirTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, true);
+                    //    await inputs.Init();
+                    //    await CreatePlayer(body, inputs, new byte[3] { 0xff, 0x00, 0x00 });
+                    //}
+
+
+                    var team = new AITeam(game.gameState, theirTeam, fieldDimensions, true);
+
+                    foreach (var (key, input) in team.GetPlayers())
                     {
-                        var inputs = new AIInputs(game.gameState, body, theirTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, true);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs, new byte[3] { 0xff, 0x00, 0x00 });
+                        await input.Init();
+                        await CreatePlayer(key, input, new byte[3] { 0xff, 0x00, 0x00 });
                     }
 
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)

@@ -25,7 +25,7 @@ namespace Common
         AI
     }
 
-    public struct PlayerInputs
+    public class PlayerInputs
     {
         public ControlScheme ControlScheme { get; set; }
         public double FootX { get; set; }

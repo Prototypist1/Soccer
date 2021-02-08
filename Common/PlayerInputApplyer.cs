@@ -7,6 +7,10 @@ namespace Common
     public static class PlayerInputApplyer {
 
 
+        public static double HowFarCanIBoost(double boost) {
+            return boost * Constants.BoostPower / Constants.BoostConsumption;
+        }
+
         public static double HowQuicklyCanAPlayerMove(double length) {
             return length / Constants.bodySpeedLimit;
         }
@@ -90,8 +94,8 @@ namespace Common
             {
                 player.ExternalVelocity = player.ExternalVelocity.NewScaled(.9);
 
-                if (state.Frame % 60 == 0) {
-                    player.Boosts = Math.Min(3, player.Boosts + 1.0/3.0);
+                if (state.Frame % 90 == 0) {
+                    player.Boosts = Math.Min(3, player.Boosts + 1.0);
                 }
 
                 // handle inputs
@@ -475,7 +479,7 @@ namespace Common
                         } 
                         else if (input.ControlScheme == ControlScheme.AI) 
                         {
-                            player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(Constants.maxThrowPower).NewAdded(player.PlayerBody.Velocity.NewMinus());
+                            player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(Constants.maxThrowPower);//.NewAdded(player.PlayerBody.Velocity.NewMinus());
                         }
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                         {
@@ -494,7 +498,7 @@ namespace Common
 
                     if (player.Throwing && !input.Throwing && state.GameBall.OwnerOrNull == player.Id)
                     {
-                        state.GameBall.Velocity = player.ProposedThrow.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity);
+                        state.GameBall.Velocity = player.ProposedThrow;//.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity);
                         //player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewScaled(2);
                         state.players[state.GameBall.OwnerOrNull.Value].LastHadBall = state.Frame;
                         state.GameBall.OwnerOrNull = null;
