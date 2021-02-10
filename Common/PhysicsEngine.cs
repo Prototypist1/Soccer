@@ -163,7 +163,7 @@ namespace physics2
 
                 foreach (var (p1, p2) in PlayerPairs(gameState))
                 {
-                    //PhysicsMath2.TryPushBallBall(p1, p2);
+                    PhysicsMath2.TryPushBallBall(p1, p2);
 
                     if (PhysicsMath2.TryBallBallCollistion(
                         p1.PlayerFoot.Position,

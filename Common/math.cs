@@ -307,9 +307,16 @@ namespace Physics2
 
         internal static void TryPushBallBall(GameState.Player player1, GameState.Player player2) {
 
+            // TODO
+            // I want to make it possible to hold space
+            // if you are holding your ground you dont move
+            // if you are pushing you bounce off
+            // or... maybe not
+            // if you want to hold your ground you have to push back
+
             var dis = player1.PlayerBody.Position.NewAdded(player2.PlayerBody.Position.NewMinus());
 
-            var violation = Constants.footLen * 2 - dis.Length;
+            var violation = Constants.footLen * 6 - dis.Length;
             if (violation> 0) {
 
                 player1.ExternalVelocity = player1.ExternalVelocity.NewAdded(dis.NewUnitized().NewScaled(violation * .005));

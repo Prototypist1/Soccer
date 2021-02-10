@@ -15,6 +15,9 @@ namespace Physics2
 
         public Vector NewUnitized() {
             var d = Math.Sqrt((x * x) + (y * y));
+            if (d == 0) {
+                var ahhhh = 0;
+            }
             return new Vector(x/d, y/d);
         }
 

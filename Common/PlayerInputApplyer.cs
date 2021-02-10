@@ -6,6 +6,90 @@ namespace Common
 {
     public static class PlayerInputApplyer {
 
+        // how hard do I have to throw it for a player to catch it at a given point
+        public static Vector RequiredThrow(Vector playerStart, Vector ballStart, Vector target)
+        {
+
+            var playerTime = HowQuicklyCanAPlayerMove(target .NewAdded(playerStart.NewMinus()).Length);
+            var speed = HowHardToThrow(target.NewAdded(ballStart.NewMinus()).Length, playerTime);
+
+            return target.NewAdded(ballStart.NewMinus()).NewUnitized().NewScaled(speed);
+        }
+
+        // assuming the player runs at max speed the whole time
+        // and assuming the ball doesn't have friction
+        public static double IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity) {
+            var diff = ballStart.NewAdded(start.NewMinus());
+
+            if (diff.Length == 0) {
+                return 0;
+            }
+
+            var speedAWay = diff.NewUnitized().Dot(ballVelocity);
+
+            if (speedAWay > Constants.bodySpeedLimit) {
+                return double.MaxValue;
+            }
+
+            var speedPerpendicular = new Vector(diff.y, -diff.x).NewUnitized().Dot(ballVelocity);
+            if (Math.Abs(speedPerpendicular) > Constants.bodySpeedLimit) {
+                return double.MaxValue;
+            }
+
+            var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular* speedPerpendicular));
+
+            if (effectiveSpeed + speedAWay <= 0) {
+                return double.MaxValue;
+            }
+
+            return diff.Length / (effectiveSpeed + speedAWay);
+        }
+
+        public static Vector IntersectBallDirection(Vector start, Vector ballStart, Vector ballVelocity)
+        {
+            var diff = ballStart.NewAdded(start.NewMinus());
+
+            if (diff.Length == 0) {
+                return new Vector(0.0, 0.0);
+            }
+
+            if (ballVelocity.Length == 0) {
+                return diff.NewUnitized();
+            }
+
+            var speedAWay = diff.NewUnitized().Dot(ballVelocity);
+
+            if (speedAWay > Constants.bodySpeedLimit)
+            {
+                //it's hopeless just run at it
+                return diff.NewUnitized();
+            }
+
+            var speedPerpendicular = new Vector(diff.y, -diff.x).NewUnitized().Dot(ballVelocity);
+            if (Math.Abs(speedPerpendicular) > Constants.bodySpeedLimit)
+            {
+                //it's hopeless just run at it
+                return diff.NewUnitized();
+            }
+
+            var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
+
+            if (effectiveSpeed + speedAWay <= 0)
+            {
+                //it's hopeless just run at it
+                return diff.NewUnitized();
+            }
+            var res = new Vector(diff.y, -diff.x).NewUnitized().NewScaled(speedPerpendicular)
+                .NewAdded(diff.NewUnitized().NewScaled(effectiveSpeed));
+
+            if (res.Length == 0 || double.IsNaN( res.Length)) {
+                var ahh = 0;
+            }
+
+            return res
+                .NewUnitized();
+        }
+
 
         public static double HowFarCanIBoost(double boost) {
             return boost * Constants.BoostPower / Constants.BoostConsumption;
@@ -15,7 +99,7 @@ namespace Common
             return length / Constants.bodySpeedLimit;
         }
 
-        public static double HowHardToThrow(double length, int time) {
+        public static double HowHardToThrow(double length, double time) {
             if (length == 0) {
                 return 0;
             }
