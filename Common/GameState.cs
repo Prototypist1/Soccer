@@ -109,6 +109,7 @@ namespace Common
         // foot really move at foot.velocity.x + body.velocity.x + externalVelocity.x
         public class Player
         {
+            public Vector BoostCenter { get; set; }
             public Guid Id { get; set; }
             public string Name { get; set; }
             public Body PlayerBody { get; set; }

@@ -57,6 +57,11 @@ namespace physics2
             gameState.Handle(gameStateTracker.UpdateGameState());
             PlayerInputApplyer.Apply(gameState, inputs);
 
+            foreach (var (p1, p2) in PhysicsEngine2.PlayerPairs(gameState))
+            {
+                PhysicsMath2.TryPushBallBall(p1, p2);
+            }
+
             gameState.Simulate(gameStateTracker);
 
             // clear out effects after a few frames

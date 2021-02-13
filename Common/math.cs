@@ -316,7 +316,7 @@ namespace Physics2
 
             var dis = player1.PlayerBody.Position.NewAdded(player2.PlayerBody.Position.NewMinus());
 
-            var violation = Constants.footLen * 6 - dis.Length;
+            var violation = Constants.footLen * 8 - dis.Length;
             if (violation> 0) {
 
                 player1.ExternalVelocity = player1.ExternalVelocity.NewAdded(dis.NewUnitized().NewScaled(violation * .005));

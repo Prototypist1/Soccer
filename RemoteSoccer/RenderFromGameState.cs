@@ -107,8 +107,11 @@ namespace RemoteSoccer
 
             // draw number of boosts
             foreach (var playerPair in gameState.players)
-            { 
-                DrawCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B), (float) (playerPair.Value.Boosts*10.0 / scale));
+            {
+                if (playerPair.Value.Boosts > 0)
+                {
+                    DrawCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B), (float)(playerPair.Value.Boosts * 10.0 / scale));
+                }
             }
 
             // has ball highlight

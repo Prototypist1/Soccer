@@ -245,7 +245,10 @@ namespace RemoteSoccer
         private Lazy<Vector[]> footOffsets = new Lazy<Vector[]>(() =>
         {
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[25].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 6 * r.NextDouble())).ToArray();
+            return new int[25]
+            .Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 6 * r.NextDouble()))
+            .Union(new[] { new Vector(0,0)})
+            .ToArray();
         });
 
         private Vector GenerateDirectionFoot(Vector myPosition,Guid self)
@@ -276,7 +279,9 @@ namespace RemoteSoccer
         {
             var res = 0.0;
 
-            if (gameState.GameBall.OwnerOrNull == self) // when you have the ball
+            var snapshot = gameState.GameBall.OwnerOrNull;
+
+            if (snapshot == self) // when you have the ball
             {
                 // don't go near the other team
                 foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key) ))
@@ -287,7 +292,7 @@ namespace RemoteSoccer
                 // go to the goal
                 res += TowardsWithInBody(myBody, myPosition, GoalWeScoreOn(), 1, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts) - Unit);
             }
-            else if (gameState.GameBall.OwnerOrNull == null)// when no one has the ball
+            else if (!(snapshot is Guid owner))// when no one has the ball
             {
                 // go towards the ball when it is in play
                 if (!gameState.CountDownState.Countdown)
@@ -295,7 +300,7 @@ namespace RemoteSoccer
                     res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts) - Unit);
                 }
             }
-            else if (team.ContainsKey((Guid)gameState.GameBall.OwnerOrNull)) // one of you teammates has the ball
+            else if (team.ContainsKey(owner)) // one of you teammates has the ball
             {
 
                 // stay away from your teammates
@@ -726,7 +731,7 @@ namespace RemoteSoccer
 
             var startWith = them.NewAdded(body.NewMinus());
             var len = startWith.Length;
-            if (len > 0 && len < whenWithIn)
+            if (len < whenWithIn)
             {
                 return -scale * them.NewAdded(us.NewMinus()).Length;
             }

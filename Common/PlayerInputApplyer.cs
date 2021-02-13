@@ -95,7 +95,10 @@ namespace Common
 
 
         public static double HowFarCanIBoost(double boost) {
-            return boost * Constants.BoostPower / Constants.BoostConsumption;
+            // boost = sum howfarIvegone * Constants.BoostConsumption / Constants.BoostPower from 0 to howfarIvegone
+            // x is howfarIvegone
+            // boost = x*x * Constants.BoostConsumption / (2*Constants.BoostPower)
+            return Math.Sqrt( boost * 2* Constants.BoostPower / Constants.BoostConsumption);
         }
 
         public static double HowQuicklyCanAPlayerMove(double length) {
@@ -181,9 +184,9 @@ namespace Common
             {
                 player.ExternalVelocity = player.ExternalVelocity.NewScaled(.9);
 
-                if (state.Frame % 90 == 0) {
-                    player.Boosts = Math.Min(3, player.Boosts + 1.0);
-                }
+                //if (state.Frame % 90 == 0) {
+                    player.Boosts = Math.Min(3, player.Boosts + 1.0/90.0);
+                //}
 
                 // handle inputs
                 if (inputs.TryGetValue(player.Id, out var input)) {
@@ -276,7 +279,7 @@ namespace Common
                             var with = player.PlayerBody.Velocity.Dot(f);
                             var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
 
-                            var engeryAdd = player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
+                            var engeryAdd = Constants.EnergyAdd;// player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 
                             //
                             var finalE = VtoE(baseValocity.Length) + engeryAdd;
@@ -298,14 +301,17 @@ namespace Common
                             }
 
                             // 
-                            if (input.Boost && player.Boosts >= 0)
-                            {
-                                player.BoostVelocity = f.NewScaled(Constants.BoostPower);
-                                player.Boosts-= Constants.BoostConsumption * f.Length;
-                            }
-                            else {
-                                player.BoostVelocity = new Vector(0.0, 0.0);
-                            }
+                            //if (input.Boost && player.Boosts >= 0)
+                            //{
+                            //    var move = f.NewScaled(Constants.BoostPower);
+                            //    player.BoostVelocity = move;
+                            //    player.BoostCenter = player.BoostCenter.NewAdded(move);
+                            //    player.Boosts -= Constants.BoostConsumption * move.Length * player.BoostCenter.Length;
+                            //}
+                            //else {
+                            //    player.BoostCenter = new Vector();
+                            //    player.BoostVelocity = new Vector(0.0, 0.0);
+                            //}
                         }
                     }
                     else
@@ -341,24 +347,59 @@ namespace Common
                             if (true) {
 
 
-                                var move = new Vector(input.FootX, input.FootY);
+                                var move = new Vector(input.FootX, input.FootY).NewScaled(Constants.BoostPower);
 
-                                if (move.Length != 0)
-                                {
-                                    var speedLimit = SpeedLimit(move.Length);
-                                    move = move.NewUnitized().NewScaled(speedLimit);
-                                }
+                                //if (move.Length != 0)
+                                //{
+                                //    var speedLimit = SpeedLimit(move.Length);
+                                //    move = move.NewUnitized().NewScaled(speedLimit);
+                                //}
 
                                 // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
-                                if (input.Boost && player.Boosts >= 0)
+
+                                //if (input.Boost && player.Boosts >= 0)
+                                //{
+
+                                if (player.Boosts > 0 && move.Length > 0)
                                 {
-                                    player.Boosts -= Constants.BoostConsumption * move.Length;
-                                    player.BoostVelocity = move.NewScaled(Constants.BoostPower);
+                                    var with = move.NewUnitized().NewScaled(move.NewUnitized().Dot(player.BoostVelocity));
+                                    var notWith = player.BoostVelocity.NewAdded(with.NewMinus()).NewScaled(Constants.BoostFade);
+                                    var proposed = with.NewAdded(notWith);
+
+                                    var offset = move.NewAdded(proposed.NewMinus());
+                                    var add = 600;
+                                    if (offset.Length > add)
+                                    {
+                                        proposed = proposed.NewAdded(offset.NewUnitized().NewScaled(add));
+                                    }
+                                    else {
+                                        proposed = move;
+                                    }
+
+                                    player.BoostVelocity = proposed;
+                                    player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
                                 }
-                                else
+                                else {
+                                    player.BoostVelocity = player.BoostVelocity.NewScaled(Constants.BoostFade);
+
+                                }
+
+                                player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * player.BoostCenter.Length;
+                                player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
+                                if (move.Length < .01)
                                 {
-                                    player.BoostVelocity = new Vector(0.0, 0.0);
+                                    player.BoostCenter = player.BoostCenter.NewScaled(.95);
                                 }
+
+                                //if (move.Length < .1 || player.Boosts <= 0)
+                                //{
+                                //}
+                                //}
+                                //else
+                                //{
+                                //    player.BoostCenter = new Vector();
+                                //    player.BoostVelocity = new Vector(0.0, 0.0);
+                                //}
                             }
                             else 
                             if (true)
@@ -429,11 +470,15 @@ namespace Common
                                 // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
                                 if (input.Boost && player.Boosts >= 0)
                                 {
-                                    player.Boosts-= Constants.BoostConsumption;
-                                    player.BoostVelocity = move.NewScaled(Constants.BoostPower);
+                                    var move2 = move.NewScaled(Constants.BoostPower);
+                                    player.BoostVelocity = move2;
+                                    player.BoostCenter = player.BoostCenter.NewAdded(move2);
+                                    player.Boosts -= Constants.BoostConsumption * move2.Length * player.BoostCenter.Length;
                                 }
-                                else {
-                                    player.BoostVelocity = new Vector(0.0,0.0);
+                                else
+                                {
+                                    player.BoostCenter = new Vector();
+                                    player.BoostVelocity = new Vector(0.0, 0.0);
                                 }
                             }
                             //else {
@@ -511,6 +556,12 @@ namespace Common
                         }
                     }
                     else {
+
+                        player.BoostVelocity = player.BoostVelocity.NewScaled(Constants.BoostFade);
+                        player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * player.BoostCenter.Length;
+                        player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
+                        player.BoostCenter = player.BoostCenter.NewScaled(.95);
+
                         if (input.ControlScheme == ControlScheme.Controller)
                         {
                             player.PlayerFoot.Velocity = new Vector(0, 0);
@@ -518,23 +569,27 @@ namespace Common
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard || input.ControlScheme == ControlScheme.AI)
                         {
                             // you can boost and throw
-                            var move = new Vector(input.FootX, input.FootY);
+                            // no you can't
+                            //var move = new Vector(input.FootX, input.FootY);
 
-                            if (move.Length != 0)
-                            {
-                                var speedLimit = SpeedLimit(move.Length);
-                                move = move.NewUnitized().NewScaled(speedLimit);
-                            }
-                            // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
-                            if (input.Boost && player.Boosts >= 1)
-                            {
-                                player.Boosts-=Constants.BoostConsumption;
-                                player.BoostVelocity = move.NewScaled(Constants.BoostPower);
-                            }
-                            else
-                            {
-                                player.BoostVelocity = new Vector(0.0, 0.0);
-                            }
+                            //if (move.Length != 0)
+                            //{
+                            //    var speedLimit = SpeedLimit(move.Length);
+                            //    move = move.NewUnitized().NewScaled(speedLimit);
+                            //}
+                            //// shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
+                            //if (input.Boost && player.Boosts >= 0)
+                            //{
+                            //    var move2 = move.NewScaled(Constants.BoostPower);
+                            //    player.BoostVelocity = move2;
+                            //    player.BoostCenter = player.BoostCenter.NewAdded(move2);
+                            //    player.Boosts -= Constants.BoostConsumption * move2.Length * player.BoostCenter.Length;
+                            //}
+                            //else
+                            //{
+                            //    player.BoostCenter = new Vector();
+                            //    player.BoostVelocity = new Vector(0.0, 0.0);
+                            //}
 
                             var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
                             if (diff.Length > max)
