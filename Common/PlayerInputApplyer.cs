@@ -37,14 +37,17 @@ namespace Common
             }
 
             var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular* speedPerpendicular));
-
-            if (effectiveSpeed + speedAWay <= 0) {
+            
+            if (effectiveSpeed - speedAWay <= 0) {
                 return double.MaxValue;
             }
 
-            return diff.Length / (effectiveSpeed + speedAWay);
+            return diff.Length / (effectiveSpeed - speedAWay);
         }
 
+        // I wish I could insert a drawing to show what I am doing here
+        // you try to maintain your direction relative to the ball
+        // and any extra speed you have you spend on moving towards the ball
         public static Vector IntersectBallDirection(Vector start, Vector ballStart, Vector ballVelocity)
         {
             var diff = ballStart.NewAdded(start.NewMinus());
@@ -74,7 +77,7 @@ namespace Common
 
             var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
 
-            if (effectiveSpeed + speedAWay <= 0)
+            if (effectiveSpeed - speedAWay <= 0)
             {
                 //it's hopeless just run at it
                 return diff.NewUnitized();
@@ -567,7 +570,7 @@ namespace Common
                         }
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                         {
-                            player.ProposedThrow = player.ProposedThrow.NewAdded(new Vector(input.FootX, input.FootY).NewScaled(.5));
+                            player.ProposedThrow = player.ProposedThrow.NewAdded(new Vector(input.FootX, input.FootY).NewScaled(2));
 
                             if (player.ProposedThrow.Length > Constants.maxThrowPower)
                             {

@@ -45,5 +45,7 @@ namespace Physics2
         {
             return Math.Sqrt(((this.x - position.x)* (this.x - position.x)) + ((this.y - position.y)* (this.y - position.y)));
         }
+
+        public override string ToString() => $"{x}, {y}";
     }
 }
