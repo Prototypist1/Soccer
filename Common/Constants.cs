@@ -44,12 +44,12 @@
         public const double speedLimit = 400;//3000;
         // firction on the ball
         public const double FrictionDenom = 80;
-        public const int bodyStartAt = 200;
-        public const int bodySpeedLimit = 400;
+        public const int bodyStartAt = 300;
+        public const int bodySpeedLimit = 500;
         public const double BoostPower = 1;
         public const double ThrowScale = .12;
         public const double maxThrowPower = 1200;
-        public const double BoostConsumption = .00000004;
-        public const double BoostFade = .8;
+        public const double BoostConsumption = .00000002;
+        public const double BoostFade = .75;
     }
 }

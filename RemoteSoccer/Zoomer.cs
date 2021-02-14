@@ -21,17 +21,17 @@ namespace RemoteSoccer
 
         public double GetTimes() => times;
 
-        public (double, double, double, double) Update(Position[] positionsList)
+        public (double, double, double, double) Update(GameState gs)
         {
 
-            foreach (var position in positionsList)
+            foreach (var position in gs.players)
             {
-                if (position.Id == body)
+                if (position.Key == body)
                 {
-                    return (position.X,
-                        position.Y,
-                        (viewFrameWidth / 2.0) - (position.X * times),
-                    (viewFrameHeight / 2.0) - (position.Y * times));
+                    return (position.Value.PlayerBody.Position.x,
+                        position.Value.PlayerBody.Position.y,
+                        (viewFrameWidth / 2.0) - (position.Value.PlayerBody.Position.x * times),
+                        (viewFrameHeight / 2.0) - (position.Value.PlayerBody.Position.y * times));
                 }
             }
 

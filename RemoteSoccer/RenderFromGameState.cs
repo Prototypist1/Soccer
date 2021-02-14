@@ -1,6 +1,7 @@
 ﻿//using Microsoft.Toolkit.Uwp.UI.Media;
 
 using Common;
+using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using System;
 using System.Collections.Generic;
@@ -53,10 +54,53 @@ namespace RemoteSoccer
         public Line line;
     }
 
+    
+    class Smoother {
+
+        private readonly IZoomer zoomer;
+        private double lastTimes;
+        private bool initTimes = false;
+        private (double, double, double, double) lastUpdate;
+        private bool initUpdate = false;
+        private const double Scale  = 10;
+
+        public Smoother(IZoomer zoomer)
+        {
+            this.zoomer = zoomer ?? throw new ArgumentNullException(nameof(zoomer));
+        }
+
+        public double GetTimes() {
+            if (!initTimes) {
+                lastTimes = zoomer.GetTimes();
+                initTimes = true;
+                return lastTimes;
+            }
+            lastTimes = (zoomer.GetTimes() + Scale * lastTimes) / (1+ Scale);
+            return lastTimes;
+        }
+
+        public (double, double, double, double) Update(GameState gameState)
+        {
+            if (!initUpdate)
+            {
+                lastUpdate = zoomer.Update(gameState);
+                initUpdate = true;
+                return lastUpdate;
+            }
+            var update = zoomer.Update(gameState);
+            lastUpdate = (
+                (update.Item1 + Scale * lastUpdate.Item1) / (1 + Scale),
+                (update.Item2 + Scale * lastUpdate.Item2) / (1 + Scale),
+                (update.Item3 + Scale * lastUpdate.Item3) / (1 + Scale),
+                (update.Item4 + Scale * lastUpdate.Item4) / (1 + Scale));
+            return lastUpdate;
+        }
+    }
+
     class RenderGameState2
     {
         private CanvasControl canvas;
-        private FullField zoomer;
+        private Smoother zoomer;
 
         private readonly TextBlock leftScore, rightScore;
 
@@ -67,10 +111,10 @@ namespace RemoteSoccer
         private List<GameState.GoalScored> goalScoreds = new List<GameState.GoalScored>();
         private List<GameState.Collision> collisions = new List<GameState.Collision>();
 
-        public RenderGameState2(CanvasControl canvas, FullField zoomer, TextBlock leftScore, TextBlock rightScore)
+        public RenderGameState2(CanvasControl canvas, IZoomer zoomer, TextBlock leftScore, TextBlock rightScore)
         {
             this.canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
-            this.zoomer = zoomer ?? throw new ArgumentNullException(nameof(zoomer));
+            this.zoomer = new Smoother(zoomer) ?? throw new ArgumentNullException(nameof(zoomer));
             this.leftScore = leftScore ?? throw new ArgumentNullException(nameof(leftScore));
             this.rightScore = rightScore ?? throw new ArgumentNullException(nameof(rightScore));
 
@@ -89,7 +133,7 @@ namespace RemoteSoccer
 
         public void Update(GameState gameState, CanvasDrawEventArgs args)
         {
-            var (playerX, playerY, xPlus, yPlus) = zoomer.Update(Array.Empty<Position>());
+            var (playerX, playerY, xPlus, yPlus) = zoomer.Update(gameState);
 
             var scale = (float)zoomer.GetTimes();
 
@@ -122,6 +166,17 @@ namespace RemoteSoccer
             foreach (var playerPair in gameState.players)
             {
                 DrawFilledCircle(playerPair.Value.PlayerFoot.Position.x, playerPair.Value.PlayerFoot.Position.y, Constants.PlayerRadius, Color.FromArgb(playerPair.Value.PlayerFoot.A, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B));
+
+                if (playerPair.Value.BoostVelocity.Length > 10) {
+                    var toThrow = playerPair.Value.BoostVelocity;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
+                    DrawLine(
+                        playerPair.Value.PlayerFoot.Position.x,
+                        playerPair.Value.PlayerFoot.Position.y,
+                        playerPair.Value.PlayerFoot.Position.x + (toThrow.x * 15),
+                        playerPair.Value.PlayerFoot.Position.y + (toThrow.y * 15),
+                        Color.FromArgb(0x20, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
+                        Constants.PlayerRadius*2);
+                }
             }
 
             // ball
@@ -258,7 +313,10 @@ namespace RemoteSoccer
                     new Vector2((float)((x1 * scale) + xPlus), (float)((y1 * scale) + yPlus)),
                     new Vector2((float)((x2 * scale) + xPlus), (float)((y2 * scale) + yPlus)),
                     color,
-                    strokeWidth * scale);
+                    strokeWidth * scale,
+                    new CanvasStrokeStyle { 
+                        EndCap = CanvasCapStyle.Round
+                    });
             }
         }
     }

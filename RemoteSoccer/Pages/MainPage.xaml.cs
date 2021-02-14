@@ -176,6 +176,17 @@ namespace RemoteSoccer
 
             game = new Game2();
 
+
+            var ourTeam = new Guid[4].Select(x => Guid.NewGuid()).ToArray();
+
+            //zoomer = new MouseZoomer(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions, (GameState gs)=> {
+
+
+            //    return gs.players.Where(x =>  x.Key == ourTeam[0]).Select(x => x.Value.PlayerBody.Position)
+            //    .Union(new[] { gs.GameBall.Posistion })
+            //    .ToArray();
+
+            //});
             zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
             //renderGameState = new RenderGameState(GameArea, zoomer, LeftScore, RightScore);
             renderGameState = new RenderGameState2(Canvas, zoomer, LeftScore, RightScore);
@@ -185,7 +196,6 @@ namespace RemoteSoccer
                 try
                 {
 
-                    var ourTeam = new Guid[4].Select(x => Guid.NewGuid()).ToArray();
                     if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
                     {
 

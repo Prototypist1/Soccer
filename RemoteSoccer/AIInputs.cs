@@ -230,23 +230,31 @@ namespace RemoteSoccer
                 {
                     var move = GenerateDirectionFoot(gameState.players[member.Key].PlayerBody.Position, member.Key);
 
+                    if (move.Length > 0) {
+                        move = move.NewUnitized().NewScaled(1000);
+                    }
+
                     member.Value.inputs.FootX = move.x;
                     member.Value.inputs.FootY = move.y;
 
-                    if ( move.Length > 100)
-                    {
-                        member.Value.inputs.Boost = true;
-                    }
+                    //if ( move.Length > 100)
+                    //{
+                    //    member.Value.inputs.Boost = true;
+                    //}
                 }
             }
+        }
+
+        private static Vector RandomVector() {
+            var rads = r.NextDouble() * Math.PI * 2;
+            return new Vector(Math.Sin(rads), Math.Cos(rads));
         }
 
         // why are these lazy?! they are always going to be initialzed
         private Lazy<Vector[]> footOffsets = new Lazy<Vector[]>(() =>
         {
-            // this isn't a good random for a circle. it perfers pie/4 to pie/2
             return new int[25]
-            .Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 6 * r.NextDouble()))
+            .Select(_ => RandomVector().NewScaled(Unit * 6 * r.NextDouble()))
             .Union(new[] { new Vector(0,0)})
             .ToArray();
         });
@@ -520,7 +528,7 @@ namespace RemoteSoccer
             };
 
             var random = new int[100]
-                .Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Constants.goalLen * r.NextDouble()))
+                .Select(_ => RandomVector().NewScaled(Constants.goalLen * r.NextDouble()))
                 .Select(vec => (Func<GameState, Vector>)((GameState _) => vec));
 
             return random
@@ -608,20 +616,20 @@ namespace RemoteSoccer
         private Lazy<Vector[]> throwOffsets = new Lazy<Vector[]>(() =>
         {
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[500].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 4 * r.NextDouble())).ToArray();
+            return new int[500].Select(_ => RandomVector().NewScaled(Unit * 4 * r.NextDouble())).ToArray();
         });
 
         private Lazy<Vector[]> cutOffsets = new Lazy<Vector[]>(() =>
         {
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[25].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Unit * 3 * r.NextDouble())).ToArray();
+            return new int[25].Select(_ => RandomVector().NewScaled(Unit * 3 * r.NextDouble())).ToArray();
         });
 
 
         private Lazy<Vector[]> goalOffsets = new Lazy<Vector[]>(() =>
         {
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[10].Select(_ => new Vector((1 - (2 * r.NextDouble())), (1 - (2 * r.NextDouble()))).NewUnitized().NewScaled(Constants.goalLen)).ToArray();
+            return new int[10].Select(_ => RandomVector().NewScaled(Constants.goalLen)).ToArray();
         });
         private int startedThrowing;
 

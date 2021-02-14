@@ -185,7 +185,7 @@ namespace Common
                 player.ExternalVelocity = player.ExternalVelocity.NewScaled(.9);
 
                 //if (state.Frame % 90 == 0) {
-                    player.Boosts = Math.Min(3, player.Boosts + 1.0/90.0);
+                    player.Boosts = Math.Min(3, Math.Max(player.Boosts + 1.0/90.0,-1));
                 //}
 
                 // handle inputs
@@ -362,25 +362,38 @@ namespace Common
 
                                 if (player.Boosts > 0 && move.Length > 0)
                                 {
+                                    var add = 300.0;
+
                                     var with = move.NewUnitized().NewScaled(move.NewUnitized().Dot(player.BoostVelocity));
-                                    var notWith = player.BoostVelocity.NewAdded(with.NewMinus()).NewScaled(Constants.BoostFade);
-                                    var proposed = with.NewAdded(notWith);
+                                    var notWith = player.BoostVelocity.NewAdded(with.NewMinus()).NewScaled(0);//.NewScaled((add - Math.Min(move.Length, add)) / add);
+                                    var proposed = with.NewScaled(Constants.BoostFade).NewAdded(notWith.NewScaled(Constants.BoostFade));
 
-                                    var offset = move.NewAdded(proposed.NewMinus());
-                                    var add = 600;
-                                    if (offset.Length > add)
+                                    proposed = player.BoostVelocity.NewScaled(Constants.BoostFade);
+
+                                    if (move.Length > add)
                                     {
-                                        proposed = proposed.NewAdded(offset.NewUnitized().NewScaled(add));
+                                        proposed = proposed.NewAdded(move.NewUnitized().NewScaled(add));
                                     }
-                                    else {
-                                        proposed = move;
+                                    else
+                                    {
+                                        proposed = proposed.NewAdded(move);
                                     }
 
-                                    player.BoostVelocity = proposed;
+                                    //var offset = move.NewAdded(proposed.NewMinus());
+                                    //
+                                    //if (offset.Length > add)
+                                    //{
+                                    //    proposed = proposed.NewAdded(offset.NewUnitized().NewScaled(add));
+                                    //}
+                                    //else {
+                                    //    proposed = move;
+                                    //}
+
+                                    player.BoostVelocity = proposed;// move;//proposed;
                                     player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
                                 }
                                 else {
-                                    player.BoostVelocity = player.BoostVelocity.NewScaled(Constants.BoostFade);
+                                    player.BoostVelocity = new Vector(0, 0);//player.BoostVelocity.NewScaled(Constants.BoostFade);
 
                                 }
 
@@ -557,7 +570,7 @@ namespace Common
                     }
                     else {
 
-                        player.BoostVelocity = player.BoostVelocity.NewScaled(Constants.BoostFade);
+                        player.BoostVelocity = new Vector(0, 0);// player.BoostVelocity.NewScaled(Constants.BoostFade);
                         player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * player.BoostCenter.Length;
                         player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
                         player.BoostCenter = player.BoostCenter.NewScaled(.95);

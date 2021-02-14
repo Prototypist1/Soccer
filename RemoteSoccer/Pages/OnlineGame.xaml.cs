@@ -38,7 +38,7 @@ namespace RemoteSoccer
         private Ref<bool> lockCurser = new Ref<bool>(false);
         private RenderGameState2 renderGameState;
         private Game2 game;
-        private FullField zoomer;
+        private MouseZoomer zoomer;
         private FieldDimensions fieldDimensions = FieldDimensions.Default;
         private readonly Guid playerId = Guid.NewGuid();
         private const int BodyA = 0x40;
@@ -59,7 +59,15 @@ namespace RemoteSoccer
 
             game = new Game2();
 
-            zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
+            zoomer = new MouseZoomer(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions, (GameState gs) => {
+
+
+                return gs.players.Where(x => x.Key == playerId).Select(x => x.Value.PlayerBody.Position)
+                .Union(new[] { gs.GameBall.Posistion })
+                .ToArray();
+
+            });
+            //zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
             renderGameState = new RenderGameState2(Canvas, zoomer, LeftScore, RightScore);
 
             var signalRHandler = SingleSignalRHandler.GetOrThrow();
