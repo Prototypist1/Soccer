@@ -95,10 +95,10 @@ namespace Common
 
 
         public static double HowFarCanIBoost(double boost) {
-            // boost = sum howfarIvegone * Constants.BoostConsumption / Constants.BoostPower from 0 to howfarIvegone
+            // boost = sum sqrt(howfarIvegone) * Constants.BoostConsumption / Constants.BoostPower from 0 to howfarIvegone
             // x is howfarIvegone
             // boost = x*x * Constants.BoostConsumption / (2*Constants.BoostPower)
-            return Math.Sqrt( boost * 2* Constants.BoostPower / Constants.BoostConsumption);
+            return Math.Pow( boost * (2.0/3.0)* Constants.BoostPower / Constants.BoostConsumption, (2.0/3.0));
         }
 
         public static double HowQuicklyCanAPlayerMove(double length) {
@@ -149,6 +149,11 @@ namespace Common
             //}
         }
 
+        private static double SpeedLimit2(double d)
+        {
+            return Constants.speedLimit * (1.0 - (1.0 / (1.0+ (d* 10 / Constants.speedLimit))));
+        }
+
         private static double SpeedLimit(double d)
         {
 
@@ -182,7 +187,7 @@ namespace Common
             // loop over the players and update them
             foreach (var player in state.players.Values)
             {
-                player.ExternalVelocity = player.ExternalVelocity.NewScaled(.9);
+                player.ExternalVelocity = player.ExternalVelocity.NewScaled(.95);
 
                 //if (state.Frame % 90 == 0) {
                     player.Boosts = Math.Min(3, Math.Max(player.Boosts + 1.0/90.0,-1));
@@ -349,11 +354,11 @@ namespace Common
 
                                 var move = new Vector(input.FootX, input.FootY).NewScaled(Constants.BoostPower);
 
-                                //if (move.Length != 0)
-                                //{
-                                //    var speedLimit = SpeedLimit(move.Length);
-                                //    move = move.NewUnitized().NewScaled(speedLimit);
-                                //}
+                                if (move.Length != 0)
+                                {
+                                    var speedLimit = SpeedLimit2(move.Length);
+                                    move = move.NewUnitized().NewScaled(speedLimit);
+                                }
 
                                 // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
 
@@ -362,22 +367,22 @@ namespace Common
 
                                 if (player.Boosts > 0 && move.Length > 0)
                                 {
-                                    var add = 300.0;
+                                    //var add = Constants.speedLimit;
 
-                                    var with = move.NewUnitized().NewScaled(move.NewUnitized().Dot(player.BoostVelocity));
-                                    var notWith = player.BoostVelocity.NewAdded(with.NewMinus()).NewScaled(0);//.NewScaled((add - Math.Min(move.Length, add)) / add);
-                                    var proposed = with.NewScaled(Constants.BoostFade).NewAdded(notWith.NewScaled(Constants.BoostFade));
+                                    //var with = move.NewUnitized().NewScaled(move.NewUnitized().Dot(player.BoostVelocity));
+                                    //var notWith = player.BoostVelocity.NewAdded(with.NewMinus()).NewScaled(0);//.NewScaled((add - Math.Min(move.Length, add)) / add);
+                                    //var proposed = with.NewScaled(Constants.BoostFade).NewAdded(notWith.NewScaled(Constants.BoostFade));
 
-                                    proposed = player.BoostVelocity.NewScaled(Constants.BoostFade);
+                                    //proposed = player.BoostVelocity.NewScaled(Constants.BoostFade);
 
-                                    if (move.Length > add)
-                                    {
-                                        proposed = proposed.NewAdded(move.NewUnitized().NewScaled(add));
-                                    }
-                                    else
-                                    {
-                                        proposed = proposed.NewAdded(move);
-                                    }
+                                    //if (move.Length > add)
+                                    //{
+                                    //    proposed = proposed.NewAdded(move.NewUnitized().NewScaled(add));
+                                    //}
+                                    //else
+                                    //{
+                                    //    proposed = proposed.NewAdded(move);
+                                    //}
 
                                     //var offset = move.NewAdded(proposed.NewMinus());
                                     //
@@ -389,7 +394,7 @@ namespace Common
                                     //    proposed = move;
                                     //}
 
-                                    player.BoostVelocity = proposed;// move;//proposed;
+                                    player.BoostVelocity = move;// proposed;// move;//proposed;
                                     player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
                                 }
                                 else {
@@ -397,7 +402,7 @@ namespace Common
 
                                 }
 
-                                player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * player.BoostCenter.Length;
+                                player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * Math.Sqrt( player.BoostCenter.Length);
                                 player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
                                 if (move.Length < .01)
                                 {

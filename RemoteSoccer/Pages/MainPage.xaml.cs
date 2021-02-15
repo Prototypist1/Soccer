@@ -126,7 +126,7 @@ namespace RemoteSoccer
 
                 frame.thing++;
 
-                while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
+                while ((1000.0 * frame.thing / 150.0) > sw.ElapsedMilliseconds)
                 {
                 }
 
@@ -196,20 +196,30 @@ namespace RemoteSoccer
                 try
                 {
 
-                    if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
-                    {
+                    //if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
+                    //{
 
-                        var body = ourTeam.First();
-                        var inputs = new MouseKeyboardInputs(lockCurser, body);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
-                    }
+                    //    var body = ourTeam.First();
+                    //    var inputs = new MouseKeyboardInputs(lockCurser, body);
+                    //    await inputs.Init();
+                    //    await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
+                    //}
 
-                    foreach (var body in ourTeam.Skip(1))
+                    //foreach (var body in ourTeam.Skip(1))
+                    //{
+                    //    var inputs = new AIInputs(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
+                    //    await inputs.Init();
+                    //    await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00, 0xff });
+                    //}
+
                     {
-                        var inputs = new AIInputs(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00, 0xff });
+                        var team = new AITeam2(game.gameState, ourTeam, fieldDimensions, false);
+
+                        foreach (var (key, input) in team.GetPlayers())
+                        {
+                            await input.Init();
+                            await CreatePlayer(key, input, new byte[3] { 0x00, 0x00, 0xff });
+                        }
                     }
 
                     var theirTeam = new Guid[4].Select(x => Guid.NewGuid()).ToArray();
@@ -221,13 +231,14 @@ namespace RemoteSoccer
                     //    await CreatePlayer(body, inputs, new byte[3] { 0xff, 0x00, 0x00 });
                     //}
 
-
-                    var team = new AITeam(game.gameState, theirTeam, fieldDimensions, true);
-
-                    foreach (var (key, input) in team.GetPlayers())
                     {
-                        await input.Init();
-                        await CreatePlayer(key, input, new byte[3] { 0xff, 0x00, 0x00 });
+                        var team = new AITeam(game.gameState, theirTeam, fieldDimensions, true);
+
+                        foreach (var (key, input) in team.GetPlayers())
+                        {
+                            await input.Init();
+                            await CreatePlayer(key, input, new byte[3] { 0xff, 0x00, 0x00 });
+                        }
                     }
 
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)

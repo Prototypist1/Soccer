@@ -295,7 +295,7 @@ namespace physics2
                                     // from player to ball wall
                                     var normal = new Vector(ballWall.x, ballwall.y).NewAdded(player.PlayerFoot.Position.NewMinus()).NewUnitized();
 
-                                    var collisionLocation = player.PlayerFoot.Position.NewAdded(normal.NewScaled(-Constants.PlayerRadius));
+                                    var collisionLocation = player.PlayerFoot.Position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
                                     var force = normal.NewScaled(2 * player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.BoostVelocity).NewAdded(player.ExternalVelocity.NewScaled(.75)).Dot(normal));
                                     gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame, Guid.NewGuid()));
 
