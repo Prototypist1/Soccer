@@ -10,7 +10,7 @@ namespace Common
         public static Vector RequiredThrow(Vector playerStart, Vector ballStart, Vector target)
         {
 
-            var playerTime = HowQuicklyCanAPlayerMove(target .NewAdded(playerStart.NewMinus()).Length);
+            var playerTime = HowQuicklyCanAPlayerMove(target.NewAdded(playerStart.NewMinus()).Length);
             var speed = HowHardToThrow(target.NewAdded(ballStart.NewMinus()).Length, playerTime);
 
             return target.NewAdded(ballStart.NewMinus()).NewUnitized().NewScaled(speed);
@@ -18,7 +18,7 @@ namespace Common
 
         // assuming the player runs at max speed the whole time
         // and assuming the ball doesn't have friction
-        public static double IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity) {
+        public static double IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity) {
             var diff = ballStart.NewAdded(start.NewMinus());
 
             if (diff.Length == 0) {
@@ -36,13 +36,34 @@ namespace Common
                 return double.MaxValue;
             }
 
-            var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular* speedPerpendicular));
-            
+            var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
+
             if (effectiveSpeed - speedAWay <= 0) {
                 return double.MaxValue;
             }
 
-            return diff.Length / (effectiveSpeed - speedAWay);
+            var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
+            var playerStartSpeed = new Vector(0, 0);
+            if (playerVelocityDot > 0)
+            {
+                playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
+            }
+
+            var at  = 256.0;
+            for (var rate = 128.0; rate >= 1; rate *= .5) {
+                var diss = diff.Length + DistanceBallTravels(speedAWay, at) - DistancePlayerTravels(playerStartSpeed.Length, at);
+                if (diss == 0) {
+                    return at;
+                }
+                if (diss > 0)
+                {
+                    at += rate;
+                }
+                else {
+                    at -= rate;
+                }
+            }
+            return at;
         }
 
         // I wish I could insert a drawing to show what I am doing here
@@ -85,7 +106,7 @@ namespace Common
             var res = new Vector(diff.y, -diff.x).NewUnitized().NewScaled(speedPerpendicular)
                 .NewAdded(diff.NewUnitized().NewScaled(effectiveSpeed));
 
-            if (res.Length == 0 || double.IsNaN( res.Length)) {
+            if (res.Length == 0 || double.IsNaN(res.Length)) {
                 var ahh = 0;
             }
 
@@ -94,11 +115,26 @@ namespace Common
         }
 
 
+        public static double HowLongItTakesBallToGo(double diff, double velocity)
+        {
+            // diff = velocity * (( 1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)) * Constants.FrictionDenom)
+            // diff / velocity=  (( 1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)) * Constants.FrictionDenom)
+            // (diff / (velocity * Constants.FrictionDenom)) - 1 = - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)
+            // 1 - (diff / (velocity * Constants.FrictionDenom)) = Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)
+            // log base (Constants.FrictionDenom - 1) / Constants.FrictionDenom of (1- (diff / (velocity * Constants.FrictionDenom))) = time
+            if (velocity * Constants.FrictionDenom <= diff) {
+                return double.MaxValue;
+            }
+
+            return Math.Log((1 - (diff / (velocity * Constants.FrictionDenom))), (Constants.FrictionDenom - 1) / Constants.FrictionDenom);
+        }
+
+
         public static double HowFarCanIBoost(double boost) {
             // boost = sum sqrt(howfarIvegone) * Constants.BoostConsumption / Constants.BoostPower from 0 to howfarIvegone
             // x is howfarIvegone
             // boost = x*x * Constants.BoostConsumption / (2*Constants.BoostPower)
-            return Math.Pow( boost * (2.0/3.0)* Constants.BoostPower / Constants.BoostConsumption, (2.0/3.0));
+            return Math.Pow(boost * (2.0 / 3.0) * Constants.BoostPower / Constants.BoostConsumption, (2.0 / 3.0));
         }
 
         public static double HowQuicklyCanAPlayerMove(double length) {
@@ -118,6 +154,21 @@ namespace Common
             return length / ((1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)) * Constants.FrictionDenom);
         }
 
+        public static double DistanceBallTravels(double velocity, double time) {
+            return velocity * Constants.FrictionDenom* (1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time));
+        }
+
+        public static double DistancePlayerTravels(double v0, double time) {
+            // figure out how long it took to reach our current speed
+            var t0 = VtoE(v0)/Constants.EnergyAdd;
+            return DistancePlayerTravelsFromStop(time + t0) - DistancePlayerTravelsFromStop(t0);
+        }
+
+        public static double DistancePlayerTravelsFromStop(double time)
+        {
+            return time * Constants.bodyStartAt + (((time * Constants.EnergyAdd + 1)*Math.Log(time * Constants.EnergyAdd + 1) - time * Constants.EnergyAdd) / (Math.Log(2) * Constants.EnergyAdd));
+        }
+
         private static double VtoE(double v)
         {
             //if (v < Constants.bodyStartAt)
@@ -126,14 +177,18 @@ namespace Common
             //}
             //else
             //{
-                var simpleV = Math.Max(0, v - Constants.bodyStartAt);
+            //var simpleV = Math.Max(0, v - Constants.bodyStartAt);
 
-                var distanceToTop = ((Constants.bodySpeedLimit - Constants.bodyStartAt) - simpleV) / (Constants.bodySpeedLimit - Constants.bodyStartAt);
+            //var distanceToTop = ((Constants.bodySpeedLimit - Constants.bodyStartAt) - simpleV) / (Constants.bodySpeedLimit - Constants.bodyStartAt);
 
-                var eDistanceToTop = Math.Pow(Math.Max(0, distanceToTop), .5);
+            //var eDistanceToTop = Math.Pow(Math.Max(0, distanceToTop), .5);
 
-                return ((1 - eDistanceToTop) * (Constants.bodySpeedLimit - Constants.bodyStartAt)) + Constants.bodyStartAt;
+            //return ((1 - eDistanceToTop) * (Constants.bodySpeedLimit - Constants.bodyStartAt)) + Constants.bodyStartAt;
             //}
+
+            // we need something we can integrate so that we can estiamate how far a player can go
+            var simpleV = Math.Max(0, v - Constants.bodyStartAt) + 1;
+            return Math.Pow(1.1,/*Math.E*/ simpleV);
         }
         private static double EtoV(double e)
         {
@@ -142,11 +197,13 @@ namespace Common
             //    return e;
             //}
             //else {
-                var p2 = Math.Min(1, (e - Constants.bodyStartAt) / (Constants.bodySpeedLimit - Constants.bodyStartAt));
-                var p1 = 1 - p2;
+            //var p2 = Math.Min(1, (e - Constants.bodyStartAt) / (Constants.bodySpeedLimit - Constants.bodyStartAt));
+            //var p1 = 1 - p2;
 
-                return Constants.bodyStartAt + ((e - Constants.bodyStartAt) * p1) + ((Constants.bodySpeedLimit - Constants.bodyStartAt) * p2);
+            //return Constants.bodyStartAt + ((e - Constants.bodyStartAt) * p1) + ((Constants.bodySpeedLimit - Constants.bodyStartAt) * p2);
             //}
+
+            return Math.Log(e,1.1) - 1 + Constants.bodyStartAt;
         }
 
         private static double SpeedLimit2(double d)
@@ -735,5 +792,6 @@ namespace Common
             state.Frame++;
 
         }
+
     }
 }
