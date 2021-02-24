@@ -100,8 +100,16 @@ namespace Physics2
             var DX = position2.x - position1.x;
             var DY = position2.y - position1.y;
 
+            var D = new Vector(DX, DY);
+
+            // uhhh 
+            if (D.Length == 0) {
+                timeOfCollision = -1;
+                return false;
+            }
+
             // if the objects are not moving towards each other dont bother
-            var V = -new Vector(DVX, DVY).Dot(new Vector(DX, DY).NewUnitized());
+            var V = -new Vector(DVX, DVY).Dot(D.NewUnitized());
             if (V <= 0)
             {
                 timeOfCollision = -1;

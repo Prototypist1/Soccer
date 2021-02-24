@@ -1,10 +1,20 @@
 ﻿using Physics2;
+using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
 
 namespace Common
 {
-    public static class PlayerInputApplyer {
+    public static class PlayerInputApplyer
+    {
+        private class MouseDrag
+        {
+            public Guid Id;
+            public ConcurrentLinkedList<Vector> moves;
+
+        }
+
+        private static ConcurrentIndexed<Guid, MouseDrag> mouseDrags = new ConcurrentIndexed<Guid, MouseDrag>();
 
         // how hard do I have to throw it for a player to catch it at a given point
         public static Vector RequiredThrow(Vector playerStart, Vector ballStart, Vector target)
@@ -18,27 +28,32 @@ namespace Common
 
         // assuming the player runs at max speed the whole time
         // and assuming the ball doesn't have friction
-        public static double IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity) {
+        public static double IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity)
+        {
             var diff = ballStart.NewAdded(start.NewMinus());
 
-            if (diff.Length == 0) {
+            if (diff.Length == 0)
+            {
                 return 0;
             }
 
             var speedAWay = diff.NewUnitized().Dot(ballVelocity);
 
-            if (speedAWay > Constants.bodySpeedLimit) {
+            if (speedAWay > Constants.bodySpeedLimit)
+            {
                 return double.MaxValue;
             }
 
             var speedPerpendicular = new Vector(diff.y, -diff.x).NewUnitized().Dot(ballVelocity);
-            if (Math.Abs(speedPerpendicular) > Constants.bodySpeedLimit) {
+            if (Math.Abs(speedPerpendicular) > Constants.bodySpeedLimit)
+            {
                 return double.MaxValue;
             }
 
             var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
 
-            if (effectiveSpeed - speedAWay <= 0) {
+            if (effectiveSpeed - speedAWay <= 0)
+            {
                 return double.MaxValue;
             }
 
@@ -49,17 +64,20 @@ namespace Common
                 playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
             }
 
-            var at  = 256.0;
-            for (var rate = 128.0; rate >= 1; rate *= .5) {
+            var at = 256.0;
+            for (var rate = 128.0; rate >= 1; rate *= .5)
+            {
                 var diss = diff.Length + DistanceBallTravels(speedAWay, at) - DistancePlayerTravels(playerStartSpeed.Length, at);
-                if (diss == 0) {
+                if (diss == 0)
+                {
                     return at;
                 }
                 if (diss > 0)
                 {
                     at += rate;
                 }
-                else {
+                else
+                {
                     at -= rate;
                 }
             }
@@ -73,11 +91,13 @@ namespace Common
         {
             var diff = ballStart.NewAdded(start.NewMinus());
 
-            if (diff.Length == 0) {
+            if (diff.Length == 0)
+            {
                 return new Vector(0.0, 0.0);
             }
 
-            if (ballVelocity.Length == 0) {
+            if (ballVelocity.Length == 0)
+            {
                 return diff.NewUnitized();
             }
 
@@ -106,7 +126,8 @@ namespace Common
             var res = new Vector(diff.y, -diff.x).NewUnitized().NewScaled(speedPerpendicular)
                 .NewAdded(diff.NewUnitized().NewScaled(effectiveSpeed));
 
-            if (res.Length == 0 || double.IsNaN(res.Length)) {
+            if (res.Length == 0 || double.IsNaN(res.Length))
+            {
                 var ahh = 0;
             }
 
@@ -122,7 +143,8 @@ namespace Common
             // (diff / (velocity * Constants.FrictionDenom)) - 1 = - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)
             // 1 - (diff / (velocity * Constants.FrictionDenom)) = Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)
             // log base (Constants.FrictionDenom - 1) / Constants.FrictionDenom of (1- (diff / (velocity * Constants.FrictionDenom))) = time
-            if (velocity * Constants.FrictionDenom <= diff) {
+            if (velocity * Constants.FrictionDenom <= diff)
+            {
                 return double.MaxValue;
             }
 
@@ -130,19 +152,26 @@ namespace Common
         }
 
 
-        public static double HowFarCanIBoost(double boost) {
+        public static double HowFarCanIBoost(double boost)
+        {
             // boost = sum sqrt(howfarIvegone) * Constants.BoostConsumption / Constants.BoostPower from 0 to howfarIvegone
             // x is howfarIvegone
             // boost = x*x * Constants.BoostConsumption / (2*Constants.BoostPower)
-            return Math.Pow(boost * (2.0 / 3.0) * Constants.BoostPower / Constants.BoostConsumption, (2.0 / 3.0));
+
+            // powerused = integral d ^ 1/2
+            // powerused = 2/3 *c*d ^ 3/2
+            return Math.Pow(boost * (3.0 / 2.0) / Constants.BoostConsumption, (2.0 / 3.0));
         }
 
-        public static double HowQuicklyCanAPlayerMove(double length) {
+        public static double HowQuicklyCanAPlayerMove(double length)
+        {
             return length / Constants.bodySpeedLimit;
         }
 
-        public static double HowHardToThrow(double length, double time) {
-            if (length == 0) {
+        public static double HowHardToThrow(double length, double time)
+        {
+            if (length == 0)
+            {
                 return 0;
             }
 
@@ -154,19 +183,21 @@ namespace Common
             return length / ((1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time)) * Constants.FrictionDenom);
         }
 
-        public static double DistanceBallTravels(double velocity, double time) {
-            return velocity * Constants.FrictionDenom* (1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time));
+        public static double DistanceBallTravels(double velocity, double time)
+        {
+            return velocity * Constants.FrictionDenom * (1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time));
         }
 
-        public static double DistancePlayerTravels(double v0, double time) {
+        public static double DistancePlayerTravels(double v0, double time)
+        {
             // figure out how long it took to reach our current speed
-            var t0 = VtoE(v0)/Constants.EnergyAdd;
+            var t0 = VtoE(v0) / Constants.EnergyAdd;
             return DistancePlayerTravelsFromStop(time + t0) - DistancePlayerTravelsFromStop(t0);
         }
 
         public static double DistancePlayerTravelsFromStop(double time)
         {
-            return time * Constants.bodyStartAt + (((time * Constants.EnergyAdd + 1)*Math.Log(time * Constants.EnergyAdd + 1) - time * Constants.EnergyAdd) / (Math.Log(2) * Constants.EnergyAdd));
+            return time * Constants.bodyStartAt + (((time * Constants.EnergyAdd + 1) * Math.Log(time * Constants.EnergyAdd + 1) - time * Constants.EnergyAdd) / (Math.Log(2) * Constants.EnergyAdd));
         }
 
         private static double VtoE(double v)
@@ -203,12 +234,12 @@ namespace Common
             //return Constants.bodyStartAt + ((e - Constants.bodyStartAt) * p1) + ((Constants.bodySpeedLimit - Constants.bodyStartAt) * p2);
             //}
 
-            return Math.Log(e,1.1) - 1 + Constants.bodyStartAt;
+            return Math.Log(e, 1.1) - 1 + Constants.bodyStartAt;
         }
 
         private static double SpeedLimit2(double d)
         {
-            return Constants.speedLimit * (1.0 - (1.0 / (1.0+ (d* 10 / Constants.speedLimit))));
+            return Constants.speedLimit * (1.0 - (1.0 / (1.0 + (d * 10 / Constants.speedLimit))));
         }
 
         private static double SpeedLimit(double d)
@@ -247,11 +278,12 @@ namespace Common
                 player.ExternalVelocity = player.ExternalVelocity.NewScaled(.95);
 
                 //if (state.Frame % 90 == 0) {
-                    player.Boosts = Math.Min(3, Math.Max(player.Boosts + 1.0/90.0,-1));
+                player.Boosts = Math.Min(3, Math.Max(player.Boosts + 1.0 / 90.0, -1));
                 //}
 
                 // handle inputs
-                if (inputs.TryGetValue(player.Id, out var input)) {
+                if (inputs.TryGetValue(player.Id, out var input))
+                {
 
 
 
@@ -309,7 +341,7 @@ namespace Common
                             var with = v.Dot(f) / f.Length;
                             if (with <= 0)
                             {
-                                player.PlayerBody.Velocity = new Vector( 0,0);
+                                player.PlayerBody.Velocity = new Vector(0, 0);
                             }
                             else
                             {
@@ -317,7 +349,7 @@ namespace Common
                                 var notWith = v.NewAdded(withVector.NewScaled(-1));
                                 var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
 
-                                player.PlayerBody.Velocity = new Vector( withVector.x + notWithScald.x,withVector.y + notWithScald.y);
+                                player.PlayerBody.Velocity = new Vector(withVector.x + notWithScald.x, withVector.y + notWithScald.y);
                             }
 
                             var damp = .98;
@@ -331,7 +363,7 @@ namespace Common
 
                             var t = (-b + Math.Sqrt(Math.Pow(b, 2) - (4 * a * c))) / (2 * a);
 
-                            player.PlayerBody.Velocity = new Vector( (damp * player.PlayerBody.Velocity.x) + (t * input.BodyX),(damp * player.PlayerBody.Velocity.y) + (t * input.BodyY));// / 2.0;
+                            player.PlayerBody.Velocity = new Vector((damp * player.PlayerBody.Velocity.x) + (t * input.BodyX), (damp * player.PlayerBody.Velocity.y) + (t * input.BodyY));// / 2.0;
 
                         }
                         else if (input.ControlScheme == ControlScheme.Controller || input.ControlScheme == ControlScheme.AI)
@@ -356,7 +388,8 @@ namespace Common
                                 var finalVelocity = f.NewScaled(finalSpeed);
                                 player.PlayerBody.Velocity = finalVelocity;
                             }
-                            else {
+                            else
+                            {
                                 var finalSpeed = EtoV(finalE);
                                 var finalVelocity = f.NewScaled(finalSpeed);
                                 player.PlayerBody.Velocity = finalVelocity;
@@ -406,198 +439,64 @@ namespace Common
                         }
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard || input.ControlScheme == ControlScheme.AI)
                         {
-                            if (true) {
+                            //if (true) {
+
+                            player.BoostVelocity = new Vector(0, 0);
 
 
-                                var move = new Vector(input.FootX, input.FootY).NewScaled(Constants.BoostPower);
-
-                                if (move.Length != 0)
-                                {
-                                    var speedLimit = SpeedLimit2(move.Length);
-                                    move = move.NewUnitized().NewScaled(speedLimit);
-                                }
-
-                                // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
-
-                                //if (input.Boost && player.Boosts >= 0)
-                                //{
-
-                                if (player.Boosts > 0 && move.Length > 0)
-                                {
-                                    //var add = Constants.speedLimit;
-
-                                    //var with = move.NewUnitized().NewScaled(move.NewUnitized().Dot(player.BoostVelocity));
-                                    //var notWith = player.BoostVelocity.NewAdded(with.NewMinus()).NewScaled(0);//.NewScaled((add - Math.Min(move.Length, add)) / add);
-                                    //var proposed = with.NewScaled(Constants.BoostFade).NewAdded(notWith.NewScaled(Constants.BoostFade));
-
-                                    //proposed = player.BoostVelocity.NewScaled(Constants.BoostFade);
-
-                                    //if (move.Length > add)
-                                    //{
-                                    //    proposed = proposed.NewAdded(move.NewUnitized().NewScaled(add));
-                                    //}
-                                    //else
-                                    //{
-                                    //    proposed = proposed.NewAdded(move);
-                                    //}
-
-                                    //var offset = move.NewAdded(proposed.NewMinus());
-                                    //
-                                    //if (offset.Length > add)
-                                    //{
-                                    //    proposed = proposed.NewAdded(offset.NewUnitized().NewScaled(add));
-                                    //}
-                                    //else {
-                                    //    proposed = move;
-                                    //}
-
-                                    player.BoostVelocity = move;// proposed;// move;//proposed;
-                                    player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
-                                }
-                                else {
-                                    player.BoostVelocity = new Vector(0, 0);//player.BoostVelocity.NewScaled(Constants.BoostFade);
-
-                                }
-
-                                player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * Math.Sqrt( player.BoostCenter.Length);
-                                player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
-                                if (move.Length < .01)
-                                {
-                                    player.BoostCenter = player.BoostCenter.NewScaled(.95);
-                                }
-
-                                //if (move.Length < .1 || player.Boosts <= 0)
-                                //{
-                                //}
-                                //}
-                                //else
-                                //{
-                                //    player.BoostCenter = new Vector();
-                                //    player.BoostVelocity = new Vector(0.0, 0.0);
-                                //}
-                            }
-                            else 
-                            if (true)
+                            var drag = mouseDrags.GetOrAdd(input.Id, new MouseDrag
                             {
-                                var tx = (input.FootX) + player.PlayerFoot.Position.x;
-                                var ty = (input.FootY) + player.PlayerFoot.Position.y;
+                                Id = input.Boost,
+                                moves = new ConcurrentLinkedList<Vector>()
+                            });
 
-
-                                var dx = tx - player.PlayerBody.Position.x;
-                                var dy = ty - player.PlayerBody.Position.y;
-
-                                var d = new Vector(dx, dy);
-
-                                if (d.Length > max)
-                                {
-                                    d = d.NewUnitized().NewScaled(max);
-                                }
-
-                                var validTx = d.x + player.PlayerBody.Position.x;
-                                var validTy = d.y + player.PlayerBody.Position.y;
-
-                                var vx = validTx - player.PlayerFoot.Position.x;
-                                var vy = validTy - player.PlayerFoot.Position.y;
-
-                                var v = new Vector(vx, vy);
-
-                                // there is a speed limit things moving too fast are bad for online play
-                                // you can get hit before you have time to respond 
-                                var len = v.Length;
-                                if (len != 0)
-                                {
-                                    var speedLimit = SpeedLimit(len);
-                                    v = v.NewUnitized().NewScaled(speedLimit);
-                                }
-
-                                player.PlayerFoot.Velocity = v;
-
-                            }
-                            else 
+                            if (input.Boost != Constants.NoMove && drag.Id != input.Boost)
                             {
-                                var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
+                                drag.Id = input.Boost;
+                                drag.moves = new ConcurrentLinkedList<Vector>();
+                            }
 
-                                var move = new Vector(input.FootX, input.FootY);
+                            if (player.Boosts <= 0)
+                            {
+                                drag.moves = new ConcurrentLinkedList<Vector>();
+                            }
+                            else
+                            {
+                                var move = new Vector(input.FootX, input.FootY).NewScaled(1.0 / Constants.BoostSpread);
 
-                                if (move.Length != 0)
+                                if (input.Boost != Constants.NoMove)
                                 {
-                                    var speedLimit = SpeedLimit(move.Length);
-                                    move = move.NewUnitized().NewScaled(speedLimit);
+                                    if (move.Length != 0)
+                                    {
+                                        var speedLimit = SpeedLimit2(move.Length);
+                                        move = move.NewUnitized().NewScaled(speedLimit);
+                                    }
+                                    for (int i = 0; i < Constants.BoostSpread; i++)
+                                    {
+                                        drag.moves.Add(move);
+                                    }
                                 }
 
-                                //var partYou = diff.Length > max ?
-                                //    1.0 /(1.0 + ((diff.Length - max) / max))://0.0: //
-                                //    1.0;
-
-                                player.PlayerFoot.Velocity = player.PlayerFoot.Velocity.NewScaled(diff.Length > max ? .8 : .2).NewAdded(move);//.NewScaled(partYou);//player.PlayerFoot.Velocity//.NewScaled(.2)
-                                                                                                                                              //.NewAdded(move);//.NewScaled(partYou)//move;//
-                                if (diff.Length <= max)
+                                if (drag.moves.TryGetFirst(out move))
                                 {
-                                    player.PlayerFoot.Velocity = player.PlayerFoot.Velocity.NewScaled(0).NewAdded(move);
-                                }
-                                else {
-                                    player.PlayerFoot.Velocity = player.PlayerFoot.Velocity.NewScaled(.5).NewAdded(move);
+                                    drag.moves.RemoveStart();
 
-                                    player.PlayerFoot.Velocity = player.PlayerFoot.Velocity
-                                        .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max) / 10.0));// .NewScaled((1.0- partYou)/100.0)
-                                }
-
-                                // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
-                                if (input.Boost && player.Boosts >= 0)
-                                {
-                                    var move2 = move.NewScaled(Constants.BoostPower);
-                                    player.BoostVelocity = move2;
-                                    player.BoostCenter = player.BoostCenter.NewAdded(move2);
-                                    player.Boosts -= Constants.BoostConsumption * move2.Length * player.BoostCenter.Length;
-                                }
-                                else
-                                {
-                                    player.BoostCenter = new Vector();
-                                    player.BoostVelocity = new Vector(0.0, 0.0);
+                                    if (player.Boosts > 0)
+                                    {
+                                        player.BoostVelocity = move;
+                                    }
                                 }
                             }
-                            //else {
-                            //    var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
 
-                            //    var move = new Vector(input.FootX, input.FootY);
 
-                            //    if (move.Length != 0)
-                            //    {
-                            //        var speedLimit = SpeedLimit(move.Length);
-                            //        move = move.NewUnitized().NewScaled(speedLimit);
-                            //    }
+                            player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * Math.Sqrt(player.BoostCenter.Length);
+                            player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
+                            if (player.BoostVelocity.Length < .1)
+                            {
+                                player.BoostCenter = player.BoostCenter.NewScaled(.95);
+                            }
 
-                            //    if (move.Length > 0)
-                            //    {
-                            //        player.PlayerFoot.Velocity = move.NewUnitized().NewScaled( player.PlayerFoot.Velocity.Dot(move.NewUnitized()))
-                            //            //.NewScaled(.8)
-                            //            .NewAdded(move.NewUnitized().NewScaled(Math.Pow(move.Length,.9)));
-                            //        if (player.PlayerFoot.Velocity.Length > move.Length) {
-                            //            player.PlayerFoot.Velocity = move;
-                            //        }
-                            //    }
-                            //    else {
-                            //        player.PlayerFoot.Velocity = new Vector(0.0,0.0);
-                            //    }
 
-                            //    if (diff.Length > max)
-                            //    {
-                            //        player.PlayerFoot.Velocity = player.PlayerFoot.Velocity
-                            //            .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max) / 2.0));// .NewScaled((1.0- partYou)/100.0)
-                            //    }
-
-                            //    // shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
-                            //    if (input.Boost && player.Boosts >= 1)
-                            //    {
-                            //        player.FramesOfBoost += 10;
-                            //        player.Boosts--;
-                            //    }
-                            //    if (player.FramesOfBoost > 0)
-                            //    {
-                            //        player.FramesOfBoost--;
-                            //        player.ExternalVelocity = player.ExternalVelocity.NewAdded(move.NewScaled(Constants.BoostPower));
-                            //    }
-                            //}
                         }
                         else if (input.ControlScheme == ControlScheme.SipmleMouse)
                         {
@@ -629,60 +528,62 @@ namespace Common
 
                             player.PlayerFoot.Velocity = v;
                         }
-                    }
-                    else {
-
-                        player.BoostVelocity = new Vector(0, 0);// player.BoostVelocity.NewScaled(Constants.BoostFade);
-                        player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * player.BoostCenter.Length;
-                        player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
-                        player.BoostCenter = player.BoostCenter.NewScaled(.95);
-
-                        if (input.ControlScheme == ControlScheme.Controller)
+                        else
                         {
-                            player.PlayerFoot.Velocity = new Vector(0, 0);
-                        }
-                        else if (input.ControlScheme == ControlScheme.MouseAndKeyboard || input.ControlScheme == ControlScheme.AI)
-                        {
-                            // you can boost and throw
-                            // no you can't
-                            //var move = new Vector(input.FootX, input.FootY);
 
-                            //if (move.Length != 0)
-                            //{
-                            //    var speedLimit = SpeedLimit(move.Length);
-                            //    move = move.NewUnitized().NewScaled(speedLimit);
-                            //}
-                            //// shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
-                            //if (input.Boost && player.Boosts >= 0)
-                            //{
-                            //    var move2 = move.NewScaled(Constants.BoostPower);
-                            //    player.BoostVelocity = move2;
-                            //    player.BoostCenter = player.BoostCenter.NewAdded(move2);
-                            //    player.Boosts -= Constants.BoostConsumption * move2.Length * player.BoostCenter.Length;
-                            //}
-                            //else
-                            //{
-                            //    player.BoostCenter = new Vector();
-                            //    player.BoostVelocity = new Vector(0.0, 0.0);
-                            //}
+                            player.BoostVelocity = new Vector(0, 0);// player.BoostVelocity.NewScaled(Constants.BoostFade);
+                            player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * player.BoostCenter.Length;
+                            player.BoostCenter = player.BoostCenter.NewAdded(player.BoostVelocity);
+                            player.BoostCenter = player.BoostCenter.NewScaled(.95);
 
-                            var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
-                            if (diff.Length > max)
+                            if (input.ControlScheme == ControlScheme.Controller)
                             {
-                                player.PlayerFoot.Velocity = player.PlayerFoot.Velocity
-                                    .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max) / 2.0));// .NewScaled((1.0- partYou)/100.0)
-                            }
-                            else {
                                 player.PlayerFoot.Velocity = new Vector(0, 0);
                             }
-                        }
-                        else {
-                            throw new NotImplementedException("zzzzzzzzzzzz");
+                            else if (input.ControlScheme == ControlScheme.MouseAndKeyboard || input.ControlScheme == ControlScheme.AI)
+                            {
+                                // you can boost and throw
+                                // no you can't
+                                //var move = new Vector(input.FootX, input.FootY);
+
+                                //if (move.Length != 0)
+                                //{
+                                //    var speedLimit = SpeedLimit(move.Length);
+                                //    move = move.NewUnitized().NewScaled(speedLimit);
+                                //}
+                                //// shared code {8F7CB418-A1DF-4932-A55C-922032F7C48C}
+                                //if (input.Boost && player.Boosts >= 0)
+                                //{
+                                //    var move2 = move.NewScaled(Constants.BoostPower);
+                                //    player.BoostVelocity = move2;
+                                //    player.BoostCenter = player.BoostCenter.NewAdded(move2);
+                                //    player.Boosts -= Constants.BoostConsumption * move2.Length * player.BoostCenter.Length;
+                                //}
+                                //else
+                                //{
+                                //    player.BoostCenter = new Vector();
+                                //    player.BoostVelocity = new Vector(0.0, 0.0);
+                                //}
+
+                                var diff = player.PlayerBody.Position.NewAdded(player.PlayerFoot.Position.NewMinus());
+                                if (diff.Length > max)
+                                {
+                                    player.PlayerFoot.Velocity = player.PlayerFoot.Velocity
+                                        .NewAdded(diff.NewUnitized().NewScaled((diff.Length - max) / 2.0));// .NewScaled((1.0- partYou)/100.0)
+                                }
+                                else
+                                {
+                                    player.PlayerFoot.Velocity = new Vector(0, 0);
+                                }
+                            }
+                            else
+                            {
+                                throw new NotImplementedException("zzzzzzzzzzzz");
+                            }
                         }
                     }
 
 
-   
                     // throwing 2
                     if (!player.Throwing && input.Throwing)
                     {
@@ -693,8 +594,8 @@ namespace Common
                         if (input.ControlScheme == ControlScheme.Controller)
                         {
                             player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(Constants.maxThrowPower);
-                        } 
-                        else if (input.ControlScheme == ControlScheme.AI) 
+                        }
+                        else if (input.ControlScheme == ControlScheme.AI)
                         {
                             player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(Constants.maxThrowPower);//.NewAdded(player.PlayerBody.Velocity.NewMinus());
                         }
@@ -716,82 +617,83 @@ namespace Common
                     if (player.Throwing && !input.Throwing && state.GameBall.OwnerOrNull == player.Id)
                     {
                         state.GameBall.Velocity = player.ProposedThrow;//.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity);
-                        //player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewScaled(2);
+                                                                       //player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewScaled(2);
                         state.players[state.GameBall.OwnerOrNull.Value].LastHadBall = state.Frame;
                         state.GameBall.OwnerOrNull = null;
                         player.ProposedThrow = new Vector();
                     }
-                    
+
                     player.Throwing = input.Throwing;
 
+
+
+
+                    // handle throwing
+                    //{
+
+                    //    if (player == state.ball.ownerOrNull)
+                    //    {
+                    //        state.ball.velocity = player.externalVelocity.NewAdded(player.body.velocity).NewAdded(player.foot.velocity);
+                    //    }
+
+                    //    var throwV = player.foot.velocity;
+
+                    //    // I think force throw is making throwing harder
+                    //    if (forceThrow && player == state.ball.ownerOrNull)
+                    //    {
+
+                    //        var newPart = 1;//Math.Max(1, throwV.Length);
+                    //        var oldPart = 2;// Math.Max(1, ball.proposedThrow.Length);
+
+                    //        player.proposedThrow = new Vector(
+                    //                ((throwV.x * newPart) + (player.proposedThrow.x * oldPart)) / (newPart + oldPart),
+                    //                ((throwV.y * newPart) + (player.proposedThrow.y * oldPart)) / (newPart + oldPart));
+
+                    //        // throw the ball!
+                    //        // duplicate code // {C7BF7AF7-2C8E-4094-85F6-E7C19F6F71C9}
+                    //        state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
+                    //        state.ball.ownerOrNull.lastHadBall = state.frame;
+                    //        state.ball.ownerOrNull = null;
+                    //        forceThrow = false;
+                    //        player.proposedThrow = new Vector();
+                    //    }
+                    //    else if (player.throwing)
+                    //    {
+
+                    //        if (player.proposedThrow.Length > Constants.MimimunThrowingSpped && (throwV.Length * 1.3 < player.proposedThrow.Length || throwV.Dot(player.proposedThrow) < 0) && player.throwing && player == state.ball.ownerOrNull)
+                    //        {
+                    //            // throw the ball!
+                    //            // duplicate code // {C7BF7AF7-2C8E-4094-85F6-E7C19F6F71C9}
+                    //            state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
+                    //            state.ball.ownerOrNull.lastHadBall = state.frame;
+                    //            state.ball.ownerOrNull = null;
+                    //            forceThrow = false;
+                    //            player.proposedThrow = new Vector();
+                    //        }
+                    //        else if (player.proposedThrow.Length == 0)
+                    //        {
+                    //            player.proposedThrow = throwV;
+                    //        }
+                    //        else
+                    //        {
+                    //            var newPart = 1;//Math.Max(1, throwV.Length);
+                    //            var oldPart = 4;// Math.Max(1, ball.proposedThrow.Length);
+                    //            player.proposedThrow = new Vector(
+                    //                        ((throwV.x * newPart) + (player.proposedThrow.x * oldPart)) / (newPart + oldPart),
+                    //                        ((throwV.y * newPart) + (player.proposedThrow.y * oldPart)) / (newPart + oldPart));
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        player.proposedThrow = new Vector();
+                    //    }
+                    //}
                 }
 
+                state.Frame++;
 
-                // handle throwing
-                //{
-
-                //    if (player == state.ball.ownerOrNull)
-                //    {
-                //        state.ball.velocity = player.externalVelocity.NewAdded(player.body.velocity).NewAdded(player.foot.velocity);
-                //    }
-
-                //    var throwV = player.foot.velocity;
-
-                //    // I think force throw is making throwing harder
-                //    if (forceThrow && player == state.ball.ownerOrNull)
-                //    {
-
-                //        var newPart = 1;//Math.Max(1, throwV.Length);
-                //        var oldPart = 2;// Math.Max(1, ball.proposedThrow.Length);
-
-                //        player.proposedThrow = new Vector(
-                //                ((throwV.x * newPart) + (player.proposedThrow.x * oldPart)) / (newPart + oldPart),
-                //                ((throwV.y * newPart) + (player.proposedThrow.y * oldPart)) / (newPart + oldPart));
-
-                //        // throw the ball!
-                //        // duplicate code // {C7BF7AF7-2C8E-4094-85F6-E7C19F6F71C9}
-                //        state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
-                //        state.ball.ownerOrNull.lastHadBall = state.frame;
-                //        state.ball.ownerOrNull = null;
-                //        forceThrow = false;
-                //        player.proposedThrow = new Vector();
-                //    }
-                //    else if (player.throwing)
-                //    {
-
-                //        if (player.proposedThrow.Length > Constants.MimimunThrowingSpped && (throwV.Length * 1.3 < player.proposedThrow.Length || throwV.Dot(player.proposedThrow) < 0) && player.throwing && player == state.ball.ownerOrNull)
-                //        {
-                //            // throw the ball!
-                //            // duplicate code // {C7BF7AF7-2C8E-4094-85F6-E7C19F6F71C9}
-                //            state.ball.velocity = player.proposedThrow.NewAdded(player.body.velocity).NewAdded(player.externalVelocity);
-                //            state.ball.ownerOrNull.lastHadBall = state.frame;
-                //            state.ball.ownerOrNull = null;
-                //            forceThrow = false;
-                //            player.proposedThrow = new Vector();
-                //        }
-                //        else if (player.proposedThrow.Length == 0)
-                //        {
-                //            player.proposedThrow = throwV;
-                //        }
-                //        else
-                //        {
-                //            var newPart = 1;//Math.Max(1, throwV.Length);
-                //            var oldPart = 4;// Math.Max(1, ball.proposedThrow.Length);
-                //            player.proposedThrow = new Vector(
-                //                        ((throwV.x * newPart) + (player.proposedThrow.x * oldPart)) / (newPart + oldPart),
-                //                        ((throwV.y * newPart) + (player.proposedThrow.y * oldPart)) / (newPart + oldPart));
-                //        }
-                //    }
-                //    else
-                //    {
-                //        player.proposedThrow = new Vector();
-                //    }
-                //}
             }
 
-            state.Frame++;
-
         }
-
     }
 }

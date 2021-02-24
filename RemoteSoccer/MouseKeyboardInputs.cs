@@ -48,7 +48,7 @@ namespace RemoteSoccer
         }
 
         bool throwing = false;
-        bool boostPressed = false;
+        Guid boostPressed = Constants.NoMove;
 
         //private void MouseKeyboardInputs_PointerReleased(CoreWindow sender, PointerEventArgs args)
         //{
@@ -58,7 +58,12 @@ namespace RemoteSoccer
         private void MouseKeyboardInputs_PointerPressed(CoreWindow sender, PointerEventArgs args)
         {
             throwing = args.CurrentPoint.Properties.IsLeftButtonPressed;
-            boostPressed = args.CurrentPoint.Properties.IsRightButtonPressed;
+            if (boostPressed == Constants.NoMove && args.CurrentPoint.Properties.IsRightButtonPressed) {
+                boostPressed = Guid.NewGuid();
+            }
+            if (boostPressed != Constants.NoMove && !args.CurrentPoint.Properties.IsRightButtonPressed) {
+                boostPressed = Constants.NoMove;
+            }
         }
 
         public async Task<PlayerInputs> Next()
@@ -107,7 +112,7 @@ namespace RemoteSoccer
                                 lastX = point.X;
                                 lastY = point.Y;
 
-                                res = new PlayerInputs(0, 0, 0, 0, id, ControlScheme.MouseAndKeyboard, false, false);
+                                res = new PlayerInputs(0, 0, 0, 0, id, ControlScheme.MouseAndKeyboard, false, Constants.NoMove);
                             }
 
                         });

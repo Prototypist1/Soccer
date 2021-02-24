@@ -1,4 +1,6 @@
-﻿namespace Common
+﻿using System;
+
+namespace Common
 {
     public static class Constants {
         public const int fieldZ = 0;
@@ -41,15 +43,17 @@
         //public const double Add = 100;
         //public const double ToThe = 2;//1.9;
         // fastest you can move your foot
-        public const double speedLimit = 1200;//3000;
+        public const double speedLimit = 2000;//3000;
         // firction on the ball
         public const double FrictionDenom = 80;
         public const int bodyStartAt = 300;
         public const int bodySpeedLimit = 500;
-        public const double BoostPower = 1;
+        public const int BoostSpread = 3;
         public const double ThrowScale = .12;
         public const double maxThrowPower = 1200;
         public const double BoostConsumption = .0000015;
         public const double BoostFade = .5;
+
+        public static Guid NoMove = Guid.Empty;
     }
 }

@@ -34,9 +34,9 @@ namespace Common
         public double BodyY { get; set; }
         public Guid Id { get; set; }
         public bool Throwing { get; set; }
-        public bool Boost { get; set; }
+        public Guid Boost { get; set; }
 
-        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid Id, ControlScheme controlScheme, bool throwing, bool boost)
+        public PlayerInputs(double footX, double footY, double bodyX, double bodyY, Guid Id, ControlScheme controlScheme, bool throwing, Guid boost)
         {
             this.FootX = footX;
             this.FootY = footY;

@@ -38,6 +38,7 @@ namespace physics2
         {
             // who needs fine grained locking??
 
+            // we don't really need a whole list, we just take the first one
             var events = new List<UpdateAction>();
 
             var timeLeft = 1.0;
