@@ -1024,10 +1024,16 @@ namespace RemoteSoccer
                     member.Value.inputs.FootX = move.x;
                     member.Value.inputs.FootY = move.y;
 
-                    if (move.Length > 100)
-                    {
+                    if (member.Value.inputs.Boost == Constants.NoMove && move.Length > 100 && gameState.players[member.Key].Boosts > 1) {
                         member.Value.inputs.Boost = Guid.NewGuid();
                     }
+
+                    if (move.Length < 100)
+                    {
+                        member.Value.inputs.Boost = Constants.NoMove;
+                    }
+                } else {
+                    member.Value.inputs.Boost = Constants.NoMove;
                 }
             }
         }

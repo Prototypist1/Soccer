@@ -126,7 +126,7 @@ namespace RemoteSoccer
 
                 frame.thing++;
 
-                while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
+                while ((1000.0 * frame.thing / 150.0) > sw.ElapsedMilliseconds)
                 {
                 }
 
@@ -177,7 +177,7 @@ namespace RemoteSoccer
             game = new Game2();
 
 
-            var teamSize = 2;
+            var teamSize = 4;
 
             var ourTeam = new Guid[teamSize].Select(x => Guid.NewGuid()).ToArray();
 
@@ -198,15 +198,15 @@ namespace RemoteSoccer
                 try
                 {
 
-                    if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
-                    {
-                        var body = ourTeam.First();
-                        var inputs = new MouseKeyboardInputs(lockCurser, body);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
-                    }
+                    //if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
+                    //{
+                    //    var body = ourTeam.First();
+                    //    var inputs = new MouseKeyboardInputs(lockCurser, body);
+                    //    await inputs.Init();
+                    //    await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
+                    //}
 
-                    foreach (var body in ourTeam.Skip(1))//
+                    foreach (var body in ourTeam)//.Skip(1)
                     {
                         var inputs = new AIInputs(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
                         await inputs.Init();

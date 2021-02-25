@@ -11,6 +11,7 @@ namespace Common
         {
             public Guid Id;
             public ConcurrentLinkedList<Vector> moves;
+            public Vector residual = new Vector();
 
         }
 
@@ -462,31 +463,49 @@ namespace Common
                             }
                             else
                             {
-                                var move = new Vector(input.FootX, input.FootY).NewScaled(1.0 / Constants.BoostSpread);
+                                var move = new Vector(input.FootX, input.FootY);//.NewScaled(1.0 / Constants.BoostSpread);
 
                                 if (input.Boost != Constants.NoMove)
                                 {
-                                    if (move.Length != 0)
+                                    //if (move.Length != 0)
+                                    //{
+                                    //    var speedLimit = SpeedLimit2(move.Length);
+                                    //    move = move.NewUnitized().NewScaled(speedLimit);
+                                    //}
+                                    //for (int i = 0; i < Constants.BoostSpread; i++)
+                                    //{
+                                    //    drag.moves.Add(move);
+                                    //}
+
+                                    var totallyToAdd = drag.residual.NewAdded(move);
+                                    if (totallyToAdd.Length > Constants.speedLimit)
                                     {
-                                        var speedLimit = SpeedLimit2(move.Length);
-                                        move = move.NewUnitized().NewScaled(speedLimit);
+                                        while (totallyToAdd.Length > Constants.speedLimit)
+                                        {
+                                            var toAdd = totallyToAdd.NewUnitized().NewScaled(Constants.speedLimit);
+                                            drag.moves.Add(toAdd);
+                                            totallyToAdd = totallyToAdd.NewAdded(toAdd.NewMinus());
+                                        }
+                                        drag.residual = totallyToAdd;
                                     }
-                                    for (int i = 0; i < Constants.BoostSpread; i++)
+                                    else
                                     {
                                         drag.moves.Add(move);
-                                    }
-                                }
-
-                                if (drag.moves.TryGetFirst(out move))
-                                {
-                                    drag.moves.RemoveStart();
-
-                                    if (player.Boosts > 0)
-                                    {
-                                        player.BoostVelocity = move;
+                                        drag.residual = new Vector(0, 0);
                                     }
                                 }
                             }
+
+                            if (drag.moves.TryGetFirst(out var move2))
+                            {
+                                drag.moves.RemoveStart();
+                                player.BoostVelocity = move2;
+                            }
+                            else if (drag.Id != Constants.NoMove) {
+                                drag.Id = Constants.NoMove;
+                                player.Boosts -= Constants.ExtraBoostCost;
+                            }
+                            
 
 
                             player.Boosts -= Constants.BoostConsumption * player.BoostVelocity.Length * Math.Sqrt(player.BoostCenter.Length);
