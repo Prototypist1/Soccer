@@ -40,23 +40,10 @@ namespace Common
 
             var speedAWay = diff.NewUnitized().Dot(ballVelocity);
 
-            if (speedAWay > Constants.bodySpeedLimit)
-            {
-                return double.MaxValue;
-            }
 
-            var speedPerpendicular = new Vector(diff.y, -diff.x).NewUnitized().Dot(ballVelocity);
-            if (Math.Abs(speedPerpendicular) > Constants.bodySpeedLimit)
-            {
-                return double.MaxValue;
-            }
+            //var speedPerpendicular = new Vector(diff.y, -diff.x).NewUnitized().Dot(ballVelocity);
 
-            var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
-
-            if (effectiveSpeed - speedAWay <= 0)
-            {
-                return double.MaxValue;
-            }
+            //var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
 
             var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
             var playerStartSpeed = new Vector(0, 0);

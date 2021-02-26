@@ -10,7 +10,7 @@ namespace RemoteSoccer
 {
     class Test
     {
-        public class AITeam
+        class AITeam
         {
 
             const double Unit = 5000;
@@ -40,6 +40,7 @@ namespace RemoteSoccer
             {
                 private readonly AITeam aITeam;
                 public PlayerInputs inputs;
+                internal Func<GameState, Vector> generator;
 
                 public AITeamMember(AITeam aITeam, Guid id)
                 {
@@ -85,6 +86,8 @@ namespace RemoteSoccer
             private WhosBall whosBall;
             private void Update()
             {
+                //Task.Delay(400).Wait();
+
                 if (gameState.GameBall.OwnerOrNull != lastKnowBallCarrier)
                 {
                     foreach (var member in team)
@@ -246,10 +249,19 @@ namespace RemoteSoccer
                         member.Value.inputs.FootX = move.x;
                         member.Value.inputs.FootY = move.y;
 
-                        if (move.Length > 100)
+                        if (member.Value.inputs.Boost == Constants.NoMove && move.Length > 100 && gameState.players[member.Key].Boosts > 1)
                         {
                             member.Value.inputs.Boost = Guid.NewGuid();
                         }
+
+                        if (move.Length < 100)
+                        {
+                            member.Value.inputs.Boost = Constants.NoMove;
+                        }
+                    }
+                    else
+                    {
+                        member.Value.inputs.Boost = Constants.NoMove;
                     }
                 }
             }
@@ -387,62 +399,82 @@ namespace RemoteSoccer
             {
                 foreach (var player in toAssign)
                 {
-                    var myPlayer = player;
-                    var cutterGenerators = cutOffsets.Value
-                        .Select<Vector, Func<GameState, Vector>>(x => _ => x)
-                        .Select(generator => (generator: generator, score: CutEvaluator(gameState.players[player.Key].PlayerBody.Position.NewAdded(generator(gameState)), player.Key)))
-                        .OrderByDescending(pair => pair.score)
-                        .ToList();
+                    if (BehindBall(player.Key))
+                    {
+                        GetNewCuttingTowards(player);
+                    }
+                    else if (player.Value.generator == null)
+                    {
+                        GetNewCuttingTowards(player);
+                    }
+                    else if (player.Value.generator(gameState).Length < Unit)
+                    {
+                        GetNewCuttingTowards(player);
+                    }
+                }
+            }
 
-                    if (cutterGenerators.Any())
-                    {
-                        UpdateDirection(player.Value, cutterGenerators.First().generator);
-                    }
-                    else
-                    {
-                        UpdateDirection(player.Value, (GameState gs) => new Vector(0.0, 0.0));
-                    }
+            private void GetNewCuttingTowards(KeyValuePair<Guid, AITeamMember> player)
+            {
+                var currentPos = gameState.players[player.Key].PlayerBody.Position;
+                var myPlayer = player;
+                var cutterGenerators = cutOffsets.Value
+                    .Select<Vector, Func<GameState, Vector>>(x => gs => currentPos.NewAdded(x).NewAdded(gs.players[player.Key].PlayerBody.Position.NewMinus()))
+                    .Select(generator => (generator: generator, score: CutEvaluator(currentPos.NewAdded(generator(gameState)), player.Key)))
+                    .OrderByDescending(pair => pair.score)
+                    .ToList();
+
+                if (cutterGenerators.Any())
+                {
+                    UpdateDirection(player.Value, cutterGenerators.First().generator);
+                }
+                else
+                {
+                    UpdateDirection(player.Value, (GameState gs) => new Vector(0.0, 0.0));
                 }
             }
 
             private void Defense()
             {
                 var noneGoalie = Goalie(team.ToArray());
-                var toAssign = GetTheBall(noneGoalie).ToList();
-
+                if (noneGoalie.Any())
                 {
-                    foreach (var (baddie, _) in gameState.players.Values
-                      .Where(x => !team.ContainsKey(x.Id) && x.Id != gameState.GameBall.OwnerOrNull.GetValueOrDefault(Guid.NewGuid()))
-                      .Select(x => (x, x.PlayerBody.Position.NewAdded(GoalTheyScoreOn().NewMinus()).Length))
-                      .OrderBy(x => x.Length))
+                    var toAssign = GetTheBall(noneGoalie).ToList();
+
                     {
-
-                        var getTheBaddies = toAssign
-                           .Select(pair => (pair, gameState.players[pair.Key].PlayerBody.Position.NewAdded(baddie.PlayerBody.Position.NewMinus()).Length))
-                           .OrderBy(pair => pair.Length)
-                           .ToList();
-
-                        if (!getTheBaddies.Any())
+                        foreach (var (baddie, _) in gameState.players.Values
+                          .Where(x => !team.ContainsKey(x.Id) && x.Id != gameState.GameBall.OwnerOrNull.GetValueOrDefault(Guid.NewGuid()))
+                          .Select(x => (x, x.PlayerBody.Position.NewAdded(GoalTheyScoreOn().NewMinus()).Length))
+                          .OrderBy(x => x.Length))
                         {
-                            continue;
-                        }
 
-                        var getTheBaddie = getTheBaddies.First();
+                            var getTheBaddies = toAssign
+                               .Select(pair => (pair, gameState.players[pair.Key].PlayerBody.Position.NewAdded(baddie.PlayerBody.Position.NewMinus()).Length))
+                               .OrderBy(pair => pair.Length)
+                               .ToList();
 
-                        toAssign.Remove(getTheBaddie.pair);
+                            if (!getTheBaddies.Any())
+                            {
+                                continue;
+                            }
 
-                        var guardGenerators = GetPositionGenerators(getTheBaddie.pair.Key)
-                            .Select(pos => (generator: pos.generator, score: GuardPlayerEvaluator(baddie.Id)(pos.pos)))
-                            .OrderByDescending(pair => pair.score)
-                            .ToList();
+                            var getTheBaddie = getTheBaddies.First();
 
-                        if (guardGenerators.Any())
-                        {
-                            UpdateDirection(getTheBaddie.pair.Value, guardGenerators.First().generator);
-                        }
-                        else
-                        {
-                            UpdateDirection(getTheBaddie.pair.Value, (GameState gs) => new Vector(0.0, 0.0));
+                            toAssign.Remove(getTheBaddie.pair);
+
+                            var guardGenerators = GetPositionGenerators(getTheBaddie.pair.Key)
+                                .Select(pos => (generator: pos.generator, score: GuardPlayerEvaluator(baddie.Id)(pos.pos)))
+                                .OrderByDescending(pair => pair.score)
+                                .ToList();
+
+                            if (guardGenerators.Any())
+                            {
+                                UpdateDirection(getTheBaddie.pair.Value, guardGenerators.First().generator);
+                            }
+                            else
+                            {
+                                UpdateDirection(getTheBaddie.pair.Value, (GameState gs) => new Vector(0.0, 0.0));
+                            }
                         }
                     }
                 }
@@ -517,6 +549,7 @@ namespace RemoteSoccer
 
             private void UpdateDirection(AITeamMember goalie, Func<GameState, Vector> generator)
             {
+                goalie.generator = generator;
                 var concreteTarget = generator(gameState);
                 if (Double.IsNaN(concreteTarget.Length))
                 {
@@ -609,32 +642,41 @@ namespace RemoteSoccer
             {
                 var res = 0.0;
 
-                // go towards the goal
-                res += Towards(myPosition, GoalWeScoreOn(), 1);
 
                 // don't be behind the ball
-                if (gameState.players[self].PlayerBody.Position.NewAdded(GoalWeScoreOn().NewMinus()).Length > Math.Max(gameState.GameBall.Posistion.NewAdded(GoalWeScoreOn().NewMinus()).Length, Constants.goalLen * 10))
+                if (BehindBall(self))
                 {
                     res += Towards(myPosition, GoalWeScoreOn(), 4);
                 }
-
-                // stay away from your teammates
-                foreach (var player in gameState.players.Where(x => team.ContainsKey(x.Key) && x.Key != self))
+                else
                 {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 9);
+
+                    // go towards the goal
+                    res += Towards(myPosition, GoalWeScoreOn(), 1);
+
+                    // stay away from your teammates
+                    foreach (var player in gameState.players.Where(x => team.ContainsKey(x.Key) && x.Key != self))
+                    {
+                        res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 9);
+                    }
+
+                    // don't get too close to the other teams players
+                    foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key)))
+                    {
+                        res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, .5, Unit * 6);
+                        res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * .5);
+                    }
+
+                    // don't get too far from the ball
+                    res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 3, Unit * 15);
+
                 }
-
-                // don't get too close to the other teams players
-                foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key)))
-                {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, .5, Unit * 6);
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * .5);
-                }
-
-                // don't get too far from the ball
-                res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 3, Unit * 15);
-
                 return res;
+            }
+
+            private bool BehindBall(Guid self)
+            {
+                return gameState.players[self].PlayerBody.Position.NewAdded(GoalWeScoreOn().NewMinus()).Length > Unit + Math.Max(gameState.GameBall.Posistion.NewAdded(GoalWeScoreOn().NewMinus()).Length, Constants.goalLen * 10);
             }
 
             private Lazy<Vector[]> throwOffsets = new Lazy<Vector[]>(() =>
@@ -646,7 +688,7 @@ namespace RemoteSoccer
             private Lazy<Vector[]> cutOffsets = new Lazy<Vector[]>(() =>
             {
                 // this isn't a good random for a circle. it perfers pie/4 to pie/2
-                return new int[25].Select(_ => RandomVector().NewScaled(Unit * 3 * r.NextDouble())).ToArray();
+                return new int[25].Select(_ => RandomVector().NewScaled(Unit * 10 * r.NextDouble())).ToArray();
             });
 
 
@@ -863,7 +905,7 @@ namespace RemoteSoccer
         private WhosBall whosBall;
         private void Update()
         {
-            Task.Delay(400).Wait();
+            //Task.Delay(400).Wait();
 
             if (gameState.GameBall.OwnerOrNull != lastKnowBallCarrier)
             {
@@ -990,9 +1032,9 @@ namespace RemoteSoccer
             }
             else if (whosBall == WhosBall.OurBall){
                 // figure out who will get to the ball first, they run at it
-                //var lastHadBall = gameState.players.OrderByDescending(y => y.Value.LastHadBall).First().Key;
+                var lastHadBall = gameState.players.OrderByDescending(y => y.Value.LastHadBall).First().Key;
                 var hot =team
-                    //.Where (x=>x.Key != lastHadBall) // don't run after it if you just had it
+                    .Where (x=>x.Key != lastHadBall) // don't run after it if you just had it
                     .Select(x =>
                 {
                     var playerPos = gameState.players[x.Key].PlayerFoot.Position;
@@ -1165,6 +1207,20 @@ namespace RemoteSoccer
 
         private void OffenseNotBall(List<KeyValuePair<Guid, AITeamMember>> toAssign)
         {
+            // dump
+            if (toAssign.Count > 1) {
+                var dump =
+                toAssign
+                    .Select(pair => (pair, value: DumpEvaluator(gameState.players[pair.Key].PlayerBody.Position, pair.Key)))
+                    .OrderByDescending(x => x.value)
+                    .First()
+                    .pair;
+
+                GetDump(dump);
+
+                toAssign.Remove(dump);
+            }
+
             foreach (var player in toAssign)
             {
                 if (BehindBall(player.Key))
@@ -1178,6 +1234,26 @@ namespace RemoteSoccer
                 else if (player.Value.generator(gameState).Length < Unit) {
                     GetNewCuttingTowards(player);
                 }
+            }
+        }
+
+        private void GetDump(KeyValuePair<Guid, AITeamMember> player)
+        {
+            var currentPos = gameState.players[player.Key].PlayerBody.Position;
+            var myPlayer = player;
+            var cutterGenerators = cutOffsets.Value
+                .Select<Vector, Func<GameState, Vector>>(x => gs => currentPos.NewAdded(x).NewAdded(gs.players[player.Key].PlayerBody.Position.NewMinus()))
+                .Select(generator => (generator: generator, score: DumpEvaluator(currentPos.NewAdded(generator(gameState)), player.Key)))
+                .OrderByDescending(pair => pair.score)
+                .ToList();
+
+            if (cutterGenerators.Any())
+            {
+                UpdateDirection(player.Value, cutterGenerators.First().generator);
+            }
+            else
+            {
+                UpdateDirection(player.Value, (GameState gs) => new Vector(0.0, 0.0));
             }
         }
 
@@ -1381,7 +1457,24 @@ namespace RemoteSoccer
             // TODO if there are several players from the other team near the goal you need to player closer to the gaol
             // if there are fewer you can rush the player
 
-            return Towards(position, gameState.GameBall.Posistion.NewAdded(GoalTheyScoreOn()).NewScaled(.5), 4);
+            var res = 0.0;
+
+            res += Towards(position, GoalTheyScoreOn(), 1);
+            res += Towards(position, gameState.GameBall.Posistion, 3);
+            res -= TowardsWithIn(position, gameState.GameBall.Posistion, 3, Constants.goalLen * 1);
+
+
+            res -= TowardsWithIn(position, GoalTheyScoreOn(), 10, Constants.goalLen*2);
+
+            // the more opponents are near the goal the more we want to be near the goal
+            foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key)))
+            {
+                if (player.Value.PlayerBody.Position.NewAdded(GoalTheyScoreOn().NewMinus()).Length < Constants.goalLen * 5) {
+                    res += Towards(position, GoalTheyScoreOn(), 1);
+                }
+            }
+
+            return res;
         }
 
 
@@ -1391,15 +1484,37 @@ namespace RemoteSoccer
             // don't go near the other team
             foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key)))
             {
-                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 4, Unit * 6);
+                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 4, Unit * 3);
             }
 
             // go to the goal
-            res += Towards(position, GoalWeScoreOn(), .5);
+            res += Towards(position, GoalWeScoreOn(), .1);
             res += TowardsWithIn(position, GoalTheyScoreOn(), 10, Constants.goalLen);
             // dont go in your own goal
-            res -= Towards(position, GoalTheyScoreOn(), .5);
+            res -= TowardsWithIn(position, GoalTheyScoreOn(), .5, Unit * 20);
             res -= TowardsWithIn(position, GoalTheyScoreOn(), 6, Constants.goalLen + Unit*2);
+
+            return res;
+        }
+        private double DumpEvaluator(Vector myPosition, Guid self) {
+
+            var res = 0.0;
+
+            // stay away from your teammates
+            foreach (var player in gameState.players.Where(x => team.ContainsKey(x.Key) && x.Key != self))
+            {
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 6);
+            }
+
+            // don't get too close to the other teams players
+            foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key)))
+            {
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 6);
+                res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * 1);
+            }
+
+            // don't get too far from the ball
+            res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 20, Unit * 10);
 
             return res;
         }
