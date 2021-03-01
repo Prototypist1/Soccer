@@ -206,41 +206,34 @@ namespace RemoteSoccer
                     //    await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
                     //}
 
-                    foreach (var body in ourTeam)//.Skip(1)
-                    {
-                        var inputs = new AIInputs(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00, 0xff });
-                    }
+                    //foreach (var body in ourTeam)//.Skip(1)
+                    //{
+                    //    var inputs = new AIInputs(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
+                    //    await inputs.Init();
+                    //    await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00, 0xff });
+                    //}
 
                     {
-                        //var team = new Test.AITeam(game.gameState, ourTeam, fieldDimensions, false);
+                        var team = new Test.AITeam(game.gameState, ourTeam, fieldDimensions, false);
 
-                        //foreach (var (key, input) in team.GetPlayers().Skip(1))
-                        //{
-                        //    await input.Init();
-                        //    await CreatePlayer(key, input, new byte[3] { 0x00, 0x00, 0xff });
-                        //}
+                        foreach (var (key, input) in team.GetPlayers())//.Skip(1)
+                        {
+                            await input.Init();
+                            await CreatePlayer(key, input, new byte[3] { 0x00, 0x00, 0xff });
+                        }
                     }
 
                     var theirTeam = new Guid[teamSize].Select(x => Guid.NewGuid()).ToArray();
 
-                    foreach (var body in theirTeam)
                     {
-                        var inputs = new AIInputs(game.gameState, body, theirTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, true);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs, new byte[3] { 0xff, 0x00, 0x00 });
+                        var team = new AITeam(game.gameState, theirTeam, fieldDimensions, true);
+
+                        foreach (var (key, input) in team.GetPlayers())
+                        {
+                            await input.Init();
+                            await CreatePlayer(key, input, new byte[3] { 0xff, 0x00, 0x00 });
+                        }
                     }
-
-                    //{
-                    //    var team = new AITeam(game.gameState, theirTeam, fieldDimensions, true);
-
-                    //    foreach (var (key, input) in team.GetPlayers())
-                    //    {
-                    //        await input.Init();
-                    //        await CreatePlayer(key, input, new byte[3] { 0xff, 0x00, 0x00 });
-                    //    }
-                    //}
 
                     foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
                     {

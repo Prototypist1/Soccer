@@ -17,6 +17,59 @@ namespace Common
 
         private static ConcurrentIndexed<Guid, MouseDrag> mouseDrags = new ConcurrentIndexed<Guid, MouseDrag>();
 
+        public static bool HitInStride(Vector ballStart, Vector playerStart, Vector playerVelocity,double time, out Vector throwVelocity, out Vector catchLocation)
+        {
+            var diff = playerStart.NewAdded(ballStart.NewMinus());
+
+            // don't try to hit yourself in stride
+            if (diff.Length == 0)
+            {
+                throwVelocity = default;
+                catchLocation = default;
+                return false;
+            }
+
+            catchLocation = playerStart.NewAdded(playerVelocity.NewScaled(time));
+
+            var v = HowHardToThrow(catchLocation.NewAdded(ballStart.NewMinus()).Length, time);
+
+            if (v> Constants.maxThrowPower)
+            {
+                throwVelocity = default;
+                catchLocation = default;
+                return false;
+            }
+            throwVelocity = catchLocation.NewAdded(ballStart.NewMinus()).NewUnitized().NewScaled(v);
+            return true;
+        }
+
+        public static bool HitInStride(Vector ballStart, Vector playerStart, Vector playerVelocity, out Vector throwVelocity, out Vector catchLocation) {
+            var diff = playerStart.NewAdded(ballStart.NewMinus());
+
+            // don't try to hit yourself in stride
+            if (diff.Length == 0)
+            {
+                throwVelocity = default;
+                catchLocation = default;
+                return false;
+            }
+
+            var speedAWay = diff.NewUnitized().Dot(playerVelocity);
+
+            var t1= HowLongItTakesBallToGo(diff.Length, Constants.maxThrowPower);
+            var t2 = HowLongItTakesBallToGo(diff.Length + speedAWay* t1, Constants.maxThrowPower);
+            var t3 = HowLongItTakesBallToGo(diff.Length + speedAWay * t2, Constants.maxThrowPower);
+
+            if (t3 == Double.MaxValue) {
+                throwVelocity = default;
+                catchLocation = default;
+                return false;
+            }
+            catchLocation = playerStart.NewAdded(playerVelocity.NewScaled(t3));
+            throwVelocity = diff.NewAdded(playerVelocity.NewScaled(t3)).NewUnitized().NewScaled(Constants.maxThrowPower);
+            return true;
+        }
+
         // how hard do I have to throw it for a player to catch it at a given point
         public static Vector RequiredThrow(Vector playerStart, Vector ballStart, Vector target)
         {
@@ -321,7 +374,6 @@ namespace Common
                     }
                     else if (input.BodyX != 0 || input.BodyY != 0)
                     {
-                        // crush oppozing forces
                         if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                         {
                             var v = new Vector(player.PlayerBody.Velocity.x, player.PlayerBody.Velocity.y);
@@ -358,8 +410,18 @@ namespace Common
                         {
                             // base velocity becomes the part of the velocity in the direction of the players movement
                             var f = new Vector(input.BodyX, input.BodyY).NewUnitized();
-                            var with = player.PlayerBody.Velocity.Dot(f);
-                            var baseValocity = with > 0 ? f.NewUnitized().NewScaled(with) : new Vector(0, 0);
+                            var baseValocity = new Vector(0, 0);
+                            if (player.PlayerBody.Velocity.Length > 0)
+                            {
+                                var with = player.PlayerBody.Velocity.NewUnitized().Dot(f);
+                                if (with > 0)
+                                {
+                                    var withVector = f.NewScaled(with * player.PlayerBody.Velocity.Length);
+                                    var notWith = player.PlayerBody.Velocity.Length - withVector.Length;
+                                    baseValocity =  withVector.NewAdded(f.NewScaled(notWith * with));
+                                }
+                            }
+
 
                             var engeryAdd = Constants.EnergyAdd;// player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 : Constants.EnergyAdd;
 
@@ -603,6 +665,8 @@ namespace Common
                         }
                         else if (input.ControlScheme == ControlScheme.AI)
                         {
+
+
                             player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(Constants.maxThrowPower);//.NewAdded(player.PlayerBody.Velocity.NewMinus());
                         }
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
