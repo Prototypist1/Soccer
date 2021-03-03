@@ -113,7 +113,7 @@ namespace Common
             public Guid Id { get; set; }
             public string Name { get; set; }
             public Body PlayerBody { get; set; }
-            public bool Throwing { get; set; }
+            //public bool Throwing { get; set; }
 
 
             public class Body

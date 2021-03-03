@@ -82,7 +82,7 @@ namespace Common
 
         // assuming the player runs at max speed the whole time
         // and assuming the ball doesn't have friction
-        public static double IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity)
+        public static double IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding)
         {
             var diff = ballStart.NewAdded(start.NewMinus());
 
@@ -91,13 +91,14 @@ namespace Common
                 return 0;
             }
 
-            var speedAWay = diff.NewUnitized().Dot(ballVelocity);
+            //var speedAWay = diff.NewUnitized().Dot(ballVelocity);
 
 
             //var speedPerpendicular = new Vector(diff.y, -diff.x).NewUnitized().Dot(ballVelocity);
 
             //var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
 
+            // this isn't quite right you keep some of your off axis speed 
             var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
             var playerStartSpeed = new Vector(0, 0);
             if (playerVelocityDot > 0)
@@ -105,15 +106,41 @@ namespace Common
                 playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
             }
 
-            var at = 256.0;
-            for (var rate = 128.0; rate >= 1; rate *= .5)
+            var at = 2.0;
+
+            while (true) {
+                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+                if (ballVelocity.Length > 0)
+                {
+                    dissToBall = ballStart
+                        .NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)))
+                        .NewAdded(start.NewMinus()).Length;
+                }
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;
+                if (dissToBall > dissTravelled)
+                {
+                    at += 20;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            
+            var rate = at*.5;
+            for (; rate >= 1; rate *= .5)
             {
-                var diss = diff.Length + DistanceBallTravels(speedAWay, at) - DistancePlayerTravels(playerStartSpeed.Length, at);
-                if (diss == 0)
+                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+                if (ballVelocity.Length > 0)
+                {
+                    dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
+                }
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;
+                if (dissToBall == dissTravelled)
                 {
                     return at;
                 }
-                if (diss > 0)
+                if (dissToBall > dissTravelled)
                 {
                     at += rate;
                 }
@@ -128,52 +155,69 @@ namespace Common
         // I wish I could insert a drawing to show what I am doing here
         // you try to maintain your direction relative to the ball
         // and any extra speed you have you spend on moving towards the ball
-        public static Vector IntersectBallDirection(Vector start, Vector ballStart, Vector ballVelocity)
+        public static Vector IntersectBallDirection(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity)
         {
             var diff = ballStart.NewAdded(start.NewMinus());
 
             if (diff.Length == 0)
             {
-                return new Vector(0.0, 0.0);
+                return new Vector(0,0);
             }
 
-            if (ballVelocity.Length == 0)
+            var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
+            var playerStartSpeed = new Vector(0, 0);
+            if (playerVelocityDot > 0)
             {
-                return diff.NewUnitized();
+                playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
             }
 
-            var speedAWay = diff.NewUnitized().Dot(ballVelocity);
+            var at = 2.0;
 
-            if (speedAWay > Constants.bodySpeedLimit)
+            while (true)
             {
-                //it's hopeless just run at it
-                return diff.NewUnitized();
+                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+                if (ballVelocity.Length > 0)
+                {
+                    dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
+                }
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at);// + HowFarCanIBoost(boost);
+                if (dissToBall > dissTravelled)
+                {
+                    at += 20;
+                }
+                else
+                {
+                    break;
+                }
             }
 
-            var speedPerpendicular = new Vector(diff.y, -diff.x).NewUnitized().Dot(ballVelocity);
-            if (Math.Abs(speedPerpendicular) > Constants.bodySpeedLimit)
+            var rate = at * .5;
+            for (; rate >= 1; rate *= .5)
             {
-                //it's hopeless just run at it
-                return diff.NewUnitized();
+                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+                if (ballVelocity.Length > 0)
+                {
+                    dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
+                }
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at);// + HowFarCanIBoost(boost);
+                if (dissToBall == dissTravelled)
+                {
+                    return ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).NewUnitized();
+                }
+                if (dissToBall > dissTravelled)
+                {
+                    at += rate;
+                }
+                else
+                {
+                    at -= rate;
+                }
             }
-
-            var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
-
-            if (effectiveSpeed - speedAWay <= 0)
+            if (ballVelocity.Length > 0)
             {
-                //it's hopeless just run at it
-                return diff.NewUnitized();
+                return ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).NewUnitized();
             }
-            var res = new Vector(diff.y, -diff.x).NewUnitized().NewScaled(speedPerpendicular)
-                .NewAdded(diff.NewUnitized().NewScaled(effectiveSpeed));
-
-            if (res.Length == 0 || double.IsNaN(res.Length))
-            {
-                var ahh = 0;
-            }
-
-            return res
-                .NewUnitized();
+            return ballStart.NewAdded(start.NewMinus()).NewUnitized();
         }
 
 
@@ -467,7 +511,7 @@ namespace Common
 
                     var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
 
-                    if (!input.Throwing)
+                    if (!input.Throw)
                     {
                         if (input.ControlScheme == ControlScheme.Controller)
                         {
@@ -653,11 +697,11 @@ namespace Common
 
 
                     // throwing 2
-                    if (!player.Throwing && input.Throwing)
-                    {
-                        player.ProposedThrow = new Vector(0, 0);
-                    }
-                    if (input.Throwing)
+                    //if (!player.Throwing && input.Throw)
+                    //{
+                    //    player.ProposedThrow = new Vector(0, 0);
+                    //}
+                    if (input.Boost == Constants.NoMove)
                     {
                         if (input.ControlScheme == ControlScheme.Controller)
                         {
@@ -665,8 +709,6 @@ namespace Common
                         }
                         else if (input.ControlScheme == ControlScheme.AI)
                         {
-
-
                             player.ProposedThrow = new Vector(input.FootX, input.FootY).NewScaled(Constants.maxThrowPower);//.NewAdded(player.PlayerBody.Velocity.NewMinus());
                         }
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
@@ -684,16 +726,16 @@ namespace Common
                         }
                     }
 
-                    if (player.Throwing && !input.Throwing && state.GameBall.OwnerOrNull == player.Id)
+                    if (input.Throw && state.GameBall.OwnerOrNull == player.Id)
                     {
                         state.GameBall.Velocity = player.ProposedThrow;//.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity);
                                                                        //player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewScaled(2);
                         state.players[state.GameBall.OwnerOrNull.Value].LastHadBall = state.Frame;
                         state.GameBall.OwnerOrNull = null;
-                        player.ProposedThrow = new Vector();
+                        //player.ProposedThrow = new Vector();
                     }
 
-                    player.Throwing = input.Throwing;
+                    //player.Throwing = input.Throw;
 
 
 

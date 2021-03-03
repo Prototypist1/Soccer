@@ -19,6 +19,7 @@ namespace Common
 
 
         public const double goalLen = 6000;
+        public const double ballWallLen = 15_000;
         public const double footLen = 750;//6000;//
         public const int PlayerRadius = 750 ;//750;//750;// 500;//300;
         public const int BallRadius = 500;//150;//250;//30;//
@@ -50,7 +51,7 @@ namespace Common
         public const int bodySpeedLimit = 400;
         public const int BoostSpread = 3;
         public const double ThrowScale = .12;
-        public const double maxThrowPower = 1300;
+        public const double maxThrowPower = 1200;
         public const double BoostConsumption = .0000015;
         public const double BoostFade = .5;
 

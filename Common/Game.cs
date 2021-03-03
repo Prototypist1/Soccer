@@ -50,7 +50,7 @@ namespace Common
                 res.Countdown = true;
                 if (TryGetBallWall(out var tuple))
                 {
-                    res.StrokeThickness = tuple.radius - (Constants.goalLen * (gameState - startCountDown) / ((double)(endCountDown - startCountDown)));
+                    res.StrokeThickness = tuple.radius - (Constants.ballWallLen * (gameState - startCountDown) / ((double)(endCountDown - startCountDown)));
                     res.Radius = tuple.radius;
                     res.BallOpacity = gameState > resetBall ? (gameState - resetBall) / (double)(endCountDown - resetBall) : ((resetBall - startCountDown) - (gameState - startCountDown)) / (double)(resetBall - startCountDown);
                     res.X = tuple.x;
@@ -102,7 +102,7 @@ namespace Common
                 ballWall = (
                     ballStartX,
                     ballStartY,
-                    Constants.goalLen * ((Math.Min(gameState, stopGrowingCircle) - startGrowingCircle) / (double)(stopGrowingCircle - startGrowingCircle)));
+                    Constants.ballWallLen * ((Math.Min(gameState, stopGrowingCircle) - startGrowingCircle) / (double)(stopGrowingCircle - startGrowingCircle)));
                 return true;
             }
             ballWall = default;

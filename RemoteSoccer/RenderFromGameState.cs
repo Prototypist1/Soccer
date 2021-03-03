@@ -282,7 +282,7 @@ namespace RemoteSoccer
             // draw throw preview
             foreach (var playerPair in gameState.players)
             {
-                if (playerPair.Value.Throwing && gameState.GameBall.OwnerOrNull == playerPair.Key)
+                if (gameState.GameBall.OwnerOrNull == playerPair.Key)
                 {
                     var toThrow = playerPair.Value.ProposedThrow;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
                     DrawLine(
