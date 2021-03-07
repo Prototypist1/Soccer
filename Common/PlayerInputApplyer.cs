@@ -713,7 +713,7 @@ namespace Common
                         }
                         else if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                         {
-                            player.ProposedThrow = player.ProposedThrow.NewAdded(new Vector(input.FootX, input.FootY).NewScaled(2));
+                            player.ProposedThrow = player.ProposedThrow.NewAdded(new Vector(input.FootX, input.FootY).NewScaled(.5));
 
                             if (player.ProposedThrow.Length > Constants.maxThrowPower)
                             {

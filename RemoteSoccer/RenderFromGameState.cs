@@ -282,8 +282,8 @@ namespace RemoteSoccer
             // draw throw preview
             foreach (var playerPair in gameState.players)
             {
-                if (gameState.GameBall.OwnerOrNull == playerPair.Key)
-                {
+                //if (gameState.GameBall.OwnerOrNull == playerPair.Key)
+                //{
                     var toThrow = playerPair.Value.ProposedThrow;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
                     DrawLine(
                         playerPair.Value.PlayerFoot.Position.x,
@@ -292,7 +292,7 @@ namespace RemoteSoccer
                         playerPair.Value.PlayerFoot.Position.y + (toThrow.y * 30),
                         Color.FromArgb(0xff, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
                         1 / scale);
-                }
+                //}
             }
 
             void DrawFilledCircle(double x, double y, double rad, Color color)
