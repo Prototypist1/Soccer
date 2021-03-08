@@ -71,14 +71,14 @@ namespace Common
         }
 
         // how hard do I have to throw it for a player to catch it at a given point
-        public static Vector RequiredThrow(Vector playerStart, Vector ballStart, Vector target)
-        {
+        //public static Vector RequiredThrow(Vector playerStart, Vector ballStart, Vector target)
+        //{
 
-            var playerTime = HowQuicklyCanAPlayerMove(target.NewAdded(playerStart.NewMinus()).Length);
-            var speed = HowHardToThrow(target.NewAdded(ballStart.NewMinus()).Length, playerTime);
+        //    var playerTime = HowQuicklyCanAPlayerMove(target.NewAdded(playerStart.NewMinus()).Length);
+        //    var speed = HowHardToThrow(target.NewAdded(ballStart.NewMinus()).Length, playerTime);
 
-            return target.NewAdded(ballStart.NewMinus()).NewUnitized().NewScaled(speed);
-        }
+        //    return target.NewAdded(ballStart.NewMinus()).NewUnitized().NewScaled(speed);
+        //}
 
         // assuming the player runs at max speed the whole time
         // and assuming the ball doesn't have friction
@@ -248,10 +248,10 @@ namespace Common
             return Math.Pow(boost * (3.0 / 2.0) / Constants.BoostConsumption, (2.0 / 3.0));
         }
 
-        public static double HowQuicklyCanAPlayerMove(double length)
-        {
-            return length / Constants.bodySpeedLimit;
-        }
+        //public static double HowQuicklyCanAPlayerMove(double length)
+        //{
+        //    return length / Constants.bodySpeedLimit;
+        //}
 
         public static double HowHardToThrow(double length, double time)
         {
@@ -280,9 +280,11 @@ namespace Common
             return DistancePlayerTravelsFromStop(time + t0) - DistancePlayerTravelsFromStop(t0);
         }
 
+        
+
         public static double DistancePlayerTravelsFromStop(double time)
         {
-            return time * Constants.bodyStartAt + (((time * Constants.EnergyAdd + 1) * Math.Log(time * Constants.EnergyAdd + 1) - time * Constants.EnergyAdd) / (Math.Log(2) * Constants.EnergyAdd));
+            return time * Constants.bodyStartAt + (((time * Constants.EnergyAdd + 1) * Math.Log(time * Constants.EnergyAdd + 1) - time * Constants.EnergyAdd) / (Math.Log(Constants.bodyEpo) * Constants.EnergyAdd));
         }
 
         private static double VtoE(double v)
@@ -304,7 +306,7 @@ namespace Common
 
             // we need something we can integrate so that we can estiamate how far a player can go
             var simpleV = Math.Max(0, v - Constants.bodyStartAt) + 1;
-            return Math.Pow(1.1,/*Math.E*/ simpleV);
+            return Math.Pow(Constants.bodyEpo,/*Math.E*/ simpleV);
         }
         private static double EtoV(double e)
         {
@@ -319,7 +321,7 @@ namespace Common
             //return Constants.bodyStartAt + ((e - Constants.bodyStartAt) * p1) + ((Constants.bodySpeedLimit - Constants.bodyStartAt) * p2);
             //}
 
-            return Math.Log(e, 1.1) - 1 + Constants.bodyStartAt;
+            return Math.Log(e, Constants.bodyEpo) - 1 + Constants.bodyStartAt;
         }
 
         private static double SpeedLimit2(double d)
@@ -421,26 +423,34 @@ namespace Common
                         if (input.ControlScheme == ControlScheme.MouseAndKeyboard)
                         {
                             var v = new Vector(player.PlayerBody.Velocity.x, player.PlayerBody.Velocity.y);
-                            var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY));
-                            var with = v.Dot(f) / f.Length;
-                            if (with <= 0)
+                            if (v.Length > 0)
                             {
-                                player.PlayerBody.Velocity = new Vector(0, 0);
-                            }
-                            else
-                            {
-                                var withVector = f.NewUnitized().NewScaled(with);
-                                var notWith = v.NewAdded(withVector.NewScaled(-1));
-                                var notWithScald = notWith.Length > withVector.Length ? notWith.NewUnitized().NewScaled(with) : notWith;
+                                var f = new Vector(Math.Sign(input.BodyX), Math.Sign(input.BodyY)).NewUnitized();
+                                var with = v.NewUnitized().Dot(f);
+                                if (with <= 0)
+                                {
+                                    player.PlayerBody.Velocity = new Vector(0, 0);
+                                }
+                                else
+                                {
+                                    var withVector = f.NewScaled(with * v.Length);
 
-                                player.PlayerBody.Velocity = new Vector(withVector.x + notWithScald.x, withVector.y + notWithScald.y);
+                                    //var notWith = v.Length - withVector.Length;
+                                    var notWith = v.NewAdded(withVector.NewScaled(-1));
+                                    // dont' crush stuff with in 45 degrees
+                                    var notWithScald = notWith.Length > withVector.Length ? notWith.NewScaled(with) : notWith;
+
+                                    player.PlayerBody.Velocity = withVector.NewAdded(notWithScald);
+
+                                    //player.PlayerBody.Velocity = f.NewScaled(withVector.Length + (notWith * Math.Sqrt(with)));//new Vector(withVector.x + notWithScald.x, withVector.y + notWithScald.y);
+                                }
                             }
 
-                            var damp = .98;
+                            var damp = .9;//.98;
 
                             var engeryAdd = /*player.Id == state.GameBall.OwnerOrNull ? Constants.EnergyAdd / 2.0 :*/ Constants.EnergyAdd;
 
-                            var R0 = EtoV(VtoE(Math.Sqrt(Math.Pow(player.PlayerBody.Velocity.x, 2) + Math.Pow(player.PlayerBody.Velocity.y, 2))) + engeryAdd);
+                            var R0 = EtoV(VtoE(player.PlayerBody.Velocity.Length) + engeryAdd);
                             var a = Math.Pow(Math.Sign(input.BodyX), 2) + Math.Pow(Math.Sign(input.BodyY), 2);
                             var b = 2 * ((Math.Sign(input.BodyX) * player.PlayerBody.Velocity.x * damp) + (Math.Sign(input.BodyY) * player.PlayerBody.Velocity.y * damp));
                             var c = Math.Pow(player.PlayerBody.Velocity.x * damp, 2) + Math.Pow(player.PlayerBody.Velocity.y * damp, 2) - Math.Pow(R0, 2);
