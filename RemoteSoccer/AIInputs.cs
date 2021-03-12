@@ -18,8 +18,7 @@ namespace RemoteSoccer
     {
 
         const double Unit = 5000;
-        private int playerLag = 30;
-        private const int throwCountdown = 10;
+        private int playerLag = 0;
         private static Random r = new Random();
         private readonly IReadOnlyDictionary<Guid, AITeamMember> team;
         private readonly GameState gameState;
@@ -479,8 +478,8 @@ namespace RemoteSoccer
                 if (gameState.GameBall.Posistion.NewAdded(GoalTheyScoreOn().NewMinus()).Length > gameState.GameBall.Posistion.NewAdded(GoalWeScoreOn().NewMinus()).Length) {
                     var dump =
                     toAssign
-                        .Select(pair => (pair, value: DumpEvaluator(gameState.players[pair.Key].PlayerBody.Position, pair.Key)))
-                        .OrderByDescending(x => x.value)
+                        .Select(pair => (pair, value: gameState.players[pair.Key].PlayerBody.Position.NewAdded(GoalTheyScoreOn().NewMinus()).Length))
+                        .OrderBy(x => x.value)
                         .First()
                         .pair;
 
@@ -614,7 +613,7 @@ namespace RemoteSoccer
             }
 
             // don't get too far from the ball
-            res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 20, Unit * 10);
+            res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 20, Unit * 10);
 
             return res;
         }
@@ -841,7 +840,7 @@ namespace RemoteSoccer
             }
 
 
-            res -= TowardsWithOut(position, gameState.GameBall.Posistion, 4, Unit * 15);
+            res -= AwayWithOut(position, gameState.GameBall.Posistion, 4, Unit * 15);
             //foreach (var player in gameState.players.Where(x => team.ContainsKey(x.Key)))
             //{
             //    res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 1, Unit* 5);
@@ -863,21 +862,40 @@ namespace RemoteSoccer
 
 
 
+
+        // I get it 
+        // when a play is in a sandwich
+        // the op in front and the op behind cancel
+        // and they just run towards the other goal
         private double HasBallEvaluator(Vector position)
         {
             var res = 0.0;
             // don't go near the other team
             foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key)))
             {
-                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 4, Unit* 3);
+                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 3, Unit* 4);
+                res -= TowardsWithIn(position, player.Value.PlayerBody.Position, 2, Unit * 6);
             }
 
-            // go to the goal
-            res += Towards(position, GoalWeScoreOn(), 2);
-            res += TowardsWithIn(position, GoalWeScoreOn(), 10, Constants.goalLen);
-            // dont go in your own goal
-            res -= TowardsWithIn(position, GoalTheyScoreOn(), 2, Unit * 15);
-            res -= TowardsWithIn(position, GoalTheyScoreOn(), 6, Constants.goalLen + Unit*2);
+
+            res += Towards(position, GoalWeScoreOn(), 1);
+
+            var lenHome = gameState.GameBall.Posistion.NewAdded(GoalTheyScoreOn().NewMinus()).Length;
+            var lenGoal = gameState.GameBall.Posistion.NewAdded(GoalWeScoreOn().NewMinus()).Length;
+            if (lenHome > lenGoal)
+            {
+                // dont go away from the goal
+                res -= AwayWithOut(position, GoalWeScoreOn(), 3, lenGoal);
+                // score if you can
+                res += TowardsWithIn(position, GoalWeScoreOn(), 10, Constants.goalLen);
+            }
+            else
+            {
+                // don't go towards your goal
+                res -= TowardsWithIn(position, GoalTheyScoreOn(), 3, lenHome);
+                // really don't self goal
+                res -= TowardsWithIn(position, GoalTheyScoreOn(), 6, Constants.goalLen + Unit * 3);
+            }
 
             return res;
         }
@@ -899,12 +917,17 @@ namespace RemoteSoccer
             }
 
             // don't get too far from the ball
-            res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 20, Unit * 12);
+            res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 20, Unit * 12);
 
             // we like to be in the line between our goal and the ball
             // we are going to fall back to being the goalie
-            res += Towards(myPosition, gameState.GameBall.Posistion, .1);
-            res += Towards(myPosition, GoalTheyScoreOn(), .1);
+            //res += Towards(myPosition, gameState.GameBall.Posistion, 2);
+
+
+            res -= Towards1D(myPosition.y, fieldDimensions.yMax * 1.0 / 3.0, 1);
+            res -= Towards1D(myPosition.y, fieldDimensions.yMax * 2.0/ 3.0, 1);
+            res -= Towards1D(myPosition.x, gameState.GameBall.Posistion.x , 1);
+            res -= Towards1D(myPosition.x, gameState.GameBall.Posistion.x + 2* Unit* Math.Sign(GoalTheyScoreOn().x - gameState.GameBall.Posistion.x), 1);
 
             return res;
         }
@@ -940,8 +963,8 @@ namespace RemoteSoccer
                 //}
 
                 // don't get too far from the ball
-                res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 1, Unit * 9);
-                res -= TowardsWithOut(myPosition, gameState.GameBall.Posistion, 4, Unit * 12);
+                res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 1, Unit * 9);
+                res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 4, Unit * 12);
 
                 // don't get too close to the ball
                 res -= TowardsWithIn(myPosition, gameState.GameBall.Posistion, .5, Unit * 3);
@@ -1063,6 +1086,10 @@ namespace RemoteSoccer
             return new Vector(0, 0);
         }
 
+        private double Towards1D(double at, double target, double scale) {
+            return -Math.Abs(at - target)*scale;
+        }
+
         private double Towards(Vector us, Vector them, double scale)
         {
             var startWith = them.NewAdded(us.NewMinus());
@@ -1095,7 +1122,7 @@ namespace RemoteSoccer
         }
 
 
-        private double TowardsWithOut(Vector us, Vector them, double scale, double whenWithOut)
+        private double AwayWithOut(Vector us, Vector them, double scale, double whenWithOut)
         {
 
             var startWith = them.NewAdded(us.NewMinus());

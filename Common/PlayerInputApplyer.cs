@@ -106,7 +106,7 @@ namespace Common
                 playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
             }
 
-            var at = 2.0;
+            var at = 1.0;
 
             while (true) {
                 var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
@@ -119,7 +119,7 @@ namespace Common
                 var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;
                 if (dissToBall > dissTravelled)
                 {
-                    at += 20;
+                    at += 5;
                 }
                 else
                 {
@@ -127,28 +127,28 @@ namespace Common
                 }
             }
             
-            var rate = at*.5;
-            for (; rate >= 1; rate *= .5)
-            {
-                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
-                if (ballVelocity.Length > 0)
-                {
-                    dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
-                }
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;
-                if (dissToBall == dissTravelled)
-                {
-                    return at;
-                }
-                if (dissToBall > dissTravelled)
-                {
-                    at += rate;
-                }
-                else
-                {
-                    at -= rate;
-                }
-            }
+            //var rate = at*.5;
+            //for (; rate >= 1; rate *= .5)
+            //{
+            //    var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+            //    if (ballVelocity.Length > 0)
+            //    {
+            //        dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
+            //    }
+            //    var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;
+            //    if (dissToBall == dissTravelled)
+            //    {
+            //        return at;
+            //    }
+            //    if (dissToBall > dissTravelled)
+            //    {
+            //        at += rate;
+            //    }
+            //    else
+            //    {
+            //        at -= rate;
+            //    }
+            //}
             return at;
         }
 
@@ -171,7 +171,7 @@ namespace Common
                 playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
             }
 
-            var at = 2.0;
+            var at = 1.0;
 
             while (true)
             {
@@ -183,7 +183,7 @@ namespace Common
                 var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at);// + HowFarCanIBoost(boost);
                 if (dissToBall > dissTravelled)
                 {
-                    at += 20;
+                    at += 5;
                 }
                 else
                 {
@@ -191,28 +191,28 @@ namespace Common
                 }
             }
 
-            var rate = at * .5;
-            for (; rate >= 1; rate *= .5)
-            {
-                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
-                if (ballVelocity.Length > 0)
-                {
-                    dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
-                }
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at);// + HowFarCanIBoost(boost);
-                if (dissToBall == dissTravelled)
-                {
-                    return ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).NewUnitized();
-                }
-                if (dissToBall > dissTravelled)
-                {
-                    at += rate;
-                }
-                else
-                {
-                    at -= rate;
-                }
-            }
+            //var rate = at * .5;
+            //for (; rate >= 1; rate *= .5)
+            //{
+            //    var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+            //    if (ballVelocity.Length > 0)
+            //    {
+            //        dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
+            //    }
+            //    var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at);// + HowFarCanIBoost(boost);
+            //    if (dissToBall == dissTravelled)
+            //    {
+            //        return ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).NewUnitized();
+            //    }
+            //    if (dissToBall > dissTravelled)
+            //    {
+            //        at += rate;
+            //    }
+            //    else
+            //    {
+            //        at -= rate;
+            //    }
+            //}
             if (ballVelocity.Length > 0)
             {
                 return ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).NewUnitized();
