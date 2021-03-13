@@ -18,7 +18,7 @@ namespace RemoteSoccer
     {
 
         const double Unit = 5000;
-        private int playerLag = 0;
+        private int playerLag = 30;
         private static Random r = new Random();
         private readonly IReadOnlyDictionary<Guid, AITeamMember> team;
         private readonly GameState gameState;

@@ -213,10 +213,28 @@ namespace RemoteSoccer
                     //    await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00, 0xff });
                     //}
 
+
+                    //https://stackoverflow.com/questions/48997243/uwp-gamepad-gamepads-is-empty-even-though-a-controller-is-connected
+                    var x = 0;
+                    while (Gamepad.Gamepads.Count == 0 || x < 10) {
+                        await Task.Delay(100);
+                        x++;
+                    }
+
+
+                    var gps = Gamepad.Gamepads.ToArray();
+                    foreach (var (gamePad, key) in gps.Zip(ourTeam.Take(gps.Length),(x,y)=>(x,y)))
+                    {
+                        var body = key;// Guid.NewGuid();
+                        var inputs = CreateController(gamePad, body);
+                        await inputs.Init();
+                        await CreatePlayer(body, inputs);
+                    }
+
                     {
                         var team = new AITeam(game.gameState, ourTeam, fieldDimensions, false);
 
-                        foreach (var (key, input) in team.GetPlayers())//.Skip(1)
+                        foreach (var (key, input) in team.GetPlayers().Skip(gps.Length))
                         {
                             await input.Init();
                             await CreatePlayer(key, input, new byte[3] { 0x00, 0x00, 0xff });
@@ -235,16 +253,9 @@ namespace RemoteSoccer
                         }
                     }
 
-                    foreach (var gamePad in Windows.Gaming.Input.Gamepad.Gamepads)
-                    {
-                        var body = Guid.NewGuid();
-                        var inputs = CreateController(gamePad, body);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs);
-                    }
 
-                    Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
-                    Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
+                    //Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
+                    //Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
 
                     MainLoop();
                 }
@@ -297,7 +308,7 @@ namespace RemoteSoccer
             () =>
             {
                 var color = GetColor();
-                game.UpdatePlayer(new UpdatePlayerEvent(body, "", BodyA, color[0], color[1], color[2], 0xff, color[0], color[1], color[2]));
+                game.UpdatePlayer(new UpdatePlayerEvent(body, "", BodyA, 0x00, color[1], 0xff , 0xff, 0x00, color[1], 0xff ));
             });
             return inputs;
         }
