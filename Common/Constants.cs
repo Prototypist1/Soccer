@@ -32,7 +32,7 @@ namespace Common
         //public const double MimimunThrowingSpped = 150;
 
         public const double MinPlayerCollisionForce = 100;//= 600;
-        public const double ExtraBallTakeForce = 100;//= 1000;
+        public const double ExtraBallTakeForce = 400;//= 1000;
         public const double BallTakeForce = 200;
 
 
@@ -46,20 +46,20 @@ namespace Common
         // fastest you can move your foot
         public const double speedLimit = 1000;//2000;//3000;
         // firction on the ball
-        public const double FrictionDenom = 100;
+        public const double FrictionDenom = 150;
         public const int bodyStartAt = 250;
         public const double bodyEpo = 1.015;
         //public const int bodySpeedLimit = 500;
         public const int BoostSpread = 3;
         public const double ThrowScale = .12;
-        public const double maxThrowPower = 1200;
+        public const double maxThrowPower = 1600;
         public const double BoostConsumption = .0000015;
         public const double BoostFade = .5;
 
 
 
         public static Guid NoMove = Guid.Empty;
-
+        public const double ExternalVelocityFriction = .96;
         public const double ExtraBoostCost = 1;
     }
 }

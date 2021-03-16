@@ -365,7 +365,7 @@ namespace Common
             // loop over the players and update them
             foreach (var player in state.players.Values)
             {
-                player.ExternalVelocity = player.ExternalVelocity.NewScaled(.95);
+                player.ExternalVelocity = player.ExternalVelocity.NewScaled(Constants.ExternalVelocityFriction);
 
                 //if (state.Frame % 90 == 0) {
                 player.Boosts = Math.Min(3, Math.Max(player.Boosts + 1.0 / 90.0, -1));
@@ -522,9 +522,9 @@ namespace Common
                     }
 
 
-                    var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
+                    //var max = Constants.footLen - Constants.PlayerRadius;// - Constants.PlayerRadius;
 
-                    if (!input.Throw)
+                    if (!input.Throw || input.ControlScheme == ControlScheme.Controller)
                     {
 
 
@@ -552,7 +552,7 @@ namespace Common
                         else if (input.ControlScheme == ControlScheme.Controller)
                         {
 
-                            var move = new Vector(input.FootX, input.FootY);
+                            var move = new Vector(input.BodyX, input.BodyY);
                             if (move.Length > 1)
                             {
                                 move = move.NewUnitized();

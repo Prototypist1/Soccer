@@ -9,16 +9,12 @@ using System.Threading.Tasks;
 
 namespace RemoteSoccer
 {
-    class Test
-    {
-
-    }
 
     class AITeam
     {
 
-        const double Unit = 5000;
-        private int playerLag = 30;
+        const double Unit = 5_000;
+        private int playerLag = 0;
         private static Random r = new Random();
         private readonly IReadOnlyDictionary<Guid, AITeamMember> team;
         private readonly GameState gameState;
@@ -689,15 +685,16 @@ namespace RemoteSoccer
             return toAssign.Except(new[] { getTheBall.pair }).ToArray();
         }
 
-        private KeyValuePair<Guid, AITeamMember>[] Goalie(KeyValuePair<Guid, AITeamMember>[] toAssign, Dictionary<Guid,PlayerInputs> inputs)
+        private KeyValuePair<Guid, AITeamMember>[] Goalie(KeyValuePair<Guid, AITeamMember>[] toAssign, Dictionary<Guid, PlayerInputs> inputs)
         {
             var goalie = toAssign
                 .Select(pair => (pair, gameState.players[pair.Key].PlayerBody.Position.NewAdded(GoalTheyScoreOn().NewMinus()).Length))
                 .OrderBy(pair => pair.Length)
                 .First();
 
+
             var goalieGenerators = GetPositionGenerators(goalie.pair.Key)
-                .Select(pos => (generator: pos.generator, score: GoalieEvaluator(pos.pos, goalie.pair.Key), pos.pos))
+                .Select(pos => new { generator = pos.generator, score = GoalieEvaluator(pos.pos, goalie.pair.Key), pos = pos.pos})
                 .OrderByDescending(pair => pair.score)
                 .ToList();
 
@@ -770,7 +767,10 @@ namespace RemoteSoccer
 
             var random = new int[100]
                 .Select(_ => RandomVector().NewScaled(Constants.goalLen * r.NextDouble()))
-                .Select(vec => (Func<GameState, Vector>)( _ => vec))
+                .Select(vec => {
+                    var x = vec;
+                    return (Func<GameState, Vector>)(_ => x); 
+                })
                 // without this all of these have different values but the same value
                 // like they are getting rolled, evaluated and then pos: prospect is being overwritten by the next now
                 .ToArray();
@@ -1038,16 +1038,31 @@ namespace RemoteSoccer
 
         private double GetTheBallEvaluator(Vector position)
         {
-            return Towards(position, gameState.GameBall.Posistion, 4);
+
+            var res = 0.0;
+
+            res += Towards(position, gameState.GameBall.Posistion, 4);
+
+            res += Towards(position, GoalTheyScoreOn(), 2);
+
+            res -= AwayWithOut(position, GoalTheyScoreOn(), 2, Unit * 20);
+            
+            return res;
         }
 
         private Func<Vector, double> GuardPlayerEvaluator(Guid playerId) => (Vector position) =>
         {
+            var res = 0.0;
+
             if (gameState.players.TryGetValue(playerId, out var player))
             {
-                return Towards(position, player.PlayerBody.Position, 4);
+                res +=  Towards(position, player.PlayerBody.Position, 4);
+
+                res += Towards(position, GoalTheyScoreOn(), 2);
+
+                res -= AwayWithOut(position, GoalTheyScoreOn(), 2, Unit * 20);
             }
-            return 0;
+            return res;
         };
 
 

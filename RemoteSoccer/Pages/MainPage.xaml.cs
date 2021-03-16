@@ -308,7 +308,7 @@ namespace RemoteSoccer
             () =>
             {
                 var color = GetColor();
-                game.UpdatePlayer(new UpdatePlayerEvent(body, "", BodyA, 0x00, color[1], 0xff , 0xff, 0x00, color[1], 0xff ));
+                game.UpdatePlayer(new UpdatePlayerEvent(body, "", BodyA, color[0], color[1], color[2], 0xff, color[0], color[1], color[2]));
             });
             return inputs;
         }
