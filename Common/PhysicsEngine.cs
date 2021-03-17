@@ -187,9 +187,14 @@ namespace physics2
                                     p1.Mass,
                                     p2.Mass);
 
+
+
                                 var normal = p1.PlayerFoot.Position.NewAdded(p2.PlayerFoot.Position.NewMinus()).NewUnitized();
 
-                                double part1, part2;
+                                p2.ExternalVelocity = p2.ExternalVelocity.NewAdded(force);
+                                p1.ExternalVelocity = p1.ExternalVelocity.NewAdded(force.NewMinus());
+
+                                //double part1, part2;
 
                                 //if (gameState.GameBall.OwnerOrNull == p1.Id)
                                 //{
@@ -205,67 +210,70 @@ namespace physics2
                                 //}
                                 //else
                                 //{
-                                    var velocityVector1 = p1.PlayerFoot.Velocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.ExternalVelocity).NewAdded(p1.BoostVelocity);
-                                    var velocityVector2 = p2.PlayerFoot.Velocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.ExternalVelocity).NewAdded(p2.BoostVelocity);
+                                //var velocityVector1 = p1.PlayerFoot.Velocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.ExternalVelocity).NewAdded(p1.BoostVelocity);
+                                //var velocityVector2 = p2.PlayerFoot.Velocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.ExternalVelocity).NewAdded(p2.BoostVelocity);
 
-                                    var denom = velocityVector1.NewMinus().NewAdded(velocityVector2).Dot(normal);
+                                //var denom = velocityVector1.NewMinus().NewAdded(velocityVector2).Dot(normal);
 
-                                    var vv1dot = velocityVector1.Dot(normal.NewMinus());
-                                    var vv2dot = velocityVector2.Dot(normal);
+                                //var vv1dot = velocityVector1.Dot(normal.NewMinus());
+                                //var vv2dot = velocityVector2.Dot(normal);
 
-                                    part1 = Math.Min(1, Math.Max(-1, (vv2dot / denom) - (vv1dot / denom)));
-                                    part2 = -part1;
+                                //part1 = Math.Min(1, Math.Max(-1, (vv2dot / denom) - (vv1dot / denom)));
+                                //part2 = -part1;
                                 //}
 
 
-                                var forceForP1 = force.NewScaled(-(1 + part1) / p1.Mass);
-                                if (p1.PlayerBody.Velocity.Dot(forceForP1) < 0)
-                                {
-                                    var remove = forceForP1.NewUnitized().NewScaled(p1.PlayerBody.Velocity.Dot(forceForP1.NewMinus().NewUnitized()));
+                                //var forceForP1 = force.NewScaled(-(1 + part1) / p1.Mass);
+                                //if (p1.PlayerBody.Velocity.Dot(forceForP1) < 0)
+                                //{
+                                //    var remove = forceForP1.NewUnitized().NewScaled(p1.PlayerBody.Velocity.Dot(forceForP1.NewMinus().NewUnitized()));
 
-                                    if (remove.Length >= forceForP1.Length)
-                                    {
-                                        remove = remove.NewUnitized().NewScaled(forceForP1.Length);
-                                    }
+                                //    if (remove.Length >= forceForP1.Length)
+                                //    {
+                                //        remove = remove.NewUnitized().NewScaled(forceForP1.Length);
+                                //    }
 
-                                    p1.PlayerBody.Velocity = p1.PlayerBody.Velocity.NewAdded(remove);
+                                //    p1.PlayerBody.Velocity = p1.PlayerBody.Velocity.NewAdded(remove);
 
-                                    forceForP1 = forceForP1.NewUnitized().NewScaled(forceForP1.Length - remove.Length);
-                                }
-                                p1.ExternalVelocity = p1.ExternalVelocity.NewAdded(forceForP1);
+                                //    forceForP1 = forceForP1.NewUnitized().NewScaled(forceForP1.Length - remove.Length);
+                                //}
+                                //p1.ExternalVelocity = p1.ExternalVelocity.NewAdded(forceForP1);
 
 
-                                var forceForP2 = force.NewScaled((1 + part2) / p2.Mass);
-                                if (p2.PlayerBody.Velocity.Dot(forceForP2) < 0)
-                                {
-                                    var remove = forceForP2.NewUnitized().NewScaled(p2.PlayerBody.Velocity.Dot(forceForP2.NewMinus().NewUnitized()));
+                                //var forceForP2 = force.NewScaled((1 + part2) / p2.Mass);
+                                //if (p2.PlayerBody.Velocity.Dot(forceForP2) < 0)
+                                //{
+                                //    var remove = forceForP2.NewUnitized().NewScaled(p2.PlayerBody.Velocity.Dot(forceForP2.NewMinus().NewUnitized()));
 
-                                    if (remove.Length >= forceForP2.Length)
-                                    {
-                                        remove = remove.NewUnitized().NewScaled(forceForP2.Length);
-                                    }
+                                //    if (remove.Length >= forceForP2.Length)
+                                //    {
+                                //        remove = remove.NewUnitized().NewScaled(forceForP2.Length);
+                                //    }
 
-                                    p2.PlayerBody.Velocity = p2.PlayerBody.Velocity.NewAdded(remove);
+                                //    p2.PlayerBody.Velocity = p2.PlayerBody.Velocity.NewAdded(remove);
 
-                                    forceForP2 = forceForP2.NewUnitized().NewScaled(forceForP2.Length - remove.Length);
-                                }
-                                p2.ExternalVelocity = p2.ExternalVelocity.NewAdded(forceForP2);
+                                //    forceForP2 = forceForP2.NewUnitized().NewScaled(forceForP2.Length - remove.Length);
+                                //}
+                                //p2.ExternalVelocity = p2.ExternalVelocity.NewAdded(forceForP2);
 
                                 if (gameState.GameBall.OwnerOrNull == p1.Id && force.Length > Constants.BallTakeForce)
                                 {
-                                    gameState.GameBall.OwnerOrNull = p2.Id;
-                                    gameState.GameBall.Posistion = p2.PlayerFoot.Position;
-                                    gameState.GameBall.Velocity = p2.ExternalVelocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.PlayerFoot.Velocity).NewAdded(p2.BoostVelocity);
 
-                                    p1.PlayerBody.Velocity = p1.PlayerBody.Velocity.NewScaled(.5);
+                                    gameState.GameBall.OwnerOrNull = null;
+                                    //gameState.GameBall.OwnerOrNull = p2.Id;
+                                    //gameState.GameBall.Posistion = p2.PlayerFoot.Position;
+                                    //gameState.GameBall.Velocity = p2.ExternalVelocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.PlayerFoot.Velocity).NewAdded(p2.BoostVelocity);
+
+                                    //p1.PlayerBody.Velocity = p1.PlayerBody.Velocity.NewScaled(.5);
                                 }
                                 else if (gameState.GameBall.OwnerOrNull == p2.Id && force.Length > Constants.BallTakeForce)
                                 {
-                                    gameState.GameBall.OwnerOrNull = p1.Id;
-                                    gameState.GameBall.Posistion = p1.PlayerFoot.Position;
-                                    gameState.GameBall.Velocity = p1.ExternalVelocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.PlayerFoot.Velocity).NewAdded(p1.BoostVelocity);
+                                    gameState.GameBall.OwnerOrNull = null;
+                                    //gameState.GameBall.OwnerOrNull = p1.Id;
+                                    //gameState.GameBall.Posistion = p1.PlayerFoot.Position;
+                                    //gameState.GameBall.Velocity = p1.ExternalVelocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.PlayerFoot.Velocity).NewAdded(p1.BoostVelocity);
 
-                                    p2.PlayerBody.Velocity = p2.PlayerBody.Velocity.NewScaled(.5);
+                                    //p2.PlayerBody.Velocity = p2.PlayerBody.Velocity.NewScaled(.5);
                                 }
 
                                 var collisionLocation = p2.PlayerFoot.Position.NewAdded(normal.NewScaled(Constants.PlayerRadius));

@@ -1,0 +1,26 @@
+﻿cutting isn't right
+	- it should be a game of fakes
+		- harder to change direction?
+	- in a real game it really matters how hard you cut
+		- if you are all in, it is hard to change direction
+		- some sort of sprint?
+	- a small lead grows 
+	- different energy speed curve? more linnear?
+	- just make it all way faster?
+	- a little harder to stop at high speeds?
+
+diving still isn't right
+	- the cost of boost is too uninitive
+		- boost is free in a radius around your body, if you would leave this radious you spend boost and drag your body behind
+			- in that case how does throwing work??
+				- I guess you can't pre aim
+	- I think the every consumption thing isn't right
+		- lots of little expendatures should be okish
+			- there is probably some buffer, you don't boost until you are a certain distance youside you your bubble
+		- maybe you should slide a bit after boosting
+
+maybe you can charge up throwing?
+
+my AI is still dumb as shit, it should consider different throw lengths and thow throught it's own goal
+
+I want there to be throws a tightly guarded player, with offence only having a tiny lead. both players dive and offense instantly kicks so as not to loose the ball

@@ -216,7 +216,8 @@ namespace RemoteSoccer
 
                     //https://stackoverflow.com/questions/48997243/uwp-gamepad-gamepads-is-empty-even-though-a-controller-is-connected
                     var x = 0;
-                    while (Gamepad.Gamepads.Count == 0 || x < 10) {
+                    while (x < 10) {
+                        var db = Gamepad.Gamepads.Count;
                         await Task.Delay(100);
                         x++;
                     }

@@ -47,8 +47,8 @@ namespace Common
         public const double speedLimit = 1000;//2000;//3000;
         // firction on the ball
         public const double FrictionDenom = 150;
-        public const int bodyStartAt = 250;
-        public const double bodyEpo = 1.015;
+        public const int bodyStartAt = 300;//250;
+        public const double bodyEpo = 1.01;//1.015;
         //public const int bodySpeedLimit = 500;
         public const int BoostSpread = 3;
         public const double ThrowScale = .12;

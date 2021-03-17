@@ -14,7 +14,7 @@ namespace RemoteSoccer
     {
 
         const double Unit = 5_000;
-        private int playerLag = 0;
+        private int playerLag = 30;
         private static Random r = new Random();
         private readonly IReadOnlyDictionary<Guid, AITeamMember> team;
         private readonly GameState gameState;
@@ -755,7 +755,10 @@ namespace RemoteSoccer
 
             var getOtherPlayers = gameState.players
                 .Where(x => !team.ContainsKey(x.Key))
-                .Select(x => (Func<GameState, Vector>)((GameState gs) => gs.players[x.Key].PlayerBody.Position.NewAdded(gs.players[self].PlayerBody.Position.NewMinus())));
+                .Select(x => {
+                    var localX = x;
+                    return (Func<GameState, Vector>)((GameState gs) => gs.players[localX.Key].PlayerBody.Position.NewAdded(gs.players[self].PlayerBody.Position.NewMinus()));
+                });
 
             var getBall = new[] {
                 (Func<GameState, Vector>)((GameState gs) => gs.GameBall.Posistion.NewAdded(gs.players[self].PlayerBody.Position.NewMinus()))
@@ -768,11 +771,12 @@ namespace RemoteSoccer
             var random = new int[100]
                 .Select(_ => RandomVector().NewScaled(Constants.goalLen * r.NextDouble()))
                 .Select(vec => {
+                    // something weird with closures here
+                    // sometimes these all ending returning the same thing
+                    // but only sometimes
                     var x = vec;
                     return (Func<GameState, Vector>)(_ => x); 
                 })
-                // without this all of these have different values but the same value
-                // like they are getting rolled, evaluated and then pos: prospect is being overwritten by the next now
                 .ToArray();
 
             var res = random
@@ -960,15 +964,15 @@ namespace RemoteSoccer
                 // stay away from your teammates
                 foreach (var player in gameState.players.Where(x => team.ContainsKey(x.Key) && x.Key != self && x.Key != gameState.GameBall.OwnerOrNull))
                 {
-                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 2, Unit * 4);
+                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 2, Unit * 8);
                 }
 
                 // don't get too close to the other teams players
-                //foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key)))
-                //{
-                //    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Unit * 6);
+                foreach (var player in gameState.players.Where(x => !team.ContainsKey(x.Key)))
+                {
+                    res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 1, Unit * 6);
                     //res -= TowardsWithIn(myPosition, player.Value.PlayerBody.Position, 3, Unit * .5);
-                //}
+                }
 
                 // don't get too far from the ball
                 res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 1, Unit * 9);
@@ -1045,7 +1049,7 @@ namespace RemoteSoccer
 
             res += Towards(position, GoalTheyScoreOn(), 2);
 
-            res -= AwayWithOut(position, GoalTheyScoreOn(), 2, Unit * 20);
+            res -= AwayWithOut(position, GoalTheyScoreOn(), 2, Unit * 30);
             
             return res;
         }
@@ -1060,7 +1064,7 @@ namespace RemoteSoccer
 
                 res += Towards(position, GoalTheyScoreOn(), 2);
 
-                res -= AwayWithOut(position, GoalTheyScoreOn(), 2, Unit * 20);
+                res -= AwayWithOut(position, GoalTheyScoreOn(), 2, Unit * 30);
             }
             return res;
         };
