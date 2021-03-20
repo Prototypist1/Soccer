@@ -83,7 +83,7 @@ namespace RemoteSoccer
                     {
                         Update();
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                     }
                     finally
@@ -975,7 +975,7 @@ namespace RemoteSoccer
         private Lazy<Vector[]> throwOffsets = new Lazy<Vector[]>(() =>
         {
             // this isn't a good random for a circle. it perfers pie/4 to pie/2
-            return new int[500].Select(_ => RandomVector().NewScaled(Unit * 6 * r.NextDouble())).ToArray();
+            return new int[50].Select(_ => RandomVector().NewScaled(Unit * 6 * r.NextDouble())).ToArray();
         });
 
         private Lazy<Vector[]> cutOffsets = new Lazy<Vector[]>(() =>

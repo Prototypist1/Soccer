@@ -565,7 +565,7 @@ namespace Common
                         var move = new Vector(input.FootX, input.FootY);//.NewScaled(1.0 / Constants.BoostSpread);
 
                         var totallyToAdd = drag.residual.NewAdded(move);
-                        if (totallyToAdd.Length > Constants.speedLimit)
+                        if (totallyToAdd.Length > Constants.speedLimit && input.Boost != Constants.NoMove)
                         {
                             while (totallyToAdd.Length > Constants.speedLimit)
                             {
@@ -577,6 +577,10 @@ namespace Common
                         }
                         else
                         {
+                            if (move.Length > Constants.speedLimit)
+                            {
+                                move = move.NewUnitized().NewScaled(Constants.speedLimit);
+                            }
                             drag.moves.Add(move);
                             drag.residual = new Vector(0, 0);
                         }
