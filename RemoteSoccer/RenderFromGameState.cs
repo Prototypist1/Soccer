@@ -144,10 +144,10 @@ namespace RemoteSoccer
                 gameState.RightGoal.Posistion.x, gameState.RightGoal.Posistion.y, Constants.goalLen, Color.FromArgb(0xff, 0xff, 0xff, 0xff));
 
             // players bodies
-            //foreach (var playerPair in gameState.players)
-            //{
-            //    DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
-            //}
+            foreach (var playerPair in gameState.players)
+            {
+                DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
+            }
 
             // draw number of boosts
             foreach (var playerPair in gameState.players)

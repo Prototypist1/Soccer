@@ -191,6 +191,11 @@ namespace physics2
 
                                 var normal = p1.PlayerFoot.Position.NewAdded(p2.PlayerFoot.Position.NewMinus()).NewUnitized();
 
+                                if ((gameState.GameBall.OwnerOrNull == p1.Id || gameState.GameBall.OwnerOrNull == p2.Id) && force.Length > Constants.BallTakeForce)
+                                {
+                                    force = force.NewAdded(force.NewUnitized().NewScaled(Constants.ExtraBallTakeForce));
+                                }
+
                                 p2.ExternalVelocity = p2.ExternalVelocity.NewAdded(force);
                                 p1.ExternalVelocity = p1.ExternalVelocity.NewAdded(force.NewMinus());
 

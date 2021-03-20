@@ -20,9 +20,9 @@ namespace Common
 
         public const double goalLen = 10000;
         public const double ballWallLen = 15_000;
-        public const double footLen = 750;//6000;//
-        public const int PlayerRadius = 1400;//;750 ;//750;//750;// 500;//300;
-        public const int BallRadius = 1100;//500;//150;//250;//30;//
+        public const int PlayerRadius = 2000;//1400;//;750 ;//750;//750;// 500;//300;
+        public const double footLen = PlayerRadius * 3;//6000;//
+        public const int BallRadius = 1600;//1100;//500;//150;//250;//30;//
         public const double BallMass = 1;
 
         //public const double speedLimit = 500;
@@ -44,7 +44,7 @@ namespace Common
         //public const double Add = 100;
         //public const double ToThe = 2;//1.9;
         // fastest you can move your foot
-        public const double speedLimit = 1000;//2000;//3000;
+        public const double speedLimit = 800;//;1000;//2000;//3000;
         // firction on the ball
         public const double FrictionDenom = 150;
         public const int bodyStartAt = 300;//250;
@@ -53,7 +53,7 @@ namespace Common
         public const int BoostSpread = 3;
         public const double ThrowScale = .12;
         public const double maxThrowPower = 1600;
-        public const double BoostConsumption = .0000015;
+        public const double BoostConsumption = .0001;
         public const double BoostFade = .5;
 
 

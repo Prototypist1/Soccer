@@ -64,7 +64,7 @@ namespace RemoteSoccer
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private const int BodyA = 0x40;
+        private const int BodyA = 0x10;
         //RenderGameEvents rge;
 
         private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
