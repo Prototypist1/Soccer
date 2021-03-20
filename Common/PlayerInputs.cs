@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Common
 {
 
-    public struct ObjectForce {
+    public struct ObjectForce
+    {
         public double fx;
         public double fy;
         public Guid id;
@@ -18,7 +17,8 @@ namespace Common
         }
     }
 
-    public enum ControlScheme { 
+    public enum ControlScheme
+    {
         MouseAndKeyboard,
         SipmleMouse,
         Controller,

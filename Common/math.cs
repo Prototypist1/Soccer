@@ -1,9 +1,5 @@
 ﻿using Common;
-using physics2;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Physics2
 {
@@ -91,7 +87,8 @@ namespace Physics2
             return vf != v;
         }
 
-        internal static bool TryBallBallCollistion(Vector position1, Vector position2, Vector velocity1, Vector velocity2, double combinedRadious, out double timeOfCollision) {
+        internal static bool TryBallBallCollistion(Vector position1, Vector position2, Vector velocity1, Vector velocity2, double combinedRadious, out double timeOfCollision)
+        {
             // how  are they moving relitive to us
             double DVX = velocity2.x - velocity1.x,
                    DVY = velocity2.y - velocity1.y;
@@ -103,7 +100,8 @@ namespace Physics2
             var D = new Vector(DX, DY);
 
             // uhhh 
-            if (D.Length == 0) {
+            if (D.Length == 0)
+            {
                 timeOfCollision = -1;
                 return false;
             }
@@ -122,7 +120,8 @@ namespace Physics2
             var B = 2 * ((DX * DVX) + (DY * DVY));
             var C = (DX * DX) + (DY * DY) - (R * R);
 
-            if (TrySolveQuadratic(A, B, C, out var time)) {
+            if (TrySolveQuadratic(A, B, C, out var time))
+            {
 
                 timeOfCollision = time;
                 return true;
@@ -133,11 +132,13 @@ namespace Physics2
         }
 
 
-        public static Vector DirectionalUnit(Vector start, Vector end) {
+        public static Vector DirectionalUnit(Vector start, Vector end)
+        {
             return end.NewAdded(start.NewMinus()).NewUnitized();
         }
 
-        public static Vector NormalUnit(Vector start, Vector end, Vector directionalUnit) {
+        public static Vector NormalUnit(Vector start, Vector end, Vector directionalUnit)
+        {
 
             return new Vector(-directionalUnit.y, directionalUnit.x);
         }
@@ -245,7 +246,7 @@ namespace Physics2
                     lineCenter.NewAdded(wallVelocity.NewScaled(time)).Dot(directionalUnit);
 
 
-                    if ( Math.Abs(directionDistance) < lineLength * .5)
+                    if (Math.Abs(directionDistance) < lineLength * .5)
                     {
                         timeOfCollision = time;
                         return true;
@@ -270,7 +271,7 @@ namespace Physics2
             var directionalUnit = DirectionalUnit(start, end);
             var normalUnit = NormalUnit(start, end, directionalUnit);
 
-            return normalUnit.NewScaled( velocity.Dot(normalUnit) * -2);
+            return normalUnit.NewScaled(velocity.Dot(normalUnit) * -2);
         }
 
         public static bool TrySolveQuadratic(double a, double b, double c, out double res)
@@ -313,7 +314,8 @@ namespace Physics2
         }
 
 
-        internal static void TryPushBallBall(GameState.Player player1, GameState.Player player2) {
+        internal static void TryPushBallBall(GameState.Player player1, GameState.Player player2)
+        {
 
             // TODO
             // I want to make it possible to hold space
@@ -325,7 +327,8 @@ namespace Physics2
             var dis = player1.PlayerBody.Position.NewAdded(player2.PlayerBody.Position.NewMinus());
 
             var violation = Constants.footLen * 8 - dis.Length;
-            if (violation> 0) {
+            if (violation > 0)
+            {
 
                 player1.ExternalVelocity = player1.ExternalVelocity.NewAdded(dis.NewUnitized().NewScaled(violation * .005));
                 player2.ExternalVelocity = player2.ExternalVelocity.NewAdded(dis.NewUnitized().NewScaled(-violation * .005));
@@ -370,7 +373,7 @@ namespace Physics2
 
             if (dis.Length < Constants.PlayerRadius + ballwall.radius)
             {
-                var violationVector = (dis.Length == 0 ? new Vector(1,0) : dis.NewUnitized()).NewScaled((Constants.PlayerRadius + ballwall.radius) - dis.Length);
+                var violationVector = (dis.Length == 0 ? new Vector(1, 0) : dis.NewUnitized()).NewScaled((Constants.PlayerRadius + ballwall.radius) - dis.Length);
                 player.ExternalVelocity = player.ExternalVelocity.NewAdded(violationVector);
             }
         }

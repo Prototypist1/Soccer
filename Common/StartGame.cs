@@ -1,6 +1,7 @@
 ﻿namespace Common
 {
-    public struct StartGame {
+    public struct StartGame
+    {
 
     }
 }

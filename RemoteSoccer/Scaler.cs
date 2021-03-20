@@ -112,7 +112,7 @@ namespace RemoteSoccer
 
         public double UnScaleX(double x)
         {
-            return (x - xPlus) /times ;
+            return (x - xPlus) / times;
         }
 
         public double UnScaleY(double y)

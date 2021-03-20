@@ -58,10 +58,12 @@ namespace RemoteSoccer
         private void MouseKeyboardInputs_PointerPressed(CoreWindow sender, PointerEventArgs args)
         {
             throwing = args.CurrentPoint.Properties.IsLeftButtonPressed;
-            if (boostPressed == Constants.NoMove && args.CurrentPoint.Properties.IsRightButtonPressed) {
+            if (boostPressed == Constants.NoMove && args.CurrentPoint.Properties.IsRightButtonPressed)
+            {
                 boostPressed = Guid.NewGuid();
             }
-            if (boostPressed != Constants.NoMove && !args.CurrentPoint.Properties.IsRightButtonPressed) {
+            if (boostPressed != Constants.NoMove && !args.CurrentPoint.Properties.IsRightButtonPressed)
+            {
                 boostPressed = Constants.NoMove;
             }
         }

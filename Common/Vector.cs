@@ -2,7 +2,8 @@
 
 namespace Physics2
 {
-    public struct Vector {
+    public struct Vector
+    {
         public readonly double x, y;
 
         public double Length => Math.Sqrt((x * x) + (y * y));
@@ -13,12 +14,14 @@ namespace Physics2
             this.y = y;
         }
 
-        public Vector NewUnitized() {
+        public Vector NewUnitized()
+        {
             var d = Math.Sqrt((x * x) + (y * y));
-            if (d == 0) {
+            if (d == 0)
+            {
                 var ahhhh = 0;
             }
-            return new Vector(x/d, y/d);
+            return new Vector(x / d, y / d);
         }
 
         public Vector NewScaled(double s)
@@ -33,17 +36,18 @@ namespace Physics2
 
         public Vector NewAdded(Vector other)
         {
-            return new Vector(x+ other.x, y+ other.y);
+            return new Vector(x + other.x, y + other.y);
         }
 
 
-        public double Dot(Vector vector) {
+        public double Dot(Vector vector)
+        {
             return (x * vector.x) + (y * vector.y);
         }
 
         internal double Distance(Vector position)
         {
-            return Math.Sqrt(((this.x - position.x)* (this.x - position.x)) + ((this.y - position.y)* (this.y - position.y)));
+            return Math.Sqrt(((this.x - position.x) * (this.x - position.x)) + ((this.y - position.y) * (this.y - position.y)));
         }
 
         public override string ToString() => $"{x}, {y}";

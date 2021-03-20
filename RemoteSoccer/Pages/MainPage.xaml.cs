@@ -1,13 +1,10 @@
 ﻿using Common;
-using Microsoft.Graphics.Canvas.UI.Xaml;
 using physics2;
 using Prototypist.TaskChain;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Numerics;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Gaming.Input;
@@ -108,20 +105,20 @@ namespace RemoteSoccer
 
             while (sending)
             {
-                game.ApplyInputs( 
-                    (await Task.WhenAll(localPlayers.Read().Select(x=>(x.input.Next())).ToArray())).ToDictionary(x=>x.Id, x=>x));
+                game.ApplyInputs(
+                    (await Task.WhenAll(localPlayers.Read().Select(x => (x.input.Next())).ToArray())).ToDictionary(x => x.Id, x => x));
 
                 if (didIt)
                 {
                     didIt = false;
-                    var dontwait =  CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                    var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
                         () =>
                         {
                             Canvas.Invalidate();
                             didIt = true;
-                        //renderGameState.Update(game.gameState);
-                    });
+                            //renderGameState.Update(game.gameState);
+                        });
                 }
 
                 frame.thing++;
@@ -170,7 +167,7 @@ namespace RemoteSoccer
             //    Window.Current.CoreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
             //}
 
-            var gameInfo =  (GameInfo)e.Parameter;
+            var gameInfo = (GameInfo)e.Parameter;
 
             var gameName = gameInfo.gameName;
 
@@ -216,7 +213,8 @@ namespace RemoteSoccer
 
                     //https://stackoverflow.com/questions/48997243/uwp-gamepad-gamepads-is-empty-even-though-a-controller-is-connected
                     var x = 0;
-                    while (x < 10) {
+                    while (x < 10)
+                    {
                         var db = Gamepad.Gamepads.Count;
                         await Task.Delay(100);
                         x++;
@@ -224,7 +222,7 @@ namespace RemoteSoccer
 
 
                     var gps = Gamepad.Gamepads.ToArray();
-                    foreach (var (gamePad, key) in gps.Zip(ourTeam.Take(gps.Length),(x,y)=>(x,y)))
+                    foreach (var (gamePad, key) in gps.Zip(ourTeam.Take(gps.Length), (x, y) => (x, y)))
                     {
                         var body = key;// Guid.NewGuid();
                         var inputs = CreateController(gamePad, body);
@@ -285,8 +283,9 @@ namespace RemoteSoccer
 
         private void RemovePlayer(Gamepad e)
         {
-            localPlayers.Run(x => { 
-                var playerInfo= x.SingleOrDefault(x => x.input is ControllerInputes controllerInputes && controllerInputes.gamepad == e);
+            localPlayers.Run(x =>
+            {
+                var playerInfo = x.SingleOrDefault(x => x.input is ControllerInputes controllerInputes && controllerInputes.gamepad == e);
                 if (playerInfo != null)
                 {
                     x.Remove(playerInfo);
@@ -497,7 +496,8 @@ namespace RemoteSoccer
             ToggleCurser();
         }
 
-        private void ToggleCurser() {
+        private void ToggleCurser()
+        {
             lockCurser.thing = !lockCurser.Thing;
             if (lockCurser.thing)
             {

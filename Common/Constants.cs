@@ -2,7 +2,8 @@
 
 namespace Common
 {
-    public static class Constants {
+    public static class Constants
+    {
         public const int fieldZ = 0;
         public const int lineZ = 1;
         public const int goalZ = 2;

@@ -363,7 +363,8 @@ namespace RemoteSoccer
             var snapshot = gameState.GameBall.OwnerOrNull;
             if (gameState.CountDownState.Countdown)
             {
-                // do nothing
+                // lean away from the ball
+                res -= TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen * 5);
             }
             else if (snapshot == self) // when you have the ball
             {
@@ -381,79 +382,37 @@ namespace RemoteSoccer
                 if (team.ContainsKey(owner)) // one of you teammates has the ball
                 {
 
-                    // stay away from your teammates
-                    //foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
-                    //{
-                    //    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Unit * .5);
-                    //}
-
-                    //// bop the other team
-                    //foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
-                    //{
-                    //    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 2, Unit * 6);
-                    //}
+                    // towards the ball
+                    res += TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen * 5);
                 }
                 else // the other team has the ball
                 {
-
-                    // stay away from your teammates
-                    //foreach (var player in gameState.players.Where(x => teammates.Contains(x.Key)))
-                    //{
-                    //    res -= TowardsWithIn(myPosition, player.Value.PlayerFoot.Position, 1, Unit * .5);
-                    //}
-
-                    // go towards the ball hard if you are close
-                    //res += TowardsPathInBody(myBody, myPosition,
-                    //    gameState.GameBall.Posistion,
-                    //    gameState.GameBall.Velocity, 10, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts) - Unit);
-
                     res += TowardsWithInBody(myBody, proposedPos, gameState.GameBall.Posistion
                     .NewAdded(gameState.GameBall.Velocity.NewScaled(Math.Min(10, gameState.GameBall.Posistion.NewAdded(myBody.NewMinus()).Length / Constants.speedLimit)))
                     , 10, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts) - Unit);
 
-                    // go towards players of the other team
-                    //foreach (var player in gameState.players.Where(x => !teammates.Contains(x.Key) && x.Key != self))
-                    //{
-                    //    res += TowardsWithInBody(myBody, myPosition, player.Value.PlayerFoot.Position, 1, Unit * 6);
-                    //}
+                    // towards the ball
+                    res += TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen * 5);
                 }
             }
             else if (whosBall == WhosBall.TheirBall)
             {
-                // go towards the ball when it is in play
-                //res += TowardsPathInBody(myBody, myPosition,
-                //    gameState.GameBall.Posistion,
-                //    gameState.GameBall.Velocity, 10, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts) - Unit);
-
                 res += TowardsWithInBody(myBody, proposedPos, gameState.GameBall.Posistion
                 .NewAdded(gameState.GameBall.Velocity.NewScaled(Math.Min(10, gameState.GameBall.Posistion.NewAdded(myBody.NewMinus()).Length / Constants.speedLimit)))
                 , 10, PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts) - Unit);
+
+
+                // towards the ball
+                res += TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen * 5);
             }
             else if (whosBall == WhosBall.OurBall)
             {
-                //res += TowardsWithInBody(myBody, myPosition, gameState.GameBall.Posistion, 10, Math.Min(PlayerInputApplyer.HowFarCanIBoost(gameState.players[self].Boosts), Unit/5.0));
+                // towards the ball
+                res += TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen * 5);
             }
 
             // a small force back towards the center
             res += Towards(proposedPos, myBody, .1);
-
-            // a small force towards the ball
-            res += TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen*5);
-
-
-            //// feet don't like to stay still while extended
-            //if (gameState.players[self].PlayerFoot.Position.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus()).Length > Unit / 2.0)
-            //{
-            //    res -= TowardsWithIn(myPosition, gameState.players[self].PlayerFoot.Position, .5, Unit / 3.0);
-            //}
-
-            // this is mostly just annoying
-            // stay away from edges
-            //res += TowardsXWithIn(myPosition, new Vector(0, 0), -1, Unit));
-            //res += TowardsXWithIn(myPosition, new Vector(fieldDimensions.xMax, 0), -1, Unit));
-
-            //res += TowardsYWithIn(myPosition, new Vector(0, 0), -1, Unit));
-            //res += TowardsYWithIn(myPosition, new Vector(0, fieldDimensions.yMax), -1, Unit));
 
             return res;
         }
@@ -947,15 +906,15 @@ namespace RemoteSoccer
             }
 
             // don't get too far from the ball
-            res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 20, Unit * 12);
+            res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 20, Unit * 15);
 
             // we like to be in the line between our goal and the ball
             // we are going to fall back to being the goalie
             //res += Towards(myPosition, gameState.GameBall.Posistion, 2);
 
 
-            res -= Towards1D(myPosition.y, fieldDimensions.yMax * 1.0 / 3.0, 1);
-            res -= Towards1D(myPosition.y, fieldDimensions.yMax * 2.0 / 3.0, 1);
+            //res -= Towards1D(myPosition.y, fieldDimensions.yMax * 1.0 / 3.0, 1);
+            //res -= Towards1D(myPosition.y, fieldDimensions.yMax * 2.0 / 3.0, 1);
             res -= Towards1D(myPosition.x, gameState.GameBall.Posistion.x, 1);
             res -= Towards1D(myPosition.x, gameState.GameBall.Posistion.x + 2 * Unit * Math.Sign(GoalTheyScoreOn().x - gameState.GameBall.Posistion.x), 1);
 
@@ -993,11 +952,11 @@ namespace RemoteSoccer
                 }
 
                 // don't get too far from the ball
-                res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 1, Unit * 9);
-                res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 4, Unit * 12);
+                res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 1, Unit * 12);
+                res -= AwayWithOut(myPosition, gameState.GameBall.Posistion, 4, Unit * 20);
 
                 // don't get too close to the ball
-                res -= TowardsWithIn(myPosition, gameState.GameBall.Posistion, .5, Unit * 3);
+                res -= TowardsWithIn(myPosition, gameState.GameBall.Posistion, .5, Unit * 5);
 
                 // don't run away from the ball, it's impossible to pass to you
                 //var diff = myPosition.NewAdded(gameState.players[self].PlayerBody.Position.NewMinus());
@@ -1082,7 +1041,7 @@ namespace RemoteSoccer
 
                 res += Towards(position, GoalTheyScoreOn(), 2);
 
-                res -= AwayWithOut(position, GoalTheyScoreOn(), 2, Unit * 30);
+                res -= AwayWithOut(position, GoalTheyScoreOn(), 2, Unit * 40);
             }
             return res;
         };

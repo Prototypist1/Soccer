@@ -1,10 +1,8 @@
 ﻿using Common;
-using Physics2;
 using Prototypist.TaskChain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace physics2
 {
@@ -27,13 +25,14 @@ namespace physics2
             gameState.Handle(new InitGameStateEvent(
                 new Physics2.Vector(field.xMax / 2.0, field.yMax / 2.0),
                 new Physics2.Vector(0, 0),
-                new Physics2.Vector(Constants.goalLen + Constants.footLen*2, field.yMax / 2.0),
+                new Physics2.Vector(Constants.goalLen + Constants.footLen * 2, field.yMax / 2.0),
                 new Physics2.Vector(field.xMax - (Constants.goalLen + Constants.footLen * 2), field.yMax / 2.0),
                 field));
 
             // GameStateTracker is a bit weird
             this.gameStateTracker = new GameStateTracker(
-                (x, y) => {
+                (x, y) =>
+                {
                     gameState.GameBall.OwnerOrNull = null;
                     gameState.GameBall.Posistion = new Physics2.Vector(gameState.CountDownState.X, gameState.CountDownState.Y);
                     gameState.GameBall.Velocity = new Physics2.Vector(0, 0);

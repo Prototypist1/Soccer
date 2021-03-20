@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Common
 {
 
-    public struct ObjectRemoved {
+    public struct ObjectRemoved
+    {
         public ObjectRemoved(Guid id)
         {
             Id = id;
@@ -58,7 +58,7 @@ namespace Common
 
     }
 
-    public class BodyCreated: ObjectCreated
+    public class BodyCreated : ObjectCreated
     {
         public BodyCreated(double x, double y, int z, Guid id, double diameter, byte r, byte g, byte b, byte a, string name) : base(x, y, z, id, diameter, r, g, b, a)
         {
@@ -90,11 +90,12 @@ namespace Common
         }
     }
 
-    public struct ObjectsCreated {
+    public struct ObjectsCreated
+    {
         public ObjectsCreated(
-            FootCreated[] feet, 
-            BodyCreated[] bodies, 
-            BallCreated ball, 
+            FootCreated[] feet,
+            BodyCreated[] bodies,
+            BallCreated ball,
             GoalCreated[] goals,
             //OuterCreated[] outers,
             int leftScore,

@@ -1,8 +1,6 @@
 ﻿using Common;
 using Physics2;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Windows.Gaming.Input;
 
@@ -79,7 +77,8 @@ namespace RemoteSoccer
             var throwing = (snap.Buttons & GamepadButtons.RightShoulder) == GamepadButtons.RightShoulder;
 
             var right = new Vector(snap.RightThumbstickX, -snap.RightThumbstickY);
-            if (right.Length > 1) {
+            if (right.Length > 1)
+            {
                 right = right.NewUnitized();
             }
 

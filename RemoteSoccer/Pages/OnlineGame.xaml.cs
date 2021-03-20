@@ -3,21 +3,14 @@ using physics2;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
@@ -59,7 +52,8 @@ namespace RemoteSoccer
 
             game = new Game2();
 
-            zoomer = new MouseZoomer(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions, (GameState gs) => {
+            zoomer = new MouseZoomer(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions, (GameState gs) =>
+            {
 
 
                 return gs.players.Where(x => x.Key == playerId).Select(x => x.Value.PlayerBody.Position)
@@ -83,10 +77,11 @@ namespace RemoteSoccer
                 color[0],
                 color[1],
                 color[2],
-                new Physics2.Vector(fieldDimensions.xMax/2.0, fieldDimensions.yMax / 2.0)
+                new Physics2.Vector(fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0)
                 ));
 
-            inputs.Init().ContinueWith(_ => {
+            inputs.Init().ContinueWith(_ =>
+            {
                 signalRHandler.Send(gameName, Inputs(inputs));
             });
 
@@ -118,8 +113,10 @@ namespace RemoteSoccer
             }
         }
 
-        async Task MainLoop(IAsyncEnumerable<GameStateUpdate> enumerable) {
-            await foreach (var item in enumerable) {
+        async Task MainLoop(IAsyncEnumerable<GameStateUpdate> enumerable)
+        {
+            await foreach (var item in enumerable)
+            {
                 game.gameState.Handle(item);
                 await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                     CoreDispatcherPriority.Normal,
@@ -145,7 +142,8 @@ namespace RemoteSoccer
             return color;
         }
 
-        private async IAsyncEnumerable<PlayerInputs> Inputs(MouseKeyboardInputs mouseKeyboardInputs) {
+        private async IAsyncEnumerable<PlayerInputs> Inputs(MouseKeyboardInputs mouseKeyboardInputs)
+        {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             var counter = 0L;

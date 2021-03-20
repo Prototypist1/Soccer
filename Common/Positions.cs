@@ -1,11 +1,9 @@
-﻿using physics2;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 
 namespace Common
 {
-    public struct Position {
+    public struct Position
+    {
         public double X { get; set; }
         public double Y { get; set; }
         public double Vx { get; set; }
@@ -25,13 +23,14 @@ namespace Common
             Id = id;
             Vx = vx;
             Vy = vy;
-           // Throwing = thowing;
+            // Throwing = thowing;
         }
     }
 
 
 
-    public struct Preview {
+    public struct Preview
+    {
         public Preview(Guid id, double x, double y, bool isFoot
             //, double vx, double vy, bool throwing
             )

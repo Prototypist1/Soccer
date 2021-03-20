@@ -4,10 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Prototypist.Fluent;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace RemoteSoccer
@@ -94,7 +91,7 @@ namespace RemoteSoccer
         {
 
             var connection = new HubConnectionBuilder()
-                .WithUrl(@"https://soccerserver.azurewebsites.net/GameHub", x=>
+                .WithUrl(@"https://soccerserver.azurewebsites.net/GameHub", x =>
                 //.WithUrl(@"http://Pyrite:5000/GameHub", x =>
                 //.WithUrl(@"http://192.168.1.7:5000/GameHub", x =>
                 //.WithUrl(@"http://localhost:5000/GameHub", x =>
@@ -114,7 +111,7 @@ namespace RemoteSoccer
         }
 
 
-        public class SignalRHandler 
+        public class SignalRHandler
         {
 
             private readonly List<Action<GameCreated>> gameCreatedHandlers = new List<Action<GameCreated>>();
@@ -302,8 +299,9 @@ namespace RemoteSoccer
                 catch (InvalidOperationException)
                 {
                 }
-                catch (Exception e) { 
-                
+                catch (Exception e)
+                {
+
                 }
             }
 
@@ -320,8 +318,9 @@ namespace RemoteSoccer
                 catch (InvalidOperationException)
                 {
                 }
-                catch (Exception e) {
-                
+                catch (Exception e)
+                {
+
                 }
             }
 

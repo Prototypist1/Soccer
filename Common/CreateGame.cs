@@ -5,7 +5,8 @@
 namespace Common
 {
 
-    public struct CreateGame {
+    public struct CreateGame
+    {
         public string Id { get; set; }
 
         public CreateGame(string id)
@@ -37,7 +38,8 @@ namespace Common
         }
     }
 
-    public struct GameCreated {
+    public struct GameCreated
+    {
         public string Id { get; set; }
 
         public GameCreated(string id)

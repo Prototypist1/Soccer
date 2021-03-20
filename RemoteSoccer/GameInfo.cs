@@ -5,7 +5,8 @@ using System;
 
 namespace RemoteSoccer
 {
-    public class GameInfo {
+    public class GameInfo
+    {
         public readonly string gameName;
         public readonly ControlScheme controlScheme;
 

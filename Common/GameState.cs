@@ -1,9 +1,7 @@
 ﻿using Physics2;
 using Prototypist.TaskChain;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using static Common.GameState;
 
 namespace Common
@@ -267,7 +265,7 @@ namespace Common
             var nextPlayers = new RawConcurrentIndexed<Guid, Player>();
             foreach (var item in gameStateUpdate.Players)
             {
-                nextPlayers.TryAdd(item.Id,item);
+                nextPlayers.TryAdd(item.Id, item);
             }
             gameState.players = nextPlayers;
             gameState.RightScore = gameStateUpdate.RightScore;

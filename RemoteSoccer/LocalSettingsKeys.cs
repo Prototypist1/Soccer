@@ -2,7 +2,8 @@
 
 namespace RemoteSoccer
 {
-    internal static class LocalSettingsKeys {
+    internal static class LocalSettingsKeys
+    {
         public const string GameName = "game-name";
         public const string PlayerName = "player-name";
         public const string PlayerColorR = "player-color-r";

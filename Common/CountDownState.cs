@@ -24,7 +24,8 @@ namespace Common
         public double BallOpacity { get; set; }
     }
 
-    public struct ColorChanged {
+    public struct ColorChanged
+    {
         public ColorChanged(Guid id, byte r, byte g, byte b, byte a)
         {
             Id = id;
@@ -35,9 +36,9 @@ namespace Common
         }
 
         public Guid Id { get; set; }
-        public byte R { get; set;}
-        public byte G { get; set;}
-        public byte B { get; set;}
+        public byte R { get; set; }
+        public byte G { get; set; }
+        public byte B { get; set; }
         public byte A { get; set; }
     }
 

@@ -1,23 +1,12 @@
 ﻿using Common;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -37,7 +26,8 @@ namespace RemoteSoccer
             UpdateEnabled();
 
             var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-            if (localSettings.Values.TryGetValue(LocalSettingsKeys.GameName,out var gameName)) {
+            if (localSettings.Values.TryGetValue(LocalSettingsKeys.GameName, out var gameName))
+            {
                 GameName.Text = (string)gameName;
                 UpdateEnabled();
             }
@@ -55,7 +45,9 @@ namespace RemoteSoccer
                             LoadingText.Visibility = Visibility.Collapsed;
                             LoadingSpinner.IsActive = false;
                         });
-                }catch (Exception ex){
+                }
+                catch (Exception ex)
+                {
                     await ConnectionLost(ex);
                 }
             });
@@ -110,7 +102,7 @@ namespace RemoteSoccer
                             var handler = (await SingleSignalRHandler.GetOrThrowAsync());
                             handler.SetOnClosed(null);
                             handler.ClearCallBacks();
-                            this.Frame.Navigate(typeof(OnlineGame), new GameInfo( gameCreated.Id, Mouse.IsChecked.Value ? ControlScheme.SipmleMouse: ControlScheme.MouseAndKeyboard));
+                            this.Frame.Navigate(typeof(OnlineGame), new GameInfo(gameCreated.Id, Mouse.IsChecked.Value ? ControlScheme.SipmleMouse : ControlScheme.MouseAndKeyboard));
                         });
                     }
                     else if (res.Is2(out var joined))

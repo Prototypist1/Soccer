@@ -1,7 +1,6 @@
 ﻿using Common;
 using Physics2;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace RemoteSoccer
@@ -15,9 +14,9 @@ namespace RemoteSoccer
         private double centerY;
         private double times;
         private FieldDimensions fieldDimensions;
-        private readonly Func<GameState,Vector[]> follow;
+        private readonly Func<GameState, Vector[]> follow;
 
-        public MouseZoomer(double viewFrameWidth, double viewFrameHeight, FieldDimensions fieldDimensions , Func<GameState, Vector[]> follow)
+        public MouseZoomer(double viewFrameWidth, double viewFrameHeight, FieldDimensions fieldDimensions, Func<GameState, Vector[]> follow)
         {
             this.viewFrameWidth = viewFrameWidth;
             this.viewFrameHeight = viewFrameHeight;
@@ -87,7 +86,8 @@ namespace RemoteSoccer
         //    return Update();
         //}
 
-        public (double, double, double, double) Update(GameState gameState) {
+        public (double, double, double, double) Update(GameState gameState)
+        {
             var times = GetTimes();
             return (
                 centerX,
@@ -105,7 +105,7 @@ namespace RemoteSoccer
 
         public void SetTimes(double v)
         {
-         //   times = v;
+            //   times = v;
         }
 
         public void SetBallId(Guid guid)
@@ -148,7 +148,7 @@ namespace RemoteSoccer
     //        centerY = (yMax + yMin) / 2.0;
 
     //        times = Math.Min(viewFrameWidth/(Math.Max(fieldDimensions.xMax * .75, (2* Constants.footLen) +  xMax - xMin)), viewFrameHeight / Math.Max(fieldDimensions.yMax*.75, (2 * Constants.footLen) + yMax - yMin));
-            
+
     //        return (
     //            centerX,
     //            centerY,

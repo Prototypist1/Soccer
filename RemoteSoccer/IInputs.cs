@@ -1,5 +1,5 @@
-﻿using System.Threading.Tasks;
-using Common;
+﻿using Common;
+using System.Threading.Tasks;
 
 namespace RemoteSoccer
 {

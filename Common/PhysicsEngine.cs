@@ -3,7 +3,6 @@ using Physics2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 //using static Common.Game;
 
 
@@ -354,7 +353,7 @@ namespace physics2
 
                                         var position = goal.Posistion.NewAdded(normal.NewScaled(Constants.goalLen));
 
-                                        GameStateUpdater.Handle(gameState, new GameState.GoalScored(position, goal.LeftGoal, new Vector(normal.y,-normal.x), gameState.Frame, Guid.NewGuid()));
+                                        GameStateUpdater.Handle(gameState, new GameState.GoalScored(position, goal.LeftGoal, new Vector(normal.y, -normal.x), gameState.Frame, Guid.NewGuid()));
 
                                         gameStateTracker.Scored();
                                     }

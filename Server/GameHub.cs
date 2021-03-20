@@ -6,18 +6,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Server
 {
 
-    public class RemoteGame {
+    public class RemoteGame
+    {
         public readonly Game2 game2 = new Game2();
         private Node lastUpdate;
         //public TaskCompletionSource<bool> next = new TaskCompletionSource<bool>();
 
-        public RemoteGame() {
+        public RemoteGame()
+        {
             lastUpdate = new Node(game2.gameState.GetGameStateUpdate());
         }
 
@@ -95,7 +96,7 @@ namespace Server
                         }
                     }
                     game2.ApplyInputs(inputs);
-                    
+
                 }
                 var update = new Node(game2.gameState.GetGameStateUpdate());
                 lastUpdate.next.SetResult(update);
@@ -106,7 +107,8 @@ namespace Server
     }
 
 
-    public class GameHubState {
+    public class GameHubState
+    {
 
         // I don't really like how I am storing this data
         public readonly ConcurrentIndexed<string, RemoteGame> games = new ConcurrentIndexed<string, RemoteGame>();
@@ -145,7 +147,8 @@ namespace Server
         //    }
         //}
 
-        public IAsyncEnumerable<GameStateUpdate> JoinChannel(JoinChannel joinChannel) {
+        public IAsyncEnumerable<GameStateUpdate> JoinChannel(JoinChannel joinChannel)
+        {
             return state.games.GetOrThrow(joinChannel.Id).GetReader();
         }
 
@@ -158,12 +161,13 @@ namespace Server
             //    myGame.Init(getOnUpdateScore(createOrJoinGame.Id), createOrJoinGame.FieldDimensions);
             //}
 
-            if (!state.connectionIdToGameName.TryAdd(Context.ConnectionId, createOrJoinGame.Id)) {
+            if (!state.connectionIdToGameName.TryAdd(Context.ConnectionId, createOrJoinGame.Id))
+            {
                 // error!
                 // I mean you are already in so who cares?
             }
 
-            if(myGame == game)
+            if (myGame == game)
             {
                 await Clients.Caller.SendAsync(nameof(GameCreated), new GameCreated(createOrJoinGame.Id));
             }
@@ -190,7 +194,8 @@ namespace Server
             }
         }
 
-        public void LeaveGame(LeaveGame leaveGame) {
+        public void LeaveGame(LeaveGame leaveGame)
+        {
             LeaveGame(Context.ConnectionId);
         }
 

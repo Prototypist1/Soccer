@@ -7,14 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Threading;
-using System.Threading.Tasks;
-using Windows.Media.Core;
-using Windows.Media.Playback;
 using Windows.UI;
-using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
 
 namespace RemoteSoccer
@@ -54,28 +48,31 @@ namespace RemoteSoccer
         public Line line;
     }
 
-    
-    class Smoother {
+
+    class Smoother
+    {
 
         private readonly IZoomer zoomer;
         private double lastTimes;
         private bool initTimes = false;
         private (double, double, double, double) lastUpdate;
         private bool initUpdate = false;
-        private const double Scale  = 10;
+        private const double Scale = 10;
 
         public Smoother(IZoomer zoomer)
         {
             this.zoomer = zoomer ?? throw new ArgumentNullException(nameof(zoomer));
         }
 
-        public double GetTimes() {
-            if (!initTimes) {
+        public double GetTimes()
+        {
+            if (!initTimes)
+            {
                 lastTimes = zoomer.GetTimes();
                 initTimes = true;
                 return lastTimes;
             }
-            lastTimes = (zoomer.GetTimes() + Scale * lastTimes) / (1+ Scale);
+            lastTimes = (zoomer.GetTimes() + Scale * lastTimes) / (1 + Scale);
             return lastTimes;
         }
 
@@ -154,9 +151,9 @@ namespace RemoteSoccer
             {
                 if (playerPair.Value.Boosts > 0)
                 {
-                    DrawCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, 
-                        Constants.footLen + (playerPair.Value.Boosts * 2.0 / scale) +(10/scale), 
-                        Color.FromArgb(0x22, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B), 
+                    DrawCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y,
+                        Constants.footLen + (playerPair.Value.Boosts * 2.0 / scale) + (10 / scale),
+                        Color.FromArgb(0x22, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B),
                         (float)(playerPair.Value.Boosts * 4.0 / scale));
                 }
             }
@@ -170,7 +167,8 @@ namespace RemoteSoccer
             {
                 DrawFilledCircle(playerPair.Value.PlayerFoot.Position.x, playerPair.Value.PlayerFoot.Position.y, Constants.PlayerRadius, Color.FromArgb(playerPair.Value.PlayerFoot.A, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B));
 
-                if (playerPair.Value.BoostVelocity.Length > 10) {
+                if (playerPair.Value.BoostVelocity.Length > 10)
+                {
                     var toThrow = playerPair.Value.BoostVelocity;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
                     DrawLine(
                         playerPair.Value.PlayerFoot.Position.x,
@@ -178,7 +176,7 @@ namespace RemoteSoccer
                         playerPair.Value.PlayerFoot.Position.x + (toThrow.x * 15),
                         playerPair.Value.PlayerFoot.Position.y + (toThrow.y * 15),
                         Color.FromArgb(0x20, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
-                        Constants.PlayerRadius*2);
+                        Constants.PlayerRadius * 2);
                 }
             }
 
@@ -287,14 +285,14 @@ namespace RemoteSoccer
             {
                 //if (gameState.GameBall.OwnerOrNull == playerPair.Key)
                 //{
-                    var toThrow = playerPair.Value.ProposedThrow;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
-                    DrawLine(
-                        playerPair.Value.PlayerFoot.Position.x,
-                        playerPair.Value.PlayerFoot.Position.y,
-                        playerPair.Value.PlayerFoot.Position.x + (toThrow.x * 30),
-                        playerPair.Value.PlayerFoot.Position.y + (toThrow.y * 30),
-                        Color.FromArgb(0xff, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
-                        1 / scale);
+                var toThrow = playerPair.Value.ProposedThrow;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
+                DrawLine(
+                    playerPair.Value.PlayerFoot.Position.x,
+                    playerPair.Value.PlayerFoot.Position.y,
+                    playerPair.Value.PlayerFoot.Position.x + (toThrow.x * 30),
+                    playerPair.Value.PlayerFoot.Position.y + (toThrow.y * 30),
+                    Color.FromArgb(0xff, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
+                    1 / scale);
                 //}
             }
 
@@ -317,7 +315,8 @@ namespace RemoteSoccer
                     new Vector2((float)((x2 * scale) + xPlus), (float)((y2 * scale) + yPlus)),
                     color,
                     strokeWidth * scale,
-                    new CanvasStrokeStyle { 
+                    new CanvasStrokeStyle
+                    {
                         EndCap = CanvasCapStyle.Round
                     });
             }
