@@ -1,4 +1,10 @@
-﻿cutting isn't right
+﻿don't consider throws where the catch is of bounds
+don't consider throws that will pass through your own goal
+
+cutting still needs work -- need to consider the other the other team more. 
+
+
+cutting isn't right
 	- it should be a game of fakes
 		- harder to change direction?
 	- in a real game it really matters how hard you cut

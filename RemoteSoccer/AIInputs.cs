@@ -364,7 +364,7 @@ namespace RemoteSoccer
             if (gameState.CountDownState.Countdown)
             {
                 // lean away from the ball
-                res -= TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen * 5);
+                res -= TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, (Constants.footLen * 2) + Constants.ballWallLen);
             }
             else if (snapshot == self) // when you have the ball
             {
@@ -412,7 +412,15 @@ namespace RemoteSoccer
             }
 
             // a small force back towards the center
-            res += Towards(proposedPos, myBody, .1);
+            var myPlayer = gameState.players[self];
+            if (myPlayer.PlayerBody.Velocity.Length > 0)
+            {
+                res += Towards(proposedPos, myBody.NewAdded(myPlayer.PlayerBody.Velocity.NewUnitized().NewScaled(Constants.footLen - Constants.PlayerRadius)), .1);
+            }
+            else {
+                res += Towards(proposedPos, myPlayer.PlayerFoot.Position, .1);
+            }
+            //res += Towards(proposedPos, myBody, .1);
 
             return res;
         }
