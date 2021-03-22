@@ -1,7 +1,8 @@
 ﻿don't consider throws where the catch is of bounds
 don't consider throws that will pass through your own goal
+charge up throw, throwing options are effected by your movement
 
-cutting still needs work -- need to consider the other the other team more. 
+cutting still needs work -- need to consider the other team more. 
 
 
 cutting isn't right

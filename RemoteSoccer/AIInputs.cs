@@ -151,15 +151,19 @@ namespace RemoteSoccer
                             .Select(x =>
                             {
                                 var diff = x.NewAdded(myBody.NewMinus());
-                                var howLongToScore = diff.Length / Constants.maxThrowPower;
-                                var proposedThrow = diff.NewUnitized().NewScaled(Constants.maxThrowPower);
+                                var len = Constants.maxThrowPower * r.NextDouble();
+                                var proposedThrow = diff.NewUnitized().NewScaled(len);
 
-                                return (howLongToScore: PlayerInputApplyer.HowLongItTakesBallToGo(diff.Length, Constants.maxThrowPower), proposedThrow);
+                                return (howLongToScore: PlayerInputApplyer.HowLongItTakesBallToGo(diff.Length, len), proposedThrow);
 
                             })
+                            .Where(pair => DontThrowAtGoal(pair.howLongToScore, pair.proposedThrow))
                             .Where(pair => gameState.players.Values
                                 .Where(x => x.PlayerFoot.Position.NewAdded(gameState.GameBall.Posistion.NewMinus()).Length > Unit * 1)
-                                .All(x => pair.howLongToScore < PlayerInputApplyer.IntersectBallTime(x.PlayerBody.Position, gameState.GameBall.Posistion, pair.proposedThrow, x.PlayerBody.Velocity, Unit)))
+                                .All(x => {
+                                    var (time, position) = PlayerInputApplyer.IntersectBallTime(x.PlayerBody.Position, gameState.GameBall.Posistion, pair.proposedThrow, x.PlayerBody.Velocity, Unit);
+                                    return pair.howLongToScore < time;
+                                    }))
                             .OrderBy(x => x.howLongToScore)
                             .Select(x => x.proposedThrow)
                             .ToArray();
@@ -172,7 +176,6 @@ namespace RemoteSoccer
                             hasBallInputs.FootY = foot.y;
                             goto next;
                         }
-
 
                         // think about throwing near you teammates
 
@@ -189,25 +192,29 @@ namespace RemoteSoccer
                                     var playerPos = gameState.players[x.Key].PlayerFoot.Position;
                                     var target = pos.NewAdded(playerPos);
                                     var diff = target.NewAdded(myBody.NewMinus());
-                                    var proposedThrow = diff.NewUnitized().NewScaled(Constants.maxThrowPower);
-                                    var howLongToCatch = PlayerInputApplyer.IntersectBallTime(playerPos, gameState.GameBall.Posistion, proposedThrow, gameState.players[x.Key].PlayerBody.Velocity, Constants.PlayerRadius + Constants.BallRadius);
-                                    return (howLongToCatch, proposedThrow, x.Key, value: EvaluatePass(proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion)), space);
+                                    var len = Constants.maxThrowPower * ((r.NextDouble()* .5) + .5);
+                                    var proposedThrow = diff.NewUnitized().NewScaled(len);
+                                    var (howLongToCatch, catchAt) = PlayerInputApplyer.IntersectBallTime(playerPos, gameState.GameBall.Posistion, proposedThrow, gameState.players[x.Key].PlayerBody.Velocity, Constants.PlayerRadius + Constants.BallRadius);
+                                    return (howLongToCatch, proposedThrow, x.Key, value: EvaluatePass(proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion)), space, catchAt);
                                 });
                             })
-                            //.Where(x=>x.howLongToCatch> 10) // don't throw really short throws
-                            //.Where(pair => pair.catchLocation.x > 0 && pair.catchLocation.y > 0 && pair.catchLocation.x < fieldDimensions.xMax && pair.catchLocation.y < fieldDimensions.yMax)
-                            //.Where(pair => pair.value > positionValue + 1000)
+                            .Where(pair => pair.catchAt.x > 0 && pair.catchAt.y > 0 && pair.catchAt.x < fieldDimensions.xMax && pair.catchAt.y < fieldDimensions.yMax)
+                            .Where(pair => DontThrowAtGoal(pair.howLongToCatch, pair.proposedThrow))
                             .Where(pair =>
                                 gameState.players
-                                .Where(x => !team.ContainsKey(x.Key)) // && x.Value.PlayerFoot.Position.NewAdded(gameState.GameBall.Posistion.NewMinus()).Length > Unit * .5
-                                .All(x => pair.howLongToCatch + 20 < PlayerInputApplyer.IntersectBallTime(x.Value.PlayerBody.Position, gameState.GameBall.Posistion, pair.proposedThrow, x.Value.PlayerBody.Velocity, Constants.PlayerRadius + Constants.BallRadius)))
+                                .Where(x => !team.ContainsKey(x.Key)) 
+                                .All(x => {
+                                    var (time, _) = PlayerInputApplyer.IntersectBallTime(x.Value.PlayerBody.Position, gameState.GameBall.Posistion, pair.proposedThrow, x.Value.PlayerBody.Velocity, Constants.PlayerRadius + Constants.BallRadius);
+                                    return pair.howLongToCatch + 20 < time;
+
+                                }))
                             .Where(pair => pair.value > positionValue + 1000 || (ourSpace < 3 * Unit && pair.space > 3 * Unit + 1000))
                             .OrderByDescending(x => x.value)
                             .ToArray();
 
                         if (passes.Any())
                         {
-                            var (_, proposedThrow, id, _, _) = passes.First();
+                            var (_, proposedThrow, id, _, _, _) = passes.First();
 
                             hasBallInputs.Throw = true;
 
@@ -229,15 +236,16 @@ namespace RemoteSoccer
                                 .Select(dir =>
                                 {
                                     var proposedThrow = dir.NewUnitized().NewScaled(Constants.maxThrowPower);
-                                    var howLongToCatch = gameState.players.Where(x => x.Key != owner).Select(x => PlayerInputApplyer.IntersectBallTime(x.Value.PlayerBody.Position, gameState.GameBall.Posistion, proposedThrow, x.Value.PlayerBody.Velocity, Constants.PlayerRadius + Constants.BallRadius)).Min();
-                                    return (proposedThrow, value: EvaluatePass(proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion)));
+                                    var howLongToCatch = gameState.players.Where(x => x.Key != owner).Select(x => PlayerInputApplyer.IntersectBallTime(x.Value.PlayerBody.Position, gameState.GameBall.Posistion, proposedThrow, x.Value.PlayerBody.Velocity, Constants.PlayerRadius + Constants.BallRadius).Item1).Min();
+                                    return (proposedThrow, value: EvaluatePass(proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion)), howLongToCatch);
                                 })
+                                .Where(pair => DontThrowAtGoal(pair.howLongToCatch, pair.proposedThrow))
                                 .OrderByDescending(x => x.value)
                             .ToArray();
 
                             if (punts.Any())
                             {
-                                var (proposedThrow, _) = punts.First();
+                                var (proposedThrow, _, _) = punts.First();
 
                                 hasBallInputs.Throw = true;
 
@@ -292,7 +300,7 @@ namespace RemoteSoccer
 
                     member.Value.FootX = move.x;
                     member.Value.FootY = move.y;
-                    if (!boost)
+                    if (!boost && move.Dot(new Vector(member.Value.BodyX, member.Value.BodyY)) > 0.5)
                     {
                         member.Value.Boost = Constants.NoMove;
                     }
@@ -312,6 +320,31 @@ namespace RemoteSoccer
                     playerInputs = member.Value
                 });
             }
+        }
+
+        private bool DontThrowAtGoal(double howLongToCatch, Vector proposedThrow)
+        {
+            if (proposedThrow.Length == 0) {
+                return true;
+            }
+            // take the normal to the throw
+            var throwNormal = new Vector(proposedThrow.y, -proposedThrow.x).NewUnitized();
+            // consider the our goals possition in those coordinates
+            var goalPositionInNormal = throwNormal.Dot(GoalTheyScoreOn());
+            // consider the balls current position in those coordinates
+            var ballPositionInNormal = throwNormal.Dot(gameState.GameBall.Posistion);
+            // are they less then good lenght apart?
+            var normalDis = Math.Abs(goalPositionInNormal - ballPositionInNormal);
+            if (normalDis > Constants.goalLen + Constants.BallRadius) {
+                return true;
+            }
+            // how long will it take to reach the goal?
+            var parallelDis = proposedThrow.NewUnitized().Dot(GoalTheyScoreOn().NewAdded(gameState.GameBall.Posistion.NewMinus()));
+            if (parallelDis < 0) {
+                return true; // you are throwing away from the gaol
+            }
+            parallelDis += Math.Sqrt(Math.Pow(Constants.goalLen + Constants.BallRadius ,2)- Math.Pow(normalDis,2));
+            return howLongToCatch + 10 < PlayerInputApplyer.HowLongItTakesBallToGo(parallelDis, proposedThrow.Length);
         }
 
         private double Space(Vector pos) => gameState.players.Where(y => !team.ContainsKey(y.Key)).Select(x => x.Value.PlayerBody.Position.NewAdded(pos.NewMinus()).Length).Min();
@@ -381,9 +414,6 @@ namespace RemoteSoccer
             {
                 if (team.ContainsKey(owner)) // one of you teammates has the ball
                 {
-
-                    // towards the ball
-                    res += TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen * 5);
                 }
                 else // the other team has the ball
                 {
@@ -411,7 +441,7 @@ namespace RemoteSoccer
                 res += TowardsWithIn(proposedPos, gameState.GameBall.Posistion, .4, Constants.footLen * 5);
             }
 
-            // a small force back towards the center
+            // a small force in the direction of motion
             var myPlayer = gameState.players[self];
             if (myPlayer.PlayerBody.Velocity.Length > 0)
             {

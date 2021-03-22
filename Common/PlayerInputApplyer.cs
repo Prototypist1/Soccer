@@ -84,13 +84,13 @@ namespace Common
 
         // assuming the player runs at max speed the whole time
         // and assuming the ball doesn't have friction
-        public static double IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding)
+        public static (double, Vector) IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding)
         {
             var diff = ballStart.NewAdded(start.NewMinus());
 
             if (diff.Length == 0)
             {
-                return 0;
+                return (0, start);
             }
 
             //var speedAWay = diff.NewUnitized().Dot(ballVelocity);
@@ -130,29 +130,13 @@ namespace Common
                 }
             }
 
-            //var rate = at*.5;
-            //for (; rate >= 1; rate *= .5)
-            //{
-            //    var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
-            //    if (ballVelocity.Length > 0)
-            //    {
-            //        dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
-            //    }
-            //    var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;
-            //    if (dissToBall == dissTravelled)
-            //    {
-            //        return at;
-            //    }
-            //    if (dissToBall > dissTravelled)
-            //    {
-            //        at += rate;
-            //    }
-            //    else
-            //    {
-            //        at -= rate;
-            //    }
-            //}
-            return at;
+            if (ballVelocity.Length == 0) {
+                return (at, ballStart);
+            }
+            else { 
+                return (at, ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))));
+            }
+
         }
 
         // I wish I could insert a drawing to show what I am doing here
@@ -275,7 +259,35 @@ namespace Common
 
         public static double DistanceBallTravels(double velocity, double time)
         {
-            return velocity * Constants.FrictionDenom * (1.0 - Math.Pow((Constants.FrictionDenom - 1) / Constants.FrictionDenom, time));
+            var r = (Constants.FrictionDenom - 1.0) / Constants.FrictionDenom;
+            var a = velocity;
+            return a * (1 - Math.Pow(r, time - 1)) / (1 - r);
+            //return velocity * Constants.FrictionDenom * (1.0 - Math.Pow((Constants.FrictionDenom - 1.0) / Constants.FrictionDenom, time));
+        }
+
+        public static double TimeBallTakesToTravel(double velocity, double distance) {
+            var r = (Constants.FrictionDenom - 1.0) / Constants.FrictionDenom;
+            var a = velocity;
+            //distance =  a * (1 - Math.Pow(r, time - 1)) / (1 - r);
+            //distance * (1 - r) / a =  (1 - Math.Pow(r, time - 1)) ;
+            //(distance * (1 - r) / a) - 1 =  - Math.Pow(r, time - 1) ;
+            //-(distance * (1 - r) / a) - 1) =  Math.Pow(r, time - 1) ;
+            // log base r of -(distance * (1 - r) / a) - 1 =   time - 1 ;
+            // (log base r of (-(distance * (1 - r) / a) - 1 ) + 1=   time - 1 ;
+
+            // it'll never get there
+            //if (distance > a / (1 - r))
+            //{
+            //    return double.MaxValue;
+            //}
+
+            var inner = 1 -(distance * (1 - r) / a);
+            // it'll never get there
+            if (inner < 1) {
+                return double.MaxValue;
+            }
+
+            return Math.Log(inner, r) + 1;
         }
 
         public static double DistancePlayerTravels(double v0, double time)
