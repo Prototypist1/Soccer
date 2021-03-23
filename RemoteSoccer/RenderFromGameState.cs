@@ -280,8 +280,12 @@ namespace RemoteSoccer
                     Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
             }
 
-            // draw throw preview
-            foreach (var playerPair in gameState.players)
+            foreach (var collision in gameState.debugs.Where(x => gameState.Frame - x.Frame< 90)) {
+                DrawCircle(collision.Target.x, collision.Target.y, Constants.BallRadius, Colors.Black, 1 / scale);
+            }
+
+                // draw throw preview
+                foreach (var playerPair in gameState.players)
             {
                 //if (gameState.GameBall.OwnerOrNull == playerPair.Key)
                 //{

@@ -86,26 +86,10 @@ namespace Common
         // and assuming the ball doesn't have friction
         public static (double, Vector) IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding)
         {
-            var diff = ballStart.NewAdded(start.NewMinus());
 
-            if (diff.Length == 0)
+            if (ballStart.NewAdded(start.NewMinus()).Length == 0)
             {
                 return (0, start);
-            }
-
-            //var speedAWay = diff.NewUnitized().Dot(ballVelocity);
-
-
-            //var speedPerpendicular = new Vector(diff.y, -diff.x).NewUnitized().Dot(ballVelocity);
-
-            //var effectiveSpeed = Math.Sqrt((Constants.bodySpeedLimit * Constants.bodySpeedLimit) - (speedPerpendicular * speedPerpendicular));
-
-            // this isn't quite right you keep some of your off axis speed 
-            var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
-            var playerStartSpeed = new Vector(0, 0);
-            if (playerVelocityDot > 0)
-            {
-                playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
             }
 
             var at = 1.0;
@@ -113,16 +97,56 @@ namespace Common
             while (true)
             {
                 var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+                var ballAt = ballStart;
                 if (ballVelocity.Length > 0)
                 {
-                    dissToBall = ballStart
-                        .NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)))
-                        .NewAdded(start.NewMinus()).Length;
+                    ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+                    dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
                 }
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;
+
+                var diff = ballAt.NewAdded(start.NewMinus());
+
+                var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
+                var playerStartSpeed = new Vector(0, 0);
+                if (playerVelocityDot > 0)
+                {
+                    playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
+                }
+
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at)+ padding;// + HowFarCanIBoost(boost);
                 if (dissToBall > dissTravelled)
                 {
                     at += 5;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            while (true)
+            {
+                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+                var ballAt = ballStart;
+                if (ballVelocity.Length > 0)
+                {
+                    ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+                    dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
+                }
+
+                var diff = ballAt.NewAdded(start.NewMinus());
+
+                var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
+                var playerStartSpeed = new Vector(0, 0);
+                if (playerVelocityDot > 0)
+                {
+                    playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
+                }
+
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;// + HowFarCanIBoost(boost);
+                if (dissToBall < dissTravelled)
+                {
+                    at -= 1;
                 }
                 else
                 {
@@ -142,20 +166,11 @@ namespace Common
         // I wish I could insert a drawing to show what I am doing here
         // you try to maintain your direction relative to the ball
         // and any extra speed you have you spend on moving towards the ball
-        public static Vector IntersectBallDirection(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity)
+        public static Vector IntersectBallDirection(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding)
         {
-            var diff = ballStart.NewAdded(start.NewMinus());
-
-            if (diff.Length == 0)
+            if (ballStart.NewAdded(start.NewMinus()).Length == 0)
             {
                 return new Vector(0, 0);
-            }
-
-            var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
-            var playerStartSpeed = new Vector(0, 0);
-            if (playerVelocityDot > 0)
-            {
-                playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
             }
 
             var at = 1.0;
@@ -163,11 +178,23 @@ namespace Common
             while (true)
             {
                 var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+                var ballAt = ballStart;
                 if (ballVelocity.Length > 0)
                 {
-                    dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
+                    ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+                    dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
                 }
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at);// + HowFarCanIBoost(boost);
+
+                var diff = ballAt.NewAdded(start.NewMinus());
+
+                var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
+                var playerStartSpeed = new Vector(0, 0);
+                if (playerVelocityDot > 0)
+                {
+                    playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
+                }
+
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;// + HowFarCanIBoost(boost);
                 if (dissToBall > dissTravelled)
                 {
                     at += 5;
@@ -178,28 +205,36 @@ namespace Common
                 }
             }
 
-            //var rate = at * .5;
-            //for (; rate >= 1; rate *= .5)
-            //{
-            //    var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
-            //    if (ballVelocity.Length > 0)
-            //    {
-            //        dissToBall = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).Length;
-            //    }
-            //    var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at);// + HowFarCanIBoost(boost);
-            //    if (dissToBall == dissTravelled)
-            //    {
-            //        return ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).NewUnitized();
-            //    }
-            //    if (dissToBall > dissTravelled)
-            //    {
-            //        at += rate;
-            //    }
-            //    else
-            //    {
-            //        at -= rate;
-            //    }
-            //}
+            while (true)
+            {
+                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+                var ballAt = ballStart;
+                if (ballVelocity.Length > 0)
+                {
+                    ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+                    dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
+                }
+
+                var diff = ballAt.NewAdded(start.NewMinus());
+
+                var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
+                var playerStartSpeed = new Vector(0, 0);
+                if (playerVelocityDot > 0)
+                {
+                    playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
+                }
+
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;// + HowFarCanIBoost(boost);
+                if (dissToBall < dissTravelled)
+                {
+                    at -= 1;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
             if (ballVelocity.Length > 0)
             {
                 return ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at))).NewAdded(start.NewMinus()).NewUnitized();
@@ -301,7 +336,7 @@ namespace Common
 
         public static double DistancePlayerTravelsFromStop(double time)
         {
-            return time * Constants.bodyStartAt + (((time * Constants.EnergyAdd + 1) * Math.Log(time * Constants.EnergyAdd + 1) - time * Constants.EnergyAdd) / (Math.Log(Constants.bodyEpo) * Constants.EnergyAdd));
+            return (time * Constants.bodyStartAt) + (((time * Constants.EnergyAdd) * Math.Log(time * Constants.EnergyAdd) - time * Constants.EnergyAdd) / (Math.Log(Constants.bodyEpo) * Constants.EnergyAdd));
         }
 
         private static double VtoE(double v)
@@ -322,7 +357,7 @@ namespace Common
             //}
 
             // we need something we can integrate so that we can estiamate how far a player can go
-            var simpleV = Math.Max(0, v - Constants.bodyStartAt) + 1;
+            var simpleV = Math.Max(0, v - Constants.bodyStartAt);
             return Math.Pow(Constants.bodyEpo,/*Math.E*/ simpleV);
         }
         private static double EtoV(double e)
@@ -338,7 +373,7 @@ namespace Common
             //return Constants.bodyStartAt + ((e - Constants.bodyStartAt) * p1) + ((Constants.bodySpeedLimit - Constants.bodyStartAt) * p2);
             //}
 
-            return Math.Log(e, Constants.bodyEpo) - 1 + Constants.bodyStartAt;
+            return Math.Log(Math.Max(1,e), Constants.bodyEpo) + Constants.bodyStartAt;
         }
 
         private static double SpeedLimit2(double d)

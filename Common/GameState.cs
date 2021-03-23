@@ -39,10 +39,19 @@ namespace Common
         }
     }
 
+    public class ThrowAt {
+            public Vector Target{ get; set; }
+        public int Frame { get; set; }
+        public Guid Id { get; set; }
+    }
+
     public class GameState
     {
         // these arn't really state
         public ConcurrentLinkedList<Collision> collisions = new ConcurrentLinkedList<Collision>();
+
+
+        public ConcurrentLinkedList<ThrowAt> debugs = new ConcurrentLinkedList<ThrowAt>();
         public class Collision
         {
             public Vector Position { get; set; }
