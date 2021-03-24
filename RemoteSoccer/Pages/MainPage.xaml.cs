@@ -99,8 +99,6 @@ namespace RemoteSoccer
             var sw = new Stopwatch();
             sw.Start();
 
-            var x = 0;
-
             var didIt = true;
 
             while (sending)
@@ -123,7 +121,7 @@ namespace RemoteSoccer
 
                 frame.thing++;
 
-                while ((1000.0 * frame.thing / 30.0) > sw.ElapsedMilliseconds)
+                while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
                 {
                 }
 
