@@ -127,14 +127,23 @@ namespace RemoteSoccer
                     var toAssign = team.Where(x => x.Key != owner).ToList();
 
                     {
-
-                        var hasBallGenerators = GetPositionGenerators(owner)
-                            .Select(pos => (generator: pos.generator, score: HasBallEvaluator(pos.pos)))
+                        var db1 = GetPositionGenerators(owner);
+                        var hasBallGenerators = db1
+                            .Select(pos =>
+                            {
+                                var localPos = pos;
+                                return (generator: localPos.generator, score: HasBallEvaluator(localPos.pos), pos: localPos.pos);
+                            })
                             .OrderByDescending(pair => pair.score)
                             .ToList();
 
                         if (hasBallGenerators.Any())
                         {
+                            if (hasBallGenerators.First().generator(gameState).Length == 0)
+                            {
+                                var db = 0;
+                            }
+
                             UpdateDirection(hasBall, hasBallGenerators.First().generator, hasBallInputs);
                         }
                         else
@@ -160,10 +169,11 @@ namespace RemoteSoccer
                             .Where(pair => DontThrowAtGoal(pair.howLongToScore, pair.proposedThrow))
                             .Where(pair => gameState.players.Values
                                 .Where(x => x.PlayerFoot.Position.NewAdded(gameState.GameBall.Posistion.NewMinus()).Length > Unit * 1)
-                                .All(x => {
+                                .All(x =>
+                                {
                                     var (time, position) = PlayerInputApplyer.IntersectBallTime(x.PlayerBody.Position, gameState.GameBall.Posistion, pair.proposedThrow, x.PlayerBody.Velocity, Constants.footLen + Constants.BallRadius);
                                     return pair.howLongToScore < time;
-                                    }))
+                                }))
                             .OrderBy(x => x.howLongToScore)
                             .Select(x => x.proposedThrow)
                             .ToArray();
@@ -192,7 +202,7 @@ namespace RemoteSoccer
                                     var playerPos = gameState.players[x.Key].PlayerFoot.Position;
                                     var target = pos.NewAdded(playerPos);
                                     var diff = target.NewAdded(myBody.NewMinus());
-                                    var len = Constants.maxThrowPower * ((r.NextDouble()* .5) + .5);
+                                    var len = Constants.maxThrowPower * ((r.NextDouble() * .5) + .5);
                                     var proposedThrow = diff.NewUnitized().NewScaled(len);
                                     var (howLongToCatch, catchAt) = PlayerInputApplyer.IntersectBallTime(playerPos, gameState.GameBall.Posistion, proposedThrow, gameState.players[x.Key].PlayerBody.Velocity, Constants.footLen + Constants.BallRadius - Unit);
                                     return (howLongToCatch, proposedThrow, x.Key, value: EvaluatePass(proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion)), space, catchAt);
@@ -202,8 +212,9 @@ namespace RemoteSoccer
                             .Where(pair => DontThrowAtGoal(pair.howLongToCatch, pair.proposedThrow))
                             .Where(pair =>
                                 gameState.players
-                                .Where(x => !team.ContainsKey(x.Key)) 
-                                .All(x => {
+                                .Where(x => !team.ContainsKey(x.Key))
+                                .All(x =>
+                                {
                                     var (time, _) = PlayerInputApplyer.IntersectBallTime(x.Value.PlayerBody.Position, gameState.GameBall.Posistion, pair.proposedThrow, x.Value.PlayerBody.Velocity, Constants.footLen + Constants.BallRadius - Unit);
                                     return pair.howLongToCatch + 20 < time;
 
@@ -229,7 +240,7 @@ namespace RemoteSoccer
                             UpdateDirection(team[id], (GameState gs) => PlayerInputApplyer.IntersectBallDirection(gs.players[id].PlayerBody.Position, gs.GameBall.Posistion, proposedThrow, gs.players[id].PlayerBody.Velocity, Constants.footLen + Constants.BallRadius - Unit), inputs[id]);
                             toAssign = toAssign.Where(x => x.Key != id).ToList();
 
-                            var foot = proposedThrow.NewScaled(1.0/Constants.maxThrowPower);
+                            var foot = proposedThrow.NewScaled(1.0 / Constants.maxThrowPower);
                             hasBallInputs.FootX = foot.x;
                             hasBallInputs.FootY = foot.y;
                             goto next;
@@ -331,7 +342,8 @@ namespace RemoteSoccer
 
         private bool DontThrowAtGoal(double howLongToCatch, Vector proposedThrow)
         {
-            if (proposedThrow.Length == 0) {
+            if (proposedThrow.Length == 0)
+            {
                 return true;
             }
             // take the normal to the throw
@@ -342,15 +354,17 @@ namespace RemoteSoccer
             var ballPositionInNormal = throwNormal.Dot(gameState.GameBall.Posistion);
             // are they less then good lenght apart?
             var normalDis = Math.Abs(goalPositionInNormal - ballPositionInNormal);
-            if (normalDis > Constants.goalLen + Constants.BallRadius) {
+            if (normalDis > Constants.goalLen + Constants.BallRadius)
+            {
                 return true;
             }
             // how long will it take to reach the goal?
             var parallelDis = proposedThrow.NewUnitized().Dot(GoalTheyScoreOn().NewAdded(gameState.GameBall.Posistion.NewMinus()));
-            if (parallelDis < 0) {
+            if (parallelDis < 0)
+            {
                 return true; // you are throwing away from the gaol
             }
-            parallelDis += Math.Sqrt(Math.Pow(Constants.goalLen + Constants.BallRadius ,2)- Math.Pow(normalDis,2));
+            parallelDis += Math.Sqrt(Math.Pow(Constants.goalLen + Constants.BallRadius, 2) - Math.Pow(normalDis, 2));
             return howLongToCatch + 10 < PlayerInputApplyer.HowLongItTakesBallToGo(parallelDis, proposedThrow.Length);
         }
 
@@ -359,7 +373,8 @@ namespace RemoteSoccer
         private static Vector RandomVector()
         {
             var rads = r.NextDouble() * Math.PI * 2;
-            return new Vector(Math.Sin(rads), Math.Cos(rads));
+            var res = new Vector(Math.Sin(rads), Math.Cos(rads));
+            return res;
         }
 
         // why are these lazy?! they are always going to be initialzed
@@ -454,7 +469,8 @@ namespace RemoteSoccer
             {
                 res += Towards(proposedPos, myBody.NewAdded(myPlayer.PlayerBody.Velocity.NewUnitized().NewScaled(Constants.footLen - Constants.PlayerRadius)), .1);
             }
-            else {
+            else
+            {
                 res += Towards(proposedPos, myPlayer.PlayerFoot.Position, .1);
             }
             //res += Towards(proposedPos, myBody, .1);
@@ -766,6 +782,24 @@ namespace RemoteSoccer
             inputs.BodyY = concreteTarget.y;
         }
 
+        class GenAndPos
+        {
+            public Func<GameState, Vector> generator;
+            public Vector pos;
+        }
+
+        class SimpleGenAndPos: GenAndPos
+        {
+            public Vector dir;
+            public SimpleGenAndPos(Vector dir, Vector myPosition) {
+                this.dir = new Vector(dir.x, dir.y);
+                this.pos = myPosition.NewAdded(dir);
+                this.generator = _ => this.dir; 
+            }
+        }
+
+        private Vector[] directions = new int[100].Select(x => RandomVector().NewScaled(Constants.goalLen * r.NextDouble())).ToArray();
+
         private List<(Func<GameState, Vector> generator, Vector pos)> GetPositionGenerators(Guid self)
         {
             var myPosition = gameState.players[self].PlayerBody.Position;
@@ -786,17 +820,21 @@ namespace RemoteSoccer
                 (Func<GameState, Vector>)((GameState gs) => gs.GameBall.Posistion.NewAdded(GoalTheyScoreOn()).NewScaled(.5).NewAdded(gs.players[self].PlayerBody.Position.NewMinus()))
             };
 
-            var random = new int[100]
-                .Select(_ => RandomVector().NewScaled(Constants.goalLen * r.NextDouble()))
-                .Select(vec =>
+            var random = directions
+                .Select(dir =>
                 {
                     // something weird with closures here
                     // sometimes these all ending returning the same thing
                     // but only sometimes
-                    var x = vec;
+                    var x = dir;
                     return (Func<GameState, Vector>)(_ => x);
                 })
                 .ToArray();
+            //var random = new List<GenAndPos>();
+            //foreach (var dir in directions)
+            //{
+            //    random.Add(new SimpleGenAndPos (dir, myPosition));
+            //}
 
             var res = random
                 .Union(getBall)
@@ -816,7 +854,7 @@ namespace RemoteSoccer
                     }
                     var prospect = myPosition.NewAdded(dir);
 
-                    return (generator, pos: prospect);
+                    return ( generator: generator, pos: prospect );
                 })
                 .Where(pair => pair.pos.x < fieldDimensions.xMax && pair.pos.x > 0 && pair.pos.y < fieldDimensions.yMax && pair.pos.y > 0)
                 .ToList();
@@ -925,7 +963,7 @@ namespace RemoteSoccer
             else
             {
                 // don't go towards your goal
-                res -= TowardsWithIn(position, GoalTheyScoreOn(), 3, lenHome - 1000);
+                res -= TowardsWithIn(position, GoalTheyScoreOn(), 3, lenHome - 500);
                 // really don't self goal
                 res -= TowardsWithIn(position, GoalTheyScoreOn(), 6, Constants.goalLen + Unit * 3);
             }
