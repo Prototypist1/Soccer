@@ -101,6 +101,33 @@ namespace Common
                 if (ballVelocity.Length > 0)
                 {
                     ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+                    ballAt = new Vector(ballAt.x % (2 * FieldDimensions.Default.xMax), ballAt.y % (2 * FieldDimensions.Default.yMax));
+                    if (ballAt.x < -FieldDimensions.Default.xMax)
+                    {
+                        ballAt = new Vector((-(ballAt.x + FieldDimensions.Default.xMax)), ballAt.y);
+                    }
+                    else if (ballAt.x < 0)
+                    {
+                        ballAt = new Vector(-ballAt.x, ballAt.y);
+                    }
+                    else if (ballAt.x > FieldDimensions.Default.xMax)
+                    {
+                        ballAt = new Vector((2 * FieldDimensions.Default.xMax) - ballAt.x, ballAt.y);
+                    }
+
+                    if (ballAt.y < -FieldDimensions.Default.yMax)
+                    {
+                        ballAt = new Vector(ballAt.x, (-(ballAt.y + FieldDimensions.Default.yMax)));
+                    }
+                    else if (ballAt.y < 0)
+                    {
+                        ballAt = new Vector(ballAt.x, -ballAt.y);
+                    }
+                    else if (ballAt.y > FieldDimensions.Default.yMax)
+                    {
+                        ballAt = new Vector(ballAt.x, (2 * FieldDimensions.Default.yMax) - ballAt.y);
+                    }
+
                     dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
                 }
 
@@ -131,6 +158,33 @@ namespace Common
                 if (ballVelocity.Length > 0)
                 {
                     ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+                    ballAt = new Vector(ballAt.x % (2 * FieldDimensions.Default.xMax), ballAt.y % (2 * FieldDimensions.Default.yMax));
+                    if (ballAt.x < -FieldDimensions.Default.xMax)
+                    {
+                        ballAt = new Vector((-(ballAt.x + FieldDimensions.Default.xMax)), ballAt.y);
+                    }
+                    else if (ballAt.x < 0)
+                    {
+                        ballAt = new Vector(-ballAt.x, ballAt.y);
+                    }
+                    else if (ballAt.x > FieldDimensions.Default.xMax)
+                    {
+                        ballAt = new Vector((2 * FieldDimensions.Default.xMax) - ballAt.x, ballAt.y);
+                    }
+
+                    if (ballAt.y < -FieldDimensions.Default.yMax)
+                    {
+                        ballAt = new Vector(ballAt.x, (-(ballAt.y + FieldDimensions.Default.yMax)));
+                    }
+                    else if (ballAt.y < 0)
+                    {
+                        ballAt = new Vector(ballAt.x, -ballAt.y);
+                    }
+                    else if (ballAt.y > FieldDimensions.Default.yMax)
+                    {
+                        ballAt = new Vector(ballAt.x, (2 * FieldDimensions.Default.yMax) - ballAt.y);
+                    }
+
                     dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
                 }
 
@@ -182,6 +236,33 @@ namespace Common
                 if (ballVelocity.Length > 0)
                 {
                     ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+                    ballAt = new Vector(ballAt.x % (2 * FieldDimensions.Default.xMax), ballAt.y % (2 * FieldDimensions.Default.yMax));
+                    if (ballAt.x < -FieldDimensions.Default.xMax)
+                    {
+                        ballAt = new Vector((-(ballAt.x + FieldDimensions.Default.xMax)), ballAt.y);
+                    }
+                    else if (ballAt.x < 0)
+                    {
+                        ballAt = new Vector(-ballAt.x, ballAt.y);
+                    }
+                    else if (ballAt.x > FieldDimensions.Default.xMax)
+                    {
+                        ballAt = new Vector((2 * FieldDimensions.Default.xMax) - ballAt.x, ballAt.y);
+                    }
+
+                    if (ballAt.y < -FieldDimensions.Default.yMax)
+                    {
+                        ballAt = new Vector(ballAt.x, (-(ballAt.y + FieldDimensions.Default.yMax)));
+                    }
+                    else if (ballAt.y < 0)
+                    {
+                        ballAt = new Vector(ballAt.x, -ballAt.y);
+                    }
+                    else if (ballAt.y > FieldDimensions.Default.yMax)
+                    {
+                        ballAt = new Vector(ballAt.x, (2 * FieldDimensions.Default.yMax) - ballAt.y);
+                    }
+
                     dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
                 }
 
@@ -212,6 +293,33 @@ namespace Common
                 if (ballVelocity.Length > 0)
                 {
                     ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+                    ballAt = new Vector(ballAt.x % (2 * FieldDimensions.Default.xMax), ballAt.y % (2 * FieldDimensions.Default.yMax));
+                    if (ballAt.x < -FieldDimensions.Default.xMax)
+                    {
+                        ballAt = new Vector((-(ballAt.x + FieldDimensions.Default.xMax)), ballAt.y);
+                    }
+                    else if (ballAt.x < 0)
+                    {
+                        ballAt = new Vector(-ballAt.x, ballAt.y);
+                    }
+                    else if (ballAt.x > FieldDimensions.Default.xMax)
+                    {
+                        ballAt = new Vector((2 * FieldDimensions.Default.xMax) - ballAt.x, ballAt.y);
+                    }
+
+                    if (ballAt.y < -FieldDimensions.Default.yMax)
+                    {
+                        ballAt = new Vector(ballAt.x, (-(ballAt.y + FieldDimensions.Default.yMax)));
+                    }
+                    else if (ballAt.y < 0)
+                    {
+                        ballAt = new Vector(ballAt.x, -ballAt.y);
+                    }
+                    else if (ballAt.y > FieldDimensions.Default.yMax)
+                    {
+                        ballAt = new Vector(ballAt.x, (2 * FieldDimensions.Default.yMax) - ballAt.y);
+                    }
+
                     dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
                 }
 

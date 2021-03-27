@@ -47,13 +47,13 @@ namespace Common
         // fastest you can move your foot
         public const double speedLimit = 800;//;1000;//2000;//3000;
         // firction on the ball
-        public const double FrictionDenom = 150;
+        public const double FrictionDenom = 200;
         public const int bodyStartAt = 300;//250;
         public const double bodyEpo = 1.01;//1.015;
         //public const int bodySpeedLimit = 500;
         public const int BoostSpread = 3;
         public const double ThrowScale = .12;
-        public const double maxThrowPower = 1600;
+        public const double maxThrowPower = 1700;
         public const double BoostConsumption = .0001;
         public const double BoostFade = .5;
 
