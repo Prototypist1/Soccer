@@ -84,7 +84,7 @@ namespace Common
 
         // assuming the player runs at max speed the whole time
         // and assuming the ball doesn't have friction
-        public static (double, Vector) IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding)
+        public static (double, Vector) IntersectBallTime(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding, bool boost =false)
         {
 
             if (ballStart.NewAdded(start.NewMinus()).Length == 0)
@@ -140,7 +140,7 @@ namespace Common
                     playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
                 }
 
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at)+ padding;// + HowFarCanIBoost(boost);
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length + (boost ? Constants.speedLimit : 0), at)+ padding;// + HowFarCanIBoost(boost);
                 if (dissToBall > dissTravelled)
                 {
                     at += 5;
@@ -220,7 +220,7 @@ namespace Common
         // I wish I could insert a drawing to show what I am doing here
         // you try to maintain your direction relative to the ball
         // and any extra speed you have you spend on moving towards the ball
-        public static Vector IntersectBallDirection(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding)
+        public static Vector IntersectBallDirection(Vector start, Vector ballStart, Vector ballVelocity, Vector palyerVelocity, double padding, bool boost = false)
         {
             if (ballStart.NewAdded(start.NewMinus()).Length == 0)
             {
@@ -275,7 +275,7 @@ namespace Common
                     playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
                 }
 
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;// + HowFarCanIBoost(boost);
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length + (boost ? Constants.speedLimit : 0), at) + padding;// + HowFarCanIBoost(boost);
                 if (dissToBall > dissTravelled)
                 {
                     at += 5;
@@ -332,7 +332,7 @@ namespace Common
                     playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
                 }
 
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;// + HowFarCanIBoost(boost);
+                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length + (boost ? Constants.speedLimit : 0), at) + padding;// + HowFarCanIBoost(boost);
                 if (dissToBall < dissTravelled)
                 {
                     at -= 1;
@@ -378,6 +378,10 @@ namespace Common
 
             return (boost / Constants.BoostConsumption) + Constants.footLen - Constants.PlayerRadius;//, (2.0 / 3.0));
             //return Math.Pow(boost * (3.0 / 2.0) / Constants.BoostConsumption, (2.0 / 3.0));
+        }
+
+        public static double HowLongCanIBoost(double boost) {
+            return boost / (Constants.BoostConsumption * Constants.speedLimit);
         }
 
         //public static double HowQuicklyCanAPlayerMove(double length)

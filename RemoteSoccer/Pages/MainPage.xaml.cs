@@ -172,7 +172,7 @@ namespace RemoteSoccer
             game = new Game2();
 
 
-            var teamSize = 3;
+            var teamSize = 4;
 
             var ourTeam = new Guid[teamSize].Select(x => Guid.NewGuid()).ToArray();
 

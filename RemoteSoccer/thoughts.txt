@@ -1,4 +1,15 @@
-﻿I really want players to make tri-angles. I think the way to do this is:
+﻿I need to put an end to two players fighting over who gets to be goaly
+	maybe distance to goal should not be the only concern
+		maybe a goalie-ripeness evaulator, it could actually just be the gaoly evaluator...
+
+why does it always turn into a clusterfuck?
+	lots of shot passes tend to pull the teams into a block
+players dive and miss all over the place
+
+team needs to spread out more...
+cutters need to not sit some place a wiggle
+
+I really want players to make tri-angles. I think the way to do this is:
 	players like to be a range of distances away from teammates
 		this leaves players locked in a lattice
 			players defer to other players movements, the ball gets to move as it pleases, the dump defers to the ball, the first cutter defers to the dump + ball, and the final cutter defers to everyone
