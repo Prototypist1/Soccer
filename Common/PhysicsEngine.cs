@@ -178,6 +178,11 @@ namespace physics2
                             time = time,
                             action = () =>
                             {
+                                var aveVel = p1.PlayerFoot.Velocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.ExternalVelocity).NewAdded(p1.BoostVelocity)
+                                .NewAdded(p2.PlayerFoot.Velocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.ExternalVelocity).NewAdded(p2.BoostVelocity)).
+                                NewScaled(.5);
+
+
                                 var force = PhysicsMath2.GetCollisionForce(
                                     p1.PlayerFoot.Velocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.ExternalVelocity).NewAdded(p1.BoostVelocity),
                                     p2.PlayerFoot.Velocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.ExternalVelocity).NewAdded(p2.BoostVelocity),
@@ -267,7 +272,7 @@ namespace physics2
                                     //gameState.GameBall.OwnerOrNull = p2.Id;
                                     //gameState.GameBall.Posistion = p2.PlayerFoot.Position;
                                     //gameState.GameBall.Velocity = p2.ExternalVelocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.PlayerFoot.Velocity).NewAdded(p2.BoostVelocity);
-
+                                    gameState.GameBall.Velocity = aveVel;
                                     //p1.PlayerBody.Velocity = p1.PlayerBody.Velocity.NewScaled(.5);
                                 }
                                 else if (gameState.GameBall.OwnerOrNull == p2.Id && force.Length > Constants.BallTakeForce)
@@ -277,6 +282,7 @@ namespace physics2
                                     //gameState.GameBall.Posistion = p1.PlayerFoot.Position;
                                     //gameState.GameBall.Velocity = p1.ExternalVelocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.PlayerFoot.Velocity).NewAdded(p1.BoostVelocity);
 
+                                    gameState.GameBall.Velocity = aveVel;
                                     //p2.PlayerBody.Velocity = p2.PlayerBody.Velocity.NewScaled(.5);
                                 }
 
