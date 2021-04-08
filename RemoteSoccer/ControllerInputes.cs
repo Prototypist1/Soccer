@@ -65,16 +65,16 @@ namespace RemoteSoccer
                 lastA = false;
             }
 
-            if (boostPressed == Constants.NoMove && (snap.Buttons & GamepadButtons.LeftShoulder) == GamepadButtons.LeftShoulder)
+            if (boostPressed == Constants.NoMove && (snap.Buttons & GamepadButtons.RightShoulder) == GamepadButtons.RightShoulder)
             {
                 boostPressed = Guid.NewGuid();
             }
-            if (boostPressed != Constants.NoMove && (snap.Buttons & GamepadButtons.LeftShoulder) == 0)
+            if (boostPressed != Constants.NoMove && (snap.Buttons & GamepadButtons.RightShoulder) == 0)
             {
                 boostPressed = Constants.NoMove;
             }
 
-            var throwing = (snap.Buttons & GamepadButtons.RightShoulder) == GamepadButtons.RightShoulder;
+            var throwing = snap.RightTrigger >0;
 
             var right = new Vector(snap.RightThumbstickX, -snap.RightThumbstickY);
             if (right.Length > 1)

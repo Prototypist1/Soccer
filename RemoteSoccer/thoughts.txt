@@ -1,4 +1,14 @@
-﻿I need to put an end to two players fighting over who gets to be goaly
+﻿just a few small things
+	players should dive the player with the ball
+	cutters need behind ball 
+	goalie needs to stay closer to the goal
+	when you have the ball on your end the goalie should not be so close to you
+	circle, bigger faster, most quantized
+
+I still need to wok on cutting
+	with no defence and an idol handler the better should naturally settle in to a circler flow pattern
+
+I need to put an end to two players fighting over who gets to be goaly
 	maybe distance to goal should not be the only concern
 		maybe a goalie-ripeness evaulator, it could actually just be the gaoly evaluator...
 
