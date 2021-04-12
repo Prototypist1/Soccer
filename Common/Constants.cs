@@ -40,7 +40,7 @@ namespace Common
         public const int ThrowTimeout = 5;
         public const int MaxDeltaV = 40;
 
-        public const double EnergyAdd = .4;//100;//.5;//250_000 ;//400;
+        public const double EnergyAdd = 100;//100;//.5;//250_000 ;//400;
         //public const double SpeedScale = 1;
         //public const double Add = 100;
         //public const double ToThe = 2;//1.9;
@@ -48,18 +48,19 @@ namespace Common
         public const double speedLimit = 800;//;1000;//2000;//3000;
         // firction on the ball
         public const double FrictionDenom = 200;
-        public const int bodyStartAt = 300;//250;
+        public const int bodyStartAt = 500;//250;
         public const double bodyEpo = 1.01;//1.015;
         //public const int bodySpeedLimit = 500;
         public const int BoostSpread = 3;
         public const double ThrowScale = .12;
-        public const double maxThrowPower = 1700;
+        public const double maxThrowPower = 2000;
         public const double BoostConsumption = .0001;
         public const double BoostFade = .5;
 
 
 
         public static Guid NoMove = Guid.Empty;
+        public const double bodyRoot = .5;
         public const double ExternalVelocityFriction = .96;
         public const double ExtraBoostCost = 1;
     }

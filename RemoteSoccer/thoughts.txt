@@ -1,5 +1,4 @@
 ﻿just a few small things
-	cutters need behind ball 
 	goalie needs to stay closer to the goal
 	when you have the ball on your end the goalie should not be so close to you
 	ball circle, bigger faster, most quantized

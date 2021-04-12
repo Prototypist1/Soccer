@@ -179,14 +179,14 @@ namespace RemoteSoccer
                 //        Constants.PlayerRadius * 2);
                 //}
 
-                var vel = playerPair.Value.PlayerBody.Velocity;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
-                DrawLine(
-                    playerPair.Value.PlayerFoot.Position.x,
-                    playerPair.Value.PlayerFoot.Position.y,
-                    playerPair.Value.PlayerFoot.Position.x + (vel.x * 15),
-                    playerPair.Value.PlayerFoot.Position.y + (vel.y * 15),
-                    Color.FromArgb(0x20, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
-                    Constants.PlayerRadius );
+                //var vel = playerPair.Value.PlayerBody.Velocity;//.NewAdded(playerPair.Value.PlayerBody.Velocity).NewAdded(playerPair.Value.PlayerFoot.Velocity).NewAdded(playerPair.Value.ExternalVelocity).NewAdded(playerPair.Value.BoostVelocity);
+                //DrawLine(
+                //    playerPair.Value.PlayerFoot.Position.x,
+                //    playerPair.Value.PlayerFoot.Position.y,
+                //    playerPair.Value.PlayerFoot.Position.x + (vel.x * 15),
+                //    playerPair.Value.PlayerFoot.Position.y + (vel.y * 15),
+                //    Color.FromArgb(0x20, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
+                //    Constants.PlayerRadius );
             }
 
             // ball

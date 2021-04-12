@@ -99,29 +99,21 @@ namespace RemoteSoccer
             var sw = new Stopwatch();
             sw.Start();
 
-            var didIt = true;
-
             while (sending)
             {
                 game.ApplyInputs(
                     (await Task.WhenAll(localPlayers.Read().Select(x => (x.input.Next())).ToArray())).ToDictionary(x => x.Id, x => x));
 
-                if (didIt)
-                {
-                    didIt = false;
-                    var dontwait = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                         CoreDispatcherPriority.Normal,
                         () =>
                         {
                             Canvas.Invalidate();
-                            didIt = true;
-                            //renderGameState.Update(game.gameState);
                         });
-                }
 
                 frame.thing++;
 
-                while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
+                while ((1000.0 * frame.thing / 30.0) > sw.ElapsedMilliseconds)
                 {
                 }
 
@@ -172,7 +164,7 @@ namespace RemoteSoccer
             game = new Game2();
 
 
-            var teamSize = 4;
+            var teamSize = 5;
 
             var ourTeam = new Guid[teamSize].Select(x => Guid.NewGuid()).ToArray();
 
