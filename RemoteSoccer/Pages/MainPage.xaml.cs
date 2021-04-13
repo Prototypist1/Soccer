@@ -113,7 +113,7 @@ namespace RemoteSoccer
 
                 frame.thing++;
 
-                while ((1000.0 * frame.thing / 30.0) > sw.ElapsedMilliseconds)
+                while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
                 {
                 }
 
@@ -164,7 +164,7 @@ namespace RemoteSoccer
             game = new Game2();
 
 
-            var teamSize = 5;
+            var teamSize = 3;
 
             var ourTeam = new Guid[teamSize].Select(x => Guid.NewGuid()).ToArray();
 

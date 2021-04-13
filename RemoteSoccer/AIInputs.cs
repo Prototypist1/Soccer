@@ -14,7 +14,7 @@ namespace RemoteSoccer
     {
 
         const double Unit = 5_000;
-        private int playerLag = 0;
+        private int playerLag = 30;
         private static Random r = new Random();
         private readonly IReadOnlyDictionary<Guid, AITeamMember> team;
         private readonly GameState gameState;
@@ -172,9 +172,9 @@ namespace RemoteSoccer
                             hasBallInputs.FootY = foot.y;
                             goto next;
                         }
-
-                        var positionValue = EvaluatePass(gameState.GameBall.Posistion);
                         var ourSpace = Space(gameState.GameBall.Posistion);
+
+                        var positionValue = EvaluatePass(gameState.GameBall.Posistion, ourSpace);
 
                         var passes = toAssign
                             .SelectMany(x =>
@@ -192,11 +192,11 @@ namespace RemoteSoccer
                                     var (howLongToCatch, catchAt) = PlayerInputApplyer.IntersectBallTime(playerPos, gameState.GameBall.Posistion.NewAdded(gameState.GameBall.Velocity.NewScaled(playerLag)), gameState.GameBall.Velocity, gameState.players[x.Key].PlayerBody.Velocity, Constants.footLen + Constants.BallRadius - Unit, true);
                                     if (howLongToCatch < PlayerInputApplyer.HowLongCanIBoost(gameState.players[x.Key].Boosts))
                                     {
-                                        return (howLongToCatch, proposedThrow, x.Key, value: EvaluatePass(proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion)), space, catchAt);
+                                        return (howLongToCatch, proposedThrow, x.Key, space, catchAt);
                                     }
 
                                     (howLongToCatch, catchAt) = PlayerInputApplyer.IntersectBallTime(playerPos, gameState.GameBall.Posistion.NewAdded(gameState.GameBall.Velocity.NewScaled(playerLag)), proposedThrow, gameState.players[x.Key].PlayerBody.Velocity, Constants.footLen + Constants.BallRadius - Unit);
-                                    return (howLongToCatch, proposedThrow, x.Key, value: EvaluatePass(proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion.NewAdded(gameState.GameBall.Velocity.NewScaled(playerLag)))), space, catchAt);
+                                    return (howLongToCatch, proposedThrow, x.Key, space, catchAt);
                                 });
                             })
                             .Where(pair => pair.howLongToCatch > 25) // don't throw really short 
@@ -218,13 +218,13 @@ namespace RemoteSoccer
                                     return pair.howLongToCatch + 20 < time;
 
                                 }))
-                            .Where(pair => pair.value > positionValue + 2000 || (ourSpace < 2 * Unit && pair.space > 6 * Unit))
-                            .OrderByDescending(x => x.value)
+                            .Where(pair =>  EvaluatePass( pair.catchAt, pair.space) > positionValue + 2000)
+                            .OrderByDescending(x => EvaluatePass(x.catchAt, x.space))
                             .ToArray();
 
                         if (passes.Any())
                         {
-                            var (_, proposedThrow, id, _, _, catchAt) = passes.First();
+                            var (_, proposedThrow, id, _,  catchAt) = passes.First();
 
                             gameState.debugs.Add(new ThrowAt
                             {
@@ -265,7 +265,7 @@ namespace RemoteSoccer
                                             return PlayerInputApplyer.IntersectBallTime(x.Value.PlayerBody.Position.NewAdded(x.Value.PlayerBody.Velocity.NewScaled(playerLag)), gameState.GameBall.Posistion.NewAdded(gameState.GameBall.Velocity.NewScaled(playerLag)), proposedThrow, x.Value.PlayerBody.Velocity, Constants.footLen + Constants.BallRadius).Item1;
                                         })
                                         .Min();
-                                    return (proposedThrow, value: EvaluatePass(proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion.NewAdded(gameState.GameBall.Velocity.NewScaled(playerLag)))), howLongToCatch);
+                                    return (proposedThrow, value: proposedThrow.NewScaled(howLongToCatch).NewAdded(gameState.GameBall.Posistion.NewAdded(gameState.GameBall.Velocity.NewScaled(playerLag))).NewAdded(GoalTheyScoreOn().NewMinus()).Length, howLongToCatch);
                                 })
                                 .Where(pair => DontThrowAtGoal(pair.howLongToCatch, pair.proposedThrow))
                                 .OrderByDescending(x => x.value)
@@ -1051,7 +1051,7 @@ namespace RemoteSoccer
 
         }
 
-        private double EvaluatePass(Vector position)
+        private double EvaluatePass(Vector position, double space)
         {
 
             var res = 0.0;
@@ -1063,6 +1063,10 @@ namespace RemoteSoccer
             // go away from our goal
             res -= TowardsWithIn(position, GoalTheyScoreOn(), 1, Unit * 12);
             res -= TowardsWithIn(position, GoalTheyScoreOn(), 10, Unit * 4);
+
+            if (space < Unit) {
+                res *= space / Unit;
+            }
 
             return res;
         }
