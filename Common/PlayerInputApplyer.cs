@@ -143,7 +143,7 @@ namespace Common
                 var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + ((boost ? Constants.speedLimit : 0) * at) + padding;// + HowFarCanIBoost(boost);
                 if (dissToBall > dissTravelled)
                 {
-                    at += 5;
+                    at += 1;
                 }
                 else
                 {
@@ -151,62 +151,62 @@ namespace Common
                 }
             }
 
-            while (true)
-            {
-                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
-                var ballAt = ballStart;
-                if (ballVelocity.Length > 0)
-                {
-                    ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
-                    ballAt = new Vector(ballAt.x % (2 * FieldDimensions.Default.xMax), ballAt.y % (2 * FieldDimensions.Default.yMax));
-                    if (ballAt.x < -FieldDimensions.Default.xMax)
-                    {
-                        ballAt = new Vector((-(ballAt.x + FieldDimensions.Default.xMax)), ballAt.y);
-                    }
-                    else if (ballAt.x < 0)
-                    {
-                        ballAt = new Vector(-ballAt.x, ballAt.y);
-                    }
-                    else if (ballAt.x > FieldDimensions.Default.xMax)
-                    {
-                        ballAt = new Vector((2 * FieldDimensions.Default.xMax) - ballAt.x, ballAt.y);
-                    }
+            //while (true)
+            //{
+            //    var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+            //    var ballAt = ballStart;
+            //    if (ballVelocity.Length > 0)
+            //    {
+            //        ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+            //        ballAt = new Vector(ballAt.x % (2 * FieldDimensions.Default.xMax), ballAt.y % (2 * FieldDimensions.Default.yMax));
+            //        if (ballAt.x < -FieldDimensions.Default.xMax)
+            //        {
+            //            ballAt = new Vector((-(ballAt.x + FieldDimensions.Default.xMax)), ballAt.y);
+            //        }
+            //        else if (ballAt.x < 0)
+            //        {
+            //            ballAt = new Vector(-ballAt.x, ballAt.y);
+            //        }
+            //        else if (ballAt.x > FieldDimensions.Default.xMax)
+            //        {
+            //            ballAt = new Vector((2 * FieldDimensions.Default.xMax) - ballAt.x, ballAt.y);
+            //        }
 
-                    if (ballAt.y < -FieldDimensions.Default.yMax)
-                    {
-                        ballAt = new Vector(ballAt.x, (-(ballAt.y + FieldDimensions.Default.yMax)));
-                    }
-                    else if (ballAt.y < 0)
-                    {
-                        ballAt = new Vector(ballAt.x, -ballAt.y);
-                    }
-                    else if (ballAt.y > FieldDimensions.Default.yMax)
-                    {
-                        ballAt = new Vector(ballAt.x, (2 * FieldDimensions.Default.yMax) - ballAt.y);
-                    }
+            //        if (ballAt.y < -FieldDimensions.Default.yMax)
+            //        {
+            //            ballAt = new Vector(ballAt.x, (-(ballAt.y + FieldDimensions.Default.yMax)));
+            //        }
+            //        else if (ballAt.y < 0)
+            //        {
+            //            ballAt = new Vector(ballAt.x, -ballAt.y);
+            //        }
+            //        else if (ballAt.y > FieldDimensions.Default.yMax)
+            //        {
+            //            ballAt = new Vector(ballAt.x, (2 * FieldDimensions.Default.yMax) - ballAt.y);
+            //        }
 
-                    dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
-                }
+            //        dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
+            //    }
 
-                var diff = ballAt.NewAdded(start.NewMinus());
+            //    var diff = ballAt.NewAdded(start.NewMinus());
 
-                var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
-                var playerStartSpeed = new Vector(0, 0);
-                if (playerVelocityDot > 0)
-                {
-                    playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
-                }
+            //    var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
+            //    var playerStartSpeed = new Vector(0, 0);
+            //    if (playerVelocityDot > 0)
+            //    {
+            //        playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
+            //    }
 
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + padding;// + HowFarCanIBoost(boost);
-                if (dissToBall < dissTravelled)
-                {
-                    at -= 1;
-                }
-                else
-                {
-                    break;
-                }
-            }
+            //    var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + ((boost ? Constants.speedLimit : 0) * at) + padding;// + HowFarCanIBoost(boost);
+            //    if (dissToBall < dissTravelled)
+            //    {
+            //        at -= 1;
+            //    }
+            //    else
+            //    {
+            //        break;
+            //    }
+            //}
 
             if (ballVelocity.Length == 0) {
                 return (at, ballStart);
@@ -278,7 +278,7 @@ namespace Common
                 var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length , at) + ((boost ? Constants.speedLimit : 0)* at) + padding;// + HowFarCanIBoost(boost);
                 if (dissToBall > dissTravelled)
                 {
-                    at += 5;
+                    at += 1;
                 }
                 else
                 {
@@ -286,62 +286,62 @@ namespace Common
                 }
             }
 
-            while (true)
-            {
-                var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
-                var ballAt = ballStart;
-                if (ballVelocity.Length > 0)
-                {
-                    ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
-                    ballAt = new Vector(ballAt.x % (2 * FieldDimensions.Default.xMax), ballAt.y % (2 * FieldDimensions.Default.yMax));
-                    if (ballAt.x < -FieldDimensions.Default.xMax)
-                    {
-                        ballAt = new Vector((-(ballAt.x + FieldDimensions.Default.xMax)), ballAt.y);
-                    }
-                    else if (ballAt.x < 0)
-                    {
-                        ballAt = new Vector(-ballAt.x, ballAt.y);
-                    }
-                    else if (ballAt.x > FieldDimensions.Default.xMax)
-                    {
-                        ballAt = new Vector((2 * FieldDimensions.Default.xMax) - ballAt.x, ballAt.y);
-                    }
+            //while (true)
+            //{
+            //    var dissToBall = ballStart.NewAdded(start.NewMinus()).Length;
+            //    var ballAt = ballStart;
+            //    if (ballVelocity.Length > 0)
+            //    {
+            //        ballAt = ballStart.NewAdded(ballVelocity.NewUnitized().NewScaled(DistanceBallTravels(ballVelocity.Length, at)));
+            //        ballAt = new Vector(ballAt.x % (2 * FieldDimensions.Default.xMax), ballAt.y % (2 * FieldDimensions.Default.yMax));
+            //        if (ballAt.x < -FieldDimensions.Default.xMax)
+            //        {
+            //            ballAt = new Vector((-(ballAt.x + FieldDimensions.Default.xMax)), ballAt.y);
+            //        }
+            //        else if (ballAt.x < 0)
+            //        {
+            //            ballAt = new Vector(-ballAt.x, ballAt.y);
+            //        }
+            //        else if (ballAt.x > FieldDimensions.Default.xMax)
+            //        {
+            //            ballAt = new Vector((2 * FieldDimensions.Default.xMax) - ballAt.x, ballAt.y);
+            //        }
 
-                    if (ballAt.y < -FieldDimensions.Default.yMax)
-                    {
-                        ballAt = new Vector(ballAt.x, (-(ballAt.y + FieldDimensions.Default.yMax)));
-                    }
-                    else if (ballAt.y < 0)
-                    {
-                        ballAt = new Vector(ballAt.x, -ballAt.y);
-                    }
-                    else if (ballAt.y > FieldDimensions.Default.yMax)
-                    {
-                        ballAt = new Vector(ballAt.x, (2 * FieldDimensions.Default.yMax) - ballAt.y);
-                    }
+            //        if (ballAt.y < -FieldDimensions.Default.yMax)
+            //        {
+            //            ballAt = new Vector(ballAt.x, (-(ballAt.y + FieldDimensions.Default.yMax)));
+            //        }
+            //        else if (ballAt.y < 0)
+            //        {
+            //            ballAt = new Vector(ballAt.x, -ballAt.y);
+            //        }
+            //        else if (ballAt.y > FieldDimensions.Default.yMax)
+            //        {
+            //            ballAt = new Vector(ballAt.x, (2 * FieldDimensions.Default.yMax) - ballAt.y);
+            //        }
 
-                    dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
-                }
+            //        dissToBall = ballAt.NewAdded(start.NewMinus()).Length;
+            //    }
 
-                var diff = ballAt.NewAdded(start.NewMinus());
+            //    var diff = ballAt.NewAdded(start.NewMinus());
 
-                var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
-                var playerStartSpeed = new Vector(0, 0);
-                if (playerVelocityDot > 0)
-                {
-                    playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
-                }
+            //    var playerVelocityDot = diff.NewUnitized().Dot(palyerVelocity);
+            //    var playerStartSpeed = new Vector(0, 0);
+            //    if (playerVelocityDot > 0)
+            //    {
+            //        playerStartSpeed = diff.NewUnitized().NewScaled(playerVelocityDot);
+            //    }
 
-                var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + ((boost ? Constants.speedLimit : 0) * at) + padding;// + HowFarCanIBoost(boost);
-                if (dissToBall < dissTravelled)
-                {
-                    at -= 1;
-                }
-                else
-                {
-                    break;
-                }
-            }
+            //    var dissTravelled = DistancePlayerTravels(playerStartSpeed.Length, at) + ((boost ? Constants.speedLimit : 0) * at) + padding;// + HowFarCanIBoost(boost);
+            //    if (dissToBall < dissTravelled)
+            //    {
+            //        at -= 1;
+            //    }
+            //    else
+            //    {
+            //        break;
+            //    }
+            //}
 
             if (ballVelocity.Length > 0)
             {
@@ -440,7 +440,7 @@ namespace Common
         public static double DistancePlayerTravels(double v0, double time)
         {
             // figure out how long it took to reach our current speed
-            var t0 = VtoE(v0) / Constants.EnergyAdd;
+            var t0 = Math.Floor( VtoE(v0) / Constants.EnergyAdd);
             return DistancePlayerTravelsFromStop(time + t0) - DistancePlayerTravelsFromStop(t0);
         }
 

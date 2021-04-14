@@ -1,7 +1,15 @@
-﻿just a few small things
-	goalie needs to stay closer to the goal
-	when you have the ball on your end the goalie should not be so close to you
-	ball circle, bigger faster, most quantized
+﻿Maybe
+	- maybe slow down time for a second when you first press the throw buttom to make it easier to aim
+	- maybe have a point in the center of the body the you can pass through but other players cant
+		- or maybe it moves counter to the "head" that has the ball
+
+current	
+	- the player who last had the ball doesn't go for it, but sometimes they should
+		- it's ok to have state on the AI
+	- goalie needs to stay closer to the goal
+	- ball circle, bigger faster, most quantized
+	- I think swtiching between cutting and clearing should be more dynamic, based on position and not a timer
+		- it's ok to have state on the AI
 
 I still need to wok on cutting
 	with no defence and an idol handler the better should naturally settle in to a circler flow pattern

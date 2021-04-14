@@ -113,7 +113,7 @@ namespace RemoteSoccer
 
                 frame.thing++;
 
-                while ((1000.0 * frame.thing / 60.0) > sw.ElapsedMilliseconds)
+                while ((1000.0 * frame.thing / 30.0) > sw.ElapsedMilliseconds)
                 {
                 }
 
