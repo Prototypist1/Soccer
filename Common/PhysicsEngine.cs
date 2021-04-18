@@ -11,14 +11,14 @@ namespace physics2
 
     public static class PhysicsEngine2
     {
-
         public static IEnumerable<(GameState.Player, GameState.Player)> PlayerPairs(GameState gameState)
         {
             foreach (var p1 in gameState.players.Values)
             {
                 foreach (var p2 in gameState.players.Values)
                 {
-                    if (p1 != p2)
+                    // hash collisions would be a bug
+                    if (p1.Id.GetHashCode() < p2.Id.GetHashCode())
                     {
                         yield return (p1, p2);
                     }
@@ -203,87 +203,16 @@ namespace physics2
                                 p2.ExternalVelocity = p2.ExternalVelocity.NewAdded(force);
                                 p1.ExternalVelocity = p1.ExternalVelocity.NewAdded(force.NewMinus());
 
-                                //double part1, part2;
-
-                                //if (gameState.GameBall.OwnerOrNull == p1.Id)
-                                //{
-                                //    //force = force.NewAdded(force.NewUnitized().NewScaled(Constants.ExtraBallTakeForce));
-                                //    part1 = 1;
-                                //    part2 = -1;
-                                //}
-                                //else if (gameState.GameBall.OwnerOrNull == p2.Id)
-                                //{
-                                //    //force = force.NewAdded(force.NewUnitized().NewScaled(Constants.ExtraBallTakeForce));
-                                //    part1 = -1;
-                                //    part2 = 1;
-                                //}
-                                //else
-                                //{
-                                //var velocityVector1 = p1.PlayerFoot.Velocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.ExternalVelocity).NewAdded(p1.BoostVelocity);
-                                //var velocityVector2 = p2.PlayerFoot.Velocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.ExternalVelocity).NewAdded(p2.BoostVelocity);
-
-                                //var denom = velocityVector1.NewMinus().NewAdded(velocityVector2).Dot(normal);
-
-                                //var vv1dot = velocityVector1.Dot(normal.NewMinus());
-                                //var vv2dot = velocityVector2.Dot(normal);
-
-                                //part1 = Math.Min(1, Math.Max(-1, (vv2dot / denom) - (vv1dot / denom)));
-                                //part2 = -part1;
-                                //}
-
-
-                                //var forceForP1 = force.NewScaled(-(1 + part1) / p1.Mass);
-                                //if (p1.PlayerBody.Velocity.Dot(forceForP1) < 0)
-                                //{
-                                //    var remove = forceForP1.NewUnitized().NewScaled(p1.PlayerBody.Velocity.Dot(forceForP1.NewMinus().NewUnitized()));
-
-                                //    if (remove.Length >= forceForP1.Length)
-                                //    {
-                                //        remove = remove.NewUnitized().NewScaled(forceForP1.Length);
-                                //    }
-
-                                //    p1.PlayerBody.Velocity = p1.PlayerBody.Velocity.NewAdded(remove);
-
-                                //    forceForP1 = forceForP1.NewUnitized().NewScaled(forceForP1.Length - remove.Length);
-                                //}
-                                //p1.ExternalVelocity = p1.ExternalVelocity.NewAdded(forceForP1);
-
-
-                                //var forceForP2 = force.NewScaled((1 + part2) / p2.Mass);
-                                //if (p2.PlayerBody.Velocity.Dot(forceForP2) < 0)
-                                //{
-                                //    var remove = forceForP2.NewUnitized().NewScaled(p2.PlayerBody.Velocity.Dot(forceForP2.NewMinus().NewUnitized()));
-
-                                //    if (remove.Length >= forceForP2.Length)
-                                //    {
-                                //        remove = remove.NewUnitized().NewScaled(forceForP2.Length);
-                                //    }
-
-                                //    p2.PlayerBody.Velocity = p2.PlayerBody.Velocity.NewAdded(remove);
-
-                                //    forceForP2 = forceForP2.NewUnitized().NewScaled(forceForP2.Length - remove.Length);
-                                //}
-                                //p2.ExternalVelocity = p2.ExternalVelocity.NewAdded(forceForP2);
-
                                 if (gameState.GameBall.OwnerOrNull == p1.Id && force.Length > Constants.BallTakeForce)
                                 {
 
                                     gameState.GameBall.OwnerOrNull = null;
-                                    //gameState.GameBall.OwnerOrNull = p2.Id;
-                                    //gameState.GameBall.Posistion = p2.PlayerFoot.Position;
-                                    //gameState.GameBall.Velocity = p2.ExternalVelocity.NewAdded(p2.PlayerBody.Velocity).NewAdded(p2.PlayerFoot.Velocity).NewAdded(p2.BoostVelocity);
                                     gameState.GameBall.Velocity = aveVel;
-                                    //p1.PlayerBody.Velocity = p1.PlayerBody.Velocity.NewScaled(.5);
                                 }
                                 else if (gameState.GameBall.OwnerOrNull == p2.Id && force.Length > Constants.BallTakeForce)
                                 {
                                     gameState.GameBall.OwnerOrNull = null;
-                                    //gameState.GameBall.OwnerOrNull = p1.Id;
-                                    //gameState.GameBall.Posistion = p1.PlayerFoot.Position;
-                                    //gameState.GameBall.Velocity = p1.ExternalVelocity.NewAdded(p1.PlayerBody.Velocity).NewAdded(p1.PlayerFoot.Velocity).NewAdded(p1.BoostVelocity);
-
                                     gameState.GameBall.Velocity = aveVel;
-                                    //p2.PlayerBody.Velocity = p2.PlayerBody.Velocity.NewScaled(.5);
                                 }
 
                                 var collisionLocation = p2.PlayerFoot.Position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
@@ -295,16 +224,120 @@ namespace physics2
                     }
                 }
 
-                if (gameStateTracker.TryGetBallWall(out var ballWall))
+                // centers can hit centers
+                foreach (var center1 in gameState.players.Values)
                 {
-                    foreach (var player in gameState.players.Values)
+                    foreach (var center2 in gameState.players.Values)
                     {
-                        if (PhysicsMath2.TryBallBallCollistion(
-                            player.PlayerFoot.Position,
-                            new Vector(ballWall.x, ballWall.y),
-                            player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
+                        // hash collisions would be a bug
+                        if (center1.Id.GetHashCode() < center2.Id.GetHashCode())
+                        {
+                            if (PhysicsMath2.TryBallBallCollistion(
+                            center1.PlayerBody.Position,
+                            center2.PlayerBody.Position,
+                            center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity),
+                            center2.PlayerBody.Velocity.NewAdded(center2.ExternalVelocity).NewAdded(center2.BoostVelocity),
+                            Constants.playerCenterRadius + Constants.playerCenterRadius,
+                            out var time))
+                            {
+                                events.Add(new UpdateAction
+                                {
+                                    time = time,
+                                    action = () =>
+                                    {
+                                        var force = PhysicsMath2.GetCollisionForce(
+                                            center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity),
+                                            center2.PlayerBody.Velocity.NewAdded(center2.ExternalVelocity).NewAdded(center2.BoostVelocity),
+                                            center1.PlayerBody.Position,
+                                            center2.PlayerBody.Position,
+                                            center1.Mass,
+                                            center2.Mass);
+
+                                        var normal = center1.PlayerBody.Position.NewAdded(center2.PlayerBody.Position.NewMinus()).NewUnitized();
+
+                                        center2.ExternalVelocity = center2.ExternalVelocity.NewAdded(force);
+                                        center1.ExternalVelocity = center1.ExternalVelocity.NewAdded(force.NewMinus());
+
+                                        var collisionLocation = center2.PlayerBody.Position.NewAdded(normal.NewScaled(Constants.playerCenterRadius));
+
+                                        // add a collision 
+                                        gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame, Guid.NewGuid()));
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+                // centers can hit feet (but not there own)
+                foreach (var center1 in gameState.players.Values)
+                {
+                    foreach (var foot2 in gameState.players.Values)
+                    {
+                        if (center1.Id != foot2.Id)
+                        {
+                            if (PhysicsMath2.TryBallBallCollistion(
+                            center1.PlayerBody.Position,
+                            foot2.PlayerFoot.Position,
+                            center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity),
+                            foot2.PlayerFoot.Velocity.NewAdded( foot2.PlayerBody.Velocity.NewAdded(foot2.ExternalVelocity).NewAdded(foot2.BoostVelocity)),
+                            Constants.PlayerRadius + Constants.playerCenterRadius,
+                            out var time))
+                            {
+                                events.Add(new UpdateAction
+                                {
+                                    time = time,
+                                    action = () =>
+                                    {
+                                        var aveVel = center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity)
+                                        .NewAdded(foot2.PlayerFoot.Velocity.NewAdded(foot2.PlayerBody.Velocity).NewAdded(foot2.ExternalVelocity).NewAdded(foot2.BoostVelocity)).
+                                        NewScaled(.5);
+
+                                        var force = PhysicsMath2.GetCollisionForce(
+                                            center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity),
+                                            foot2.PlayerFoot.Velocity.NewAdded(foot2.PlayerBody.Velocity).NewAdded(foot2.ExternalVelocity).NewAdded(foot2.BoostVelocity),
+                                            center1.PlayerBody.Position,
+                                            foot2.PlayerFoot.Position,
+                                            center1.Mass,
+                                            foot2.Mass);
+
+                                        var normal = center1.PlayerBody.Position.NewAdded(foot2.PlayerFoot.Position.NewMinus()).NewUnitized();
+
+                                        if (gameState.GameBall.OwnerOrNull == foot2.Id && force.Length > Constants.BallTakeForce)
+                                        {
+                                            force = force.NewAdded(force.NewUnitized().NewScaled(Constants.ExtraBallTakeForce));
+                                        }
+
+                                        foot2.ExternalVelocity = foot2.ExternalVelocity.NewAdded(force);
+                                        center1.ExternalVelocity = center1.ExternalVelocity.NewAdded(force.NewMinus());
+
+                                        if (gameState.GameBall.OwnerOrNull == foot2.Id && force.Length > Constants.BallTakeForce)
+                                        {
+                                            gameState.GameBall.OwnerOrNull = null;
+                                            gameState.GameBall.Velocity = aveVel;
+                                        }
+
+                                        var collisionLocation = foot2.PlayerFoot.Position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
+
+                                        // add a collision 
+                                        gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame, Guid.NewGuid()));
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+                // centers can hit the wall
+                foreach (var player in gameState.players.Values)
+                {
+                    foreach (var parameter in gameState.PerimeterSegments)
+                    {
+                        if (PhysicsMath2.TryBallLineCollision(
+                            player.PlayerBody.Position,
+                            player.PlayerBody.Velocity.NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
+                            parameter.Start,
+                            parameter.End,
                             new Vector(0, 0),
-                            Constants.PlayerRadius + ballWall.radius,
+                            Constants.playerCenterRadius,
                             out var time))
                         {
                             events.Add(new UpdateAction
@@ -312,25 +345,147 @@ namespace physics2
                                 time = time,
                                 action = () =>
                                 {
-                                    // from player to ball wall
-                                    var normal = new Vector(ballWall.x, ballwall.y).NewAdded(player.PlayerFoot.Position.NewMinus()).NewUnitized();
 
-                                    var collisionLocation = player.PlayerFoot.Position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
-                                    var force = normal.NewScaled(2 * player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.BoostVelocity).NewAdded(player.ExternalVelocity.NewScaled(.75)).Dot(normal));
+                                    // add a collision 
+                                    var directionalUnit = PhysicsMath2.DirectionalUnit(parameter.Start, parameter.End);
+                                    var normal = PhysicsMath2.NormalUnit(parameter.Start, parameter.End, directionalUnit);
+
+                                    var collisionLocation = player.PlayerBody.Position.NewAdded(normal.NewScaled(-Constants.playerCenterRadius));
+                                    var force = normal.NewScaled(2 * player.PlayerBody.Velocity.NewAdded(player.BoostVelocity).NewAdded(player.ExternalVelocity.NewScaled(.75)).Dot(normal));
                                     gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame, Guid.NewGuid()));
 
-                                    // half the foot and body velocity becomes external so you bounce a bit
+                                    // half the body velocity becomes external so you bounce a bit
                                     // some of the external for is lost so you can't loose the ball bounce off the wall and get it back
                                     player.ExternalVelocity = player.ExternalVelocity
                                         .NewAdded(normal.NewScaled(player.PlayerBody.Velocity.Dot(normal)).NewMinus())
-                                        .NewAdded(normal.NewScaled(player.PlayerFoot.Velocity.Dot(normal)).NewMinus())
                                         .NewAdded(normal.NewScaled(player.BoostVelocity.Dot(normal)).NewMinus())
                                         .NewAdded(normal.NewScaled(player.ExternalVelocity.Dot(normal)).NewScaled(1.5).NewMinus());
                                     player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewAdded(normal.NewScaled(player.PlayerBody.Velocity.Dot(normal)).NewMinus());
-                                    player.PlayerFoot.Velocity = player.PlayerFoot.Velocity.NewAdded(normal.NewScaled(player.PlayerFoot.Velocity.Dot(normal)).NewMinus());
                                     player.BoostVelocity = player.BoostVelocity.NewAdded(normal.NewScaled(player.BoostVelocity.Dot(normal)).NewMinus());
+
                                 }
                             });
+                        }
+                    }
+                }
+                // centers can catch the ball but it goes to the foot
+                foreach (var player in gameState.players.Values)
+                {
+                    if (gameState.GameBall.OwnerOrNull == null && player.LastHadBall + Constants.ThrowTimeout < gameState.Frame)
+                    {
+                        if (PhysicsMath2.TryBallBallCollistion(
+                            gameState.GameBall.Posistion,
+                            player.PlayerBody.Position,
+                            gameState.GameBall.Velocity,
+                            player.PlayerBody.Velocity.NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
+                            Constants.BallRadius + Constants.playerCenterRadius,
+                            out var time))
+                        {
+                            events.Add(new UpdateAction
+                            {
+                                time = time,
+                                action = () =>
+                                {
+                                    gameState.GameBall.OwnerOrNull = player.Id;
+                                    gameState.GameBall.Posistion = player.PlayerFoot.Position;
+                                    gameState.GameBall.Velocity = player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity);
+
+                                    //var force = PhysicsMath2.GetCollisionForce(
+                                    //    player.PlayerBody.Velocity.NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
+                                    //    gameState.GameBall.Velocity,
+                                    //    player.PlayerBody.Position,
+                                    //    gameState.GameBall.Posistion,
+                                    //    player.Mass,
+                                    //    Constants.BallMass);
+
+                                    //var normal = player.PlayerBody.Position.NewAdded(gameState.GameBall.Posistion.NewMinus()).NewUnitized();
+
+                                    //gameState.GameBall.Velocity = gameState.GameBall.Velocity.NewAdded(force);
+                                    //player.ExternalVelocity = player.ExternalVelocity.NewAdded(force.NewMinus());
+
+                                    //var collisionLocation = gameState.GameBall.Posistion.NewAdded(normal.NewScaled(Constants.BallRadius));
+
+                                    //// add a collision 
+                                    //gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame, Guid.NewGuid()));
+
+                                }
+                            });
+                        }
+                    }
+
+                }
+
+                if (gameStateTracker.TryGetBallWall(out var ballWall))
+                {
+                    foreach (var player in gameState.players.Values)
+                    {
+                        {
+                            if (PhysicsMath2.TryBallBallCollistion(
+                                player.PlayerFoot.Position,
+                                new Vector(ballWall.x, ballWall.y),
+                                player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
+                                new Vector(0, 0),
+                                Constants.PlayerRadius + ballWall.radius,
+                                out var time))
+                            {
+                                events.Add(new UpdateAction
+                                {
+                                    time = time,
+                                    action = () =>
+                                    {
+                                        // from player to ball wall
+                                        var normal = new Vector(ballWall.x, ballwall.y).NewAdded(player.PlayerFoot.Position.NewMinus()).NewUnitized();
+
+                                        var collisionLocation = player.PlayerFoot.Position.NewAdded(normal.NewScaled(Constants.PlayerRadius));
+                                        var force = normal.NewScaled(2 * player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.BoostVelocity).NewAdded(player.ExternalVelocity.NewScaled(.75)).Dot(normal));
+                                        gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame, Guid.NewGuid()));
+
+                                        // half the foot and body velocity becomes external so you bounce a bit
+                                        // some of the external for is lost so you can't loose the ball bounce off the wall and get it back
+                                        player.ExternalVelocity = player.ExternalVelocity
+                                            .NewAdded(normal.NewScaled(player.PlayerBody.Velocity.Dot(normal)).NewMinus())
+                                            .NewAdded(normal.NewScaled(player.PlayerFoot.Velocity.Dot(normal)).NewMinus())
+                                            .NewAdded(normal.NewScaled(player.BoostVelocity.Dot(normal)).NewMinus())
+                                            .NewAdded(normal.NewScaled(player.ExternalVelocity.Dot(normal)).NewScaled(1.5).NewMinus());
+                                        player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewAdded(normal.NewScaled(player.PlayerBody.Velocity.Dot(normal)).NewMinus());
+                                        player.PlayerFoot.Velocity = player.PlayerFoot.Velocity.NewAdded(normal.NewScaled(player.PlayerFoot.Velocity.Dot(normal)).NewMinus());
+                                        player.BoostVelocity = player.BoostVelocity.NewAdded(normal.NewScaled(player.BoostVelocity.Dot(normal)).NewMinus());
+                                    }
+                                });
+                            }
+                        }
+                        {
+                            if (PhysicsMath2.TryBallBallCollistion(
+                                player.PlayerBody.Position,
+                                new Vector(ballWall.x, ballWall.y),
+                                player.PlayerBody.Velocity.NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
+                                new Vector(0, 0),
+                                Constants.playerCenterRadius + ballWall.radius,
+                                out var time))
+                            {
+                                events.Add(new UpdateAction
+                                {
+                                    time = time,
+                                    action = () =>
+                                    {
+                                        // from player to ball wall
+                                        var normal = new Vector(ballWall.x, ballwall.y).NewAdded(player.PlayerBody.Position.NewMinus()).NewUnitized();
+
+                                        var collisionLocation = player.PlayerBody.Position.NewAdded(normal.NewScaled(Constants.playerCenterRadius));
+                                        var force = normal.NewScaled(2 * player.PlayerBody.Velocity.NewAdded(player.BoostVelocity).NewAdded(player.ExternalVelocity.NewScaled(.75)).Dot(normal));
+                                        gameState.collisions.Add(new GameState.Collision(collisionLocation, force, gameState.Frame, Guid.NewGuid()));
+
+                                        // half the body velocity becomes external so you bounce a bit
+                                        // some of the external for is lost so you can't loose the ball bounce off the wall and get it back
+                                        player.ExternalVelocity = player.ExternalVelocity
+                                            .NewAdded(normal.NewScaled(player.PlayerBody.Velocity.Dot(normal)).NewMinus())
+                                            .NewAdded(normal.NewScaled(player.BoostVelocity.Dot(normal)).NewMinus())
+                                            .NewAdded(normal.NewScaled(player.ExternalVelocity.Dot(normal)).NewScaled(1.5).NewMinus());
+                                        player.PlayerBody.Velocity = player.PlayerBody.Velocity.NewAdded(normal.NewScaled(player.PlayerBody.Velocity.Dot(normal)).NewMinus());
+                                        player.BoostVelocity = player.BoostVelocity.NewAdded(normal.NewScaled(player.BoostVelocity.Dot(normal)).NewMinus());
+                                    }
+                                });
+                            }
                         }
                     }
                 }

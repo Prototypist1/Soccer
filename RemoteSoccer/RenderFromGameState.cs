@@ -143,6 +143,7 @@ namespace RemoteSoccer
             // players bodies
             foreach (var playerPair in gameState.players)
             {
+                DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.playerCenterRadius, Color.FromArgb(0xff, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
                 DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
             }
 

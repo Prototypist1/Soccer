@@ -22,7 +22,8 @@ namespace Common
         public const double goalLen = 10000;
         public const double ballWallLen = 15_000;
         public const int PlayerRadius = 2000;//1400;//;750 ;//750;//750;// 500;//300;
-        public const double footLen = PlayerRadius * 3;//6000;//
+        public const int playerCenterRadius = 1000;
+        public const double footLen = (PlayerRadius * 3) + playerCenterRadius;//6000;//
         public const int BallRadius = 1600;//1100;//500;//150;//250;//30;//
         public const double BallMass = 1;
 
