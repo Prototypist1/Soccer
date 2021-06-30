@@ -96,7 +96,7 @@ namespace RemoteSoccer
 
     class RenderGameState2
     {
-        private CanvasControl canvas;
+        //private CanvasControl canvas;
         private Smoother zoomer;
 
         private readonly TextBlock leftScore, rightScore;
@@ -108,9 +108,9 @@ namespace RemoteSoccer
         private List<GameState.GoalScored> goalScoreds = new List<GameState.GoalScored>();
         private List<GameState.Collision> collisions = new List<GameState.Collision>();
 
-        public RenderGameState2(CanvasControl canvas, IZoomer zoomer, TextBlock leftScore, TextBlock rightScore)
+        public RenderGameState2(/*CanvasControl canvas,*/ IZoomer zoomer, TextBlock leftScore, TextBlock rightScore)
         {
-            this.canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
+            //this.canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
             this.zoomer = new Smoother(zoomer) ?? throw new ArgumentNullException(nameof(zoomer));
             this.leftScore = leftScore ?? throw new ArgumentNullException(nameof(leftScore));
             this.rightScore = rightScore ?? throw new ArgumentNullException(nameof(rightScore));
@@ -134,34 +134,75 @@ namespace RemoteSoccer
 
             var scale = (float)zoomer.GetTimes();
 
+            // walls
+            foreach (var segment in gameState.PerimeterSegments)
+            {
+                var width = 1_000_000;
+
+                var xOffset = 0f;
+
+                if (segment.Start.y > segment.End.y)
+                {
+                    xOffset = -width / 2f;
+                }
+                else if (segment.Start.y < segment.End.y)
+                {
+                    xOffset = width / 2f;
+                }
+
+                var yOffset = 0f;
+
+                if (segment.Start.x > segment.End.x)
+                {
+                    yOffset = width / 2f;
+                }
+                else if (segment.Start.x < segment.End.x)
+                {
+                    yOffset = -width / 2f;
+                }
+
+
+                DrawLine(
+                    segment.Start.x + xOffset,
+                    segment.Start.y + yOffset,
+                    segment.End.x + xOffset,
+                    segment.End.y + yOffset,
+                    Color.FromArgb(0x11, 0x00, 0x00, 0x00),
+                    width,
+                    CanvasCapStyle.Square);
+            }
+
             // goals
             DrawFilledCircle(
                 gameState.LeftGoal.Posistion.x, gameState.LeftGoal.Posistion.y, Constants.goalLen, Color.FromArgb(0xff, 0xff, 0xff, 0xff));
             DrawFilledCircle(
                 gameState.RightGoal.Posistion.x, gameState.RightGoal.Posistion.y, Constants.goalLen, Color.FromArgb(0xff, 0xff, 0xff, 0xff));
 
+
+            // has ball highlight
+            DrawCircle(gameState.GameBall.Posistion.x, gameState.GameBall.Posistion.y, Constants.BallRadius,
+                Color.FromArgb((byte)((gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity : 1) * 0xff), 0xff, 0xff, 0xff), 35 / scale);
+
+
             // players bodies
             foreach (var playerPair in gameState.players)
             {
                 DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.playerCenterRadius, Color.FromArgb(0xff, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
-                DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
+                //DrawFilledCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y, Constants.footLen, Color.FromArgb(playerPair.Value.PlayerBody.A, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B));
             }
+
 
             // draw number of boosts
             foreach (var playerPair in gameState.players)
             {
                 if (playerPair.Value.Boosts > 0)
                 {
-                    DrawCircle(playerPair.Value.PlayerBody.Position.x, playerPair.Value.PlayerBody.Position.y,
-                        Constants.footLen + (playerPair.Value.Boosts * 2.0 / scale) + (10 / scale),
-                        Color.FromArgb(0x22, playerPair.Value.PlayerBody.R, playerPair.Value.PlayerBody.G, playerPair.Value.PlayerBody.B),
+                    DrawCircle(playerPair.Value.PlayerFoot.Position.x, playerPair.Value.PlayerFoot.Position.y,
+                        Constants.PlayerRadius + (playerPair.Value.Boosts * 2.0 / scale)  + (2 / scale),
+                        Color.FromArgb(0x22, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
                         (float)(playerPair.Value.Boosts * 4.0 / scale));
                 }
             }
-
-            // has ball highlight
-            DrawCircle(gameState.GameBall.Posistion.x, gameState.GameBall.Posistion.y, Constants.BallRadius,
-                Color.FromArgb((byte)((gameState.CountDownState.Countdown ? gameState.CountDownState.BallOpacity : 1) * 0xff), 0xff, 0xff, 0xff), 20 / scale);
 
             // players feet
             foreach (var playerPair in gameState.players)
@@ -203,16 +244,8 @@ namespace RemoteSoccer
             }
 
             // score
-            leftScore.Text = gameState.LeftScore + "";
-            rightScore.Text = gameState.RightScore + "";
-
-            // walls
-            foreach (var segment in gameState.PerimeterSegments)
-            {
-                DrawLine(segment.Start.x, segment.Start.y,
-                    segment.End.x, segment.End.y,
-                    Color.FromArgb(0xff, 0x00, 0x00, 0x00), 1 / scale);
-            }
+            leftScore.Text = gameState.RightScore + "";
+            rightScore.Text = gameState.LeftScore + ""; 
 
             // goals scored
             foreach (var goalScored in gameState.GoalsScored.Except(goalScoreds))
@@ -235,7 +268,8 @@ namespace RemoteSoccer
                     goalSocred.Posistion.y + (goalSocred.Surface.y * 1000 * (gameState.Frame - goalSocred.Frame)),
                     goalSocred.Posistion.x - (goalSocred.Surface.x * 1000 * (gameState.Frame - goalSocred.Frame)),
                     goalSocred.Posistion.y - (goalSocred.Surface.y * 1000 * (gameState.Frame - goalSocred.Frame)),
-                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - goalSocred.Frame) / goalAnimationLength)) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - goalSocred.Frame) / goalAnimationLength)) * 0xff), 0x00, 0x00, 0x00), 1 / scale,
+                    CanvasCapStyle.Round);
             }
 
             // collisions
@@ -266,28 +300,32 @@ namespace RemoteSoccer
                     collision.Position.y - ((collision.Force.x + (collision.Force.y / 10.0)) * .5 * (gameState.Frame - collision.Frame)),
                     collision.Position.x + ((collision.Force.y + (collision.Force.x / 10.0)) * 1 * (gameState.Frame - collision.Frame)),
                     collision.Position.y - ((collision.Force.x + (collision.Force.y / 10.0)) * 1 * (gameState.Frame - collision.Frame)),
-                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale,
+                    CanvasCapStyle.Round);
 
                 DrawLine(
                     collision.Position.x - ((collision.Force.y + (collision.Force.x / 10.0)) * .5 * (gameState.Frame - collision.Frame)),
                     collision.Position.y + ((collision.Force.x + (collision.Force.y / 10.0)) * .5 * (gameState.Frame - collision.Frame)),
                     collision.Position.x - ((collision.Force.y + (collision.Force.x / 10.0)) * 1 * (gameState.Frame - collision.Frame)),
                     collision.Position.y + ((collision.Force.x + (collision.Force.y / 10.0)) * 1 * (gameState.Frame - collision.Frame)),
-                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale,
+                    CanvasCapStyle.Round);
 
                 DrawLine(
                     collision.Position.x + ((collision.Force.y - (collision.Force.x / 10.0)) * .5 * (gameState.Frame - collision.Frame)),
                     collision.Position.y - ((collision.Force.x - (collision.Force.y / 10.0)) * .5 * (gameState.Frame - collision.Frame)),
                     collision.Position.x + ((collision.Force.y - (collision.Force.x / 10.0)) * 1 * (gameState.Frame - collision.Frame)),
                     collision.Position.y - ((collision.Force.x - (collision.Force.y / 10.0)) * 1 * (gameState.Frame - collision.Frame)),
-                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale,
+                    CanvasCapStyle.Round);
 
                 DrawLine(
                     collision.Position.x - ((collision.Force.y - (collision.Force.x / 10.0)) * .5 * (gameState.Frame - collision.Frame)),
                     collision.Position.y + ((collision.Force.x - (collision.Force.y / 10.0)) * .5 * (gameState.Frame - collision.Frame)),
                     collision.Position.x - ((collision.Force.y - (collision.Force.x / 10.0)) * 1 * (gameState.Frame - collision.Frame)),
                     collision.Position.y + ((collision.Force.x - (collision.Force.y / 10.0)) * 1 * (gameState.Frame - collision.Frame)),
-                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale);
+                    Color.FromArgb((byte)(1.0 - (((gameState.Frame - collision.Frame) / (collision.Force.Length / timeDenom))) * 0xff), 0x00, 0x00, 0x00), 1 / scale,
+                    CanvasCapStyle.Round);
             }
 
             foreach (var collision in gameState.debugs.Where(x => gameState.Frame - x.Frame< 180)) {
@@ -306,7 +344,8 @@ namespace RemoteSoccer
                     playerPair.Value.PlayerFoot.Position.x + (toThrow.x * 30),
                     playerPair.Value.PlayerFoot.Position.y + (toThrow.y * 30),
                     Color.FromArgb(0xff, playerPair.Value.PlayerFoot.R, playerPair.Value.PlayerFoot.G, playerPair.Value.PlayerFoot.B),
-                    1 / scale);
+                    1 / scale,
+                    CanvasCapStyle.Round);
                 //}
             }
 
@@ -322,7 +361,7 @@ namespace RemoteSoccer
                    (float)((x * scale) + xPlus), (float)((y * scale) + yPlus), (float)(rad * scale), color, strokeWidth * scale);
             }
 
-            void DrawLine(double x1, double y1, double x2, double y2, Color color, float strokeWidth)
+            void DrawLine(double x1, double y1, double x2, double y2, Color color, float strokeWidth, CanvasCapStyle capStyle) 
             {
                 args.DrawingSession.DrawLine(
                     new Vector2((float)((x1 * scale) + xPlus), (float)((y1 * scale) + yPlus)),
@@ -331,7 +370,7 @@ namespace RemoteSoccer
                     strokeWidth * scale,
                     new CanvasStrokeStyle
                     {
-                        EndCap = CanvasCapStyle.Round
+                        EndCap = capStyle
                     });
             }
         }

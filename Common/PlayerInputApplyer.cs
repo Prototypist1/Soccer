@@ -693,10 +693,10 @@ namespace Common
 
                         var offsetDiff = targetOffset.NewAdded(currentOffset.NewMinus());
 
-                        if (offsetDiff.Length < Constants.speedLimit && new Vector(input.FootX, input.FootY).Length > .98 && player.Boosts > 0 && input.Boost != Constants.NoMove)
+                        if (offsetDiff.Length < Constants.speedLimit && new Vector(input.BodyX, input.BodyY).Length > .98 && player.Boosts > 0 && input.Boost != Constants.NoMove)
                         {
                             player.PlayerFoot.Velocity = offsetDiff;
-                            player.BoostVelocity = player.BoostVelocity.NewScaled(0.2).NewAdded(new Vector(input.FootX, input.FootY).NewUnitized().NewScaled(Constants.speedLimit - offsetDiff.Length));
+                            player.BoostVelocity = player.BoostVelocity.NewScaled(0.2).NewAdded(new Vector(input.BodyX, input.BodyY).NewUnitized().NewScaled(Constants.speedLimit - offsetDiff.Length));
 
                         }
                         else if (offsetDiff.Length > Constants.speedLimit)

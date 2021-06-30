@@ -54,15 +54,12 @@ namespace RemoteSoccer
 
             zoomer = new MouseZoomer(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions, (GameState gs) =>
             {
-
-
                 return gs.players.Where(x => x.Key == playerId).Select(x => x.Value.PlayerBody.Position)
                 .Union(new[] { gs.GameBall.Posistion })
                 .ToArray();
-
             });
             //zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
-            renderGameState = new RenderGameState2(Canvas, zoomer, LeftScore, RightScore);
+            renderGameState = new RenderGameState2(/*Canvas,*/ zoomer, LeftScore, RightScore);
 
             var signalRHandler = SingleSignalRHandler.GetOrThrow();
             var color = GetColor();

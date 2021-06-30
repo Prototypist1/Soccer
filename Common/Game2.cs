@@ -25,8 +25,8 @@ namespace physics2
             gameState.Handle(new InitGameStateEvent(
                 new Physics2.Vector(field.xMax / 2.0, field.yMax / 2.0),
                 new Physics2.Vector(0, 0),
-                new Physics2.Vector(Constants.goalLen + Constants.footLen * 2, field.yMax / 2.0),
-                new Physics2.Vector(field.xMax - (Constants.goalLen + Constants.footLen * 2), field.yMax / 2.0),
+                new Physics2.Vector(Constants.goalLen + Constants.goalLen * 2, field.yMax / 2.0),
+                new Physics2.Vector(field.xMax - (Constants.goalLen + Constants.goalLen * 2), field.yMax / 2.0),
                 field));
 
             // GameStateTracker is a bit weird

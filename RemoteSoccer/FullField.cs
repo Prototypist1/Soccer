@@ -79,7 +79,7 @@ namespace RemoteSoccer
             this.centerY = centerY;
         }
 
-        public double GetTimes() => Math.Min(this.viewFrameWidth / ((centerX * 2) + Constants.footLen), this.viewFrameHeight / ((centerY * 2) + Constants.footLen));
+        public double GetTimes() => Math.Min(this.viewFrameWidth / ((centerX * 2) /*+ Constants.footLen*/), this.viewFrameHeight / ((centerY * 2)/* + Constants.footLen*/));
 
         //public (double, double, double, double) Update(Position[] positionsList)
         //{

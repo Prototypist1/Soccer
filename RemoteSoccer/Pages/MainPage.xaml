@@ -15,21 +15,21 @@
     <Grid x:Name="GameHolder" SizeChanged="GameHolder_SizeChanged" Background="#ffeeeeee"  PointerWheelChanged="GameHolder_PointerWheelChanged">
 
         <!--<Canvas x:Name="GameArea" />-->
-        <canvas:CanvasControl x:Name="Canvas" Draw="Canvas_Draw" />
+        
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Border BorderThickness="10" >
-                <TextBlock x:Name="LeftScore" Text="0"  FontSize="100"/>
+                <TextBlock x:Name="LeftScore" Text="0"  FontSize="150" Foreground="#22000000"/>
             </Border>
             <Border BorderThickness="10" >
-                <TextBlock Text=":" FontSize="100"  />
+                <TextBlock Text=":" FontSize="150"  Foreground="#22000000" />
             </Border>
             <Border BorderThickness="10" >
-                <TextBlock x:Name="RightScore" Text="0" FontSize="100" />
+                <TextBlock x:Name="RightScore" Text="0" FontSize="150"  Foreground="#22000000" />
             </Border>
         </StackPanel>
 
-
+        <canvas:CanvasControl x:Name="Canvas" Draw="Canvas_Draw" />
 
         <Border BorderThickness="10" VerticalAlignment="Bottom">
             <TextBlock x:Name="Fps" Text="" />

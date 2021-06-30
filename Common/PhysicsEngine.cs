@@ -225,49 +225,49 @@ namespace physics2
                 }
 
                 // centers can hit centers
-                foreach (var center1 in gameState.players.Values)
-                {
-                    foreach (var center2 in gameState.players.Values)
-                    {
-                        // hash collisions would be a bug
-                        if (center1.Id.GetHashCode() < center2.Id.GetHashCode())
-                        {
-                            if (PhysicsMath2.TryBallBallCollistion(
-                            center1.PlayerBody.Position,
-                            center2.PlayerBody.Position,
-                            center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity),
-                            center2.PlayerBody.Velocity.NewAdded(center2.ExternalVelocity).NewAdded(center2.BoostVelocity),
-                            Constants.playerCenterRadius + Constants.playerCenterRadius,
-                            out var time))
-                            {
-                                events.Add(new UpdateAction
-                                {
-                                    time = time,
-                                    action = () =>
-                                    {
-                                        var force = PhysicsMath2.GetCollisionForce(
-                                            center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity),
-                                            center2.PlayerBody.Velocity.NewAdded(center2.ExternalVelocity).NewAdded(center2.BoostVelocity),
-                                            center1.PlayerBody.Position,
-                                            center2.PlayerBody.Position,
-                                            center1.Mass,
-                                            center2.Mass);
+                //foreach (var center1 in gameState.players.Values)
+                //{
+                //    foreach (var center2 in gameState.players.Values)
+                //    {
+                //        // hash collisions would be a bug
+                //        if (center1.Id.GetHashCode() < center2.Id.GetHashCode())
+                //        {
+                //            if (PhysicsMath2.TryBallBallCollistion(
+                //            center1.PlayerBody.Position,
+                //            center2.PlayerBody.Position,
+                //            center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity),
+                //            center2.PlayerBody.Velocity.NewAdded(center2.ExternalVelocity).NewAdded(center2.BoostVelocity),
+                //            Constants.playerCenterRadius + Constants.playerCenterRadius,
+                //            out var time))
+                //            {
+                //                events.Add(new UpdateAction
+                //                {
+                //                    time = time,
+                //                    action = () =>
+                //                    {
+                //                        var force = PhysicsMath2.GetCollisionForce(
+                //                            center1.PlayerBody.Velocity.NewAdded(center1.ExternalVelocity).NewAdded(center1.BoostVelocity),
+                //                            center2.PlayerBody.Velocity.NewAdded(center2.ExternalVelocity).NewAdded(center2.BoostVelocity),
+                //                            center1.PlayerBody.Position,
+                //                            center2.PlayerBody.Position,
+                //                            center1.Mass,
+                //                            center2.Mass);
 
-                                        var normal = center1.PlayerBody.Position.NewAdded(center2.PlayerBody.Position.NewMinus()).NewUnitized();
+                //                        var normal = center1.PlayerBody.Position.NewAdded(center2.PlayerBody.Position.NewMinus()).NewUnitized();
 
-                                        center2.ExternalVelocity = center2.ExternalVelocity.NewAdded(force);
-                                        center1.ExternalVelocity = center1.ExternalVelocity.NewAdded(force.NewMinus());
+                //                        center2.ExternalVelocity = center2.ExternalVelocity.NewAdded(force);
+                //                        center1.ExternalVelocity = center1.ExternalVelocity.NewAdded(force.NewMinus());
 
-                                        var collisionLocation = center2.PlayerBody.Position.NewAdded(normal.NewScaled(Constants.playerCenterRadius));
+                //                        var collisionLocation = center2.PlayerBody.Position.NewAdded(normal.NewScaled(Constants.playerCenterRadius));
 
-                                        // add a collision 
-                                        gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame, Guid.NewGuid()));
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }
+                //                        // add a collision 
+                //                        gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame, Guid.NewGuid()));
+                //                    }
+                //                });
+                //            }
+                //        }
+                //    }
+                //}
                 // centers can hit feet (but not there own)
                 foreach (var center1 in gameState.players.Values)
                 {
@@ -369,51 +369,51 @@ namespace physics2
                     }
                 }
                 // centers can catch the ball but it goes to the foot
-                foreach (var player in gameState.players.Values)
-                {
-                    if (gameState.GameBall.OwnerOrNull == null && player.LastHadBall + Constants.ThrowTimeout < gameState.Frame)
-                    {
-                        if (PhysicsMath2.TryBallBallCollistion(
-                            gameState.GameBall.Posistion,
-                            player.PlayerBody.Position,
-                            gameState.GameBall.Velocity,
-                            player.PlayerBody.Velocity.NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
-                            Constants.BallRadius + Constants.playerCenterRadius,
-                            out var time))
-                        {
-                            events.Add(new UpdateAction
-                            {
-                                time = time,
-                                action = () =>
-                                {
-                                    gameState.GameBall.OwnerOrNull = player.Id;
-                                    gameState.GameBall.Posistion = player.PlayerFoot.Position;
-                                    gameState.GameBall.Velocity = player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity);
+                //foreach (var player in gameState.players.Values)
+                //{
+                //    if (gameState.GameBall.OwnerOrNull == null && player.LastHadBall + Constants.ThrowTimeout < gameState.Frame)
+                //    {
+                //        if (PhysicsMath2.TryBallBallCollistion(
+                //            gameState.GameBall.Posistion,
+                //            player.PlayerBody.Position,
+                //            gameState.GameBall.Velocity,
+                //            player.PlayerBody.Velocity.NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
+                //            Constants.BallRadius + Constants.playerCenterRadius,
+                //            out var time))
+                //        {
+                //            events.Add(new UpdateAction
+                //            {
+                //                time = time,
+                //                action = () =>
+                //                {
+                //                    gameState.GameBall.OwnerOrNull = player.Id;
+                //                    gameState.GameBall.Posistion = player.PlayerFoot.Position;
+                //                    gameState.GameBall.Velocity = player.PlayerFoot.Velocity.NewAdded(player.PlayerBody.Velocity).NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity);
 
-                                    //var force = PhysicsMath2.GetCollisionForce(
-                                    //    player.PlayerBody.Velocity.NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
-                                    //    gameState.GameBall.Velocity,
-                                    //    player.PlayerBody.Position,
-                                    //    gameState.GameBall.Posistion,
-                                    //    player.Mass,
-                                    //    Constants.BallMass);
+                //                    //var force = PhysicsMath2.GetCollisionForce(
+                //                    //    player.PlayerBody.Velocity.NewAdded(player.ExternalVelocity).NewAdded(player.BoostVelocity),
+                //                    //    gameState.GameBall.Velocity,
+                //                    //    player.PlayerBody.Position,
+                //                    //    gameState.GameBall.Posistion,
+                //                    //    player.Mass,
+                //                    //    Constants.BallMass);
 
-                                    //var normal = player.PlayerBody.Position.NewAdded(gameState.GameBall.Posistion.NewMinus()).NewUnitized();
+                //                    //var normal = player.PlayerBody.Position.NewAdded(gameState.GameBall.Posistion.NewMinus()).NewUnitized();
 
-                                    //gameState.GameBall.Velocity = gameState.GameBall.Velocity.NewAdded(force);
-                                    //player.ExternalVelocity = player.ExternalVelocity.NewAdded(force.NewMinus());
+                //                    //gameState.GameBall.Velocity = gameState.GameBall.Velocity.NewAdded(force);
+                //                    //player.ExternalVelocity = player.ExternalVelocity.NewAdded(force.NewMinus());
 
-                                    //var collisionLocation = gameState.GameBall.Posistion.NewAdded(normal.NewScaled(Constants.BallRadius));
+                //                    //var collisionLocation = gameState.GameBall.Posistion.NewAdded(normal.NewScaled(Constants.BallRadius));
 
-                                    //// add a collision 
-                                    //gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame, Guid.NewGuid()));
+                //                    //// add a collision 
+                //                    //gameState.collisions.Add(new GameState.Collision(collisionLocation, force.NewScaled(2), gameState.Frame, Guid.NewGuid()));
 
-                                }
-                            });
-                        }
-                    }
+                //                }
+                //            });
+                //        }
+                //    }
 
-                }
+                //}
 
                 if (gameStateTracker.TryGetBallWall(out var ballWall))
                 {

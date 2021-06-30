@@ -164,7 +164,7 @@ namespace RemoteSoccer
             game = new Game2();
 
 
-            var teamSize = 3;
+            var teamSize = 5;
 
             var ourTeam = new Guid[teamSize].Select(x => Guid.NewGuid()).ToArray();
 
@@ -178,7 +178,7 @@ namespace RemoteSoccer
             //});
             zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
             //renderGameState = new RenderGameState(GameArea, zoomer, LeftScore, RightScore);
-            renderGameState = new RenderGameState2(Canvas, zoomer, LeftScore, RightScore);
+            renderGameState = new RenderGameState2(/*Canvas,*/ zoomer, LeftScore, RightScore);
 
             Task.Run(async () =>
             {
