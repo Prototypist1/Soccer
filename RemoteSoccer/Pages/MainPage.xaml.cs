@@ -53,6 +53,9 @@ namespace RemoteSoccer
             LocalId = localId;
         }
 
+        /// <summary>
+        /// aka body id
+        /// </summary>
         public Guid LocalId { get; }
     }
 
@@ -67,10 +70,12 @@ namespace RemoteSoccer
         private JumpBallConcurrent<HashSet<PlayerInfo>> localPlayers = new JumpBallConcurrent<HashSet<PlayerInfo>>(new HashSet<PlayerInfo>());
 
         private Ref<bool> lockCurser = new Ref<bool>(true);
-        private FullField zoomer;
-        private RenderGameState2 renderGameState;
+        private Zoomer zoomerLeft;
+        private Zoomer zoomerRight;
+        private RenderGameState2 renderGameStateLeft, renderGameStateRight;
         private Ref<int> frame = new Ref<int>(0);
         private FieldDimensions fieldDimensions = FieldDimensions.Default;
+        private bool initialized = false;
 
         //private IInputs inputs;
         public MainPage()
@@ -108,7 +113,8 @@ namespace RemoteSoccer
                         CoreDispatcherPriority.Normal,
                         () =>
                         {
-                            Canvas.Invalidate();
+                            CanvasLeft.Invalidate();
+                            CanvasRight.Invalidate();
                         });
 
                 frame.thing++;
@@ -128,13 +134,19 @@ namespace RemoteSoccer
 
 
 
-        private void GameHolder_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void Canvas_SizeChangedLeft(object sender, SizeChangedEventArgs e)
         {
-            zoomer.UpdateWindow(GameHolder.ActualWidth, GameHolder.ActualHeight);
+            zoomerLeft.UpdateWindow(CanvasLeft.ActualWidth, CanvasLeft.ActualHeight);
         }
 
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        private void Canvas_SizeChangedRight(object sender, SizeChangedEventArgs e)
+        {
+            zoomerRight.UpdateWindow(CanvasRight.ActualWidth, CanvasRight.ActualHeight);
+        }
+
+
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
@@ -176,76 +188,87 @@ namespace RemoteSoccer
             //    .ToArray();
 
             //});
-            zoomer = new FullField(GameHolder.ActualWidth, GameHolder.ActualHeight, fieldDimensions.xMax / 2.0, fieldDimensions.yMax / 2.0);
+
+
+            // this blocks like a mofo
+            // we don't want anything to get a peice of the main thread while we are setting up
+            try
+            {
+
+                //if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
+                //{
+                //    var body = ourTeam.First();
+                //    var inputs = new MouseKeyboardInputs(lockCurser, body);
+                //    await inputs.Init();
+                //    await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
+                //}
+
+                //foreach (var body in ourTeam)//.Skip(1)
+                //{
+                //    var inputs = new AIInputs(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
+                //    await inputs.Init();
+                //    await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00, 0xff });
+                //}
+
+
+                //https://stackoverflow.com/questions/48997243/uwp-gamepad-gamepads-is-empty-even-though-a-controller-is-connected
+                var x = 0;
+                while (x < 10)
+                {
+                    var db = Gamepad.Gamepads.Count;
+                    Task.Delay(100).Wait();
+                    x++;
+                }
+
+
+                var gps = Gamepad.Gamepads.ToArray();
+                foreach (var (gamePad, key) in gps.Zip(ourTeam.Take(gps.Length), (x, y) => (x, y)))
+                {
+                    var body = key;// Guid.NewGuid();
+                    var inputs = CreateController(gamePad, body);
+                    inputs.Init().Wait();
+                    CreatePlayer(body, inputs).Wait();
+                }
+
+                {
+                    var team = new AITeam(game.gameState, ourTeam, fieldDimensions, false);
+
+                    foreach (var (key, input) in team.GetPlayers().Skip(gps.Length))
+                    {
+                        input.Init().Wait();
+                        CreatePlayer(key, input, new byte[3] { 0x00, 0x00, 0xff }).Wait();
+                    }
+                }
+
+                var theirTeam = new Guid[teamSize].Select(x => Guid.NewGuid()).ToArray();
+
+                {
+                    var team = new AITeam(game.gameState, theirTeam, fieldDimensions, true);
+
+                    foreach (var (key, input) in team.GetPlayers())
+                    {
+                        input.Init().Wait();
+                        CreatePlayer(key, input, new byte[3] { 0xff, 0x00, 0x00 }).Wait();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await OnDisconnect(ex);
+            }
+
+            var ourBody = localPlayers.Read().First().LocalId;
+
+            zoomerLeft = new Zoomer(CanvasLeft.ActualWidth, CanvasLeft.ActualHeight, ourBody, .0025);
+            zoomerRight = new Zoomer(CanvasRight.ActualWidth, CanvasRight.ActualHeight, ourBody, .01);
             //renderGameState = new RenderGameState(GameArea, zoomer, LeftScore, RightScore);
-            renderGameState = new RenderGameState2(/*Canvas,*/ zoomer, LeftScore, RightScore);
+            renderGameStateLeft = new RenderGameState2(/*Canvas,*/ zoomerLeft, LeftScore, RightScore);
+            renderGameStateRight = new RenderGameState2(/*Canvas,*/ zoomerRight, LeftScore, RightScore);
 
             Task.Run(async () =>
             {
-                try
-                {
-
-                    //if (gameInfo.controlScheme == ControlScheme.MouseAndKeyboard)
-                    //{
-                    //    var body = ourTeam.First();
-                    //    var inputs = new MouseKeyboardInputs(lockCurser, body);
-                    //    await inputs.Init();
-                    //    await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
-                    //}
-
-                    //foreach (var body in ourTeam)//.Skip(1)
-                    //{
-                    //    var inputs = new AIInputs(game.gameState, body, ourTeam.Except(new Guid[] { body }).ToArray(), fieldDimensions, false);
-                    //    await inputs.Init();
-                    //    await CreatePlayer(body, inputs, new byte[3] { 0x00, 0x00, 0xff });
-                    //}
-
-
-                    //https://stackoverflow.com/questions/48997243/uwp-gamepad-gamepads-is-empty-even-though-a-controller-is-connected
-                    var x = 0;
-                    while (x < 10)
-                    {
-                        var db = Gamepad.Gamepads.Count;
-                        await Task.Delay(100);
-                        x++;
-                    }
-
-
-                    var gps = Gamepad.Gamepads.ToArray();
-                    foreach (var (gamePad, key) in gps.Zip(ourTeam.Take(gps.Length), (x, y) => (x, y)))
-                    {
-                        var body = key;// Guid.NewGuid();
-                        var inputs = CreateController(gamePad, body);
-                        await inputs.Init();
-                        await CreatePlayer(body, inputs);
-                    }
-
-                    {
-                        var team = new AITeam(game.gameState, ourTeam, fieldDimensions, false);
-
-                        foreach (var (key, input) in team.GetPlayers().Skip(gps.Length))
-                        {
-                            await input.Init();
-                            await CreatePlayer(key, input, new byte[3] { 0x00, 0x00, 0xff });
-                        }
-                    }
-
-                    var theirTeam = new Guid[teamSize].Select(x => Guid.NewGuid()).ToArray();
-
-                    {
-                        var team = new AITeam(game.gameState, theirTeam, fieldDimensions, true);
-
-                        foreach (var (key, input) in team.GetPlayers())
-                        {
-                            await input.Init();
-                            await CreatePlayer(key, input, new byte[3] { 0xff, 0x00, 0x00 });
-                        }
-                    }
-
-
-                    //Windows.Gaming.Input.Gamepad.GamepadAdded += Gamepad_GamepadAdded;
-                    //Windows.Gaming.Input.Gamepad.GamepadRemoved += Gamepad_GamepadRemoved;
-
+                try { 
+                
                     MainLoop();
                 }
                 catch (Exception ex)
@@ -457,7 +480,7 @@ namespace RemoteSoccer
         {
             var delta = e.GetCurrentPoint(GameHolder).Properties.MouseWheelDelta;
 
-            zoomer.SetTimes(zoomer.GetTimes() * Math.Pow(1.1, delta / 100.0));
+            zoomerLeft.SetTimes(zoomerLeft.GetTimes() * Math.Pow(1.1, delta / 100.0));
         }
 
         private void ColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
@@ -545,17 +568,24 @@ namespace RemoteSoccer
                 });
         }
 
-        private void Canvas_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
+        private void Canvas_DrawLeft(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
         {
-            renderGameState.Update(game.gameState, args);
+            renderGameStateLeft.Update(game.gameState, args);
+        }
+
+        private void Canvas_DrawRight(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
+        {
+            renderGameStateRight.Update(game.gameState, args);
         }
 
         // got this from https://microsoft.github.io/Win2D/html/QuickStart.htm
         // they say it avoids memory leaks
         private void Page_Unloaded(object sender, RoutedEventArgs e)
         {
-            this.Canvas.RemoveFromVisualTree();
-            this.Canvas = null;
+            this.CanvasLeft.RemoveFromVisualTree();
+            this.CanvasLeft = null;
+            this.CanvasRight.RemoveFromVisualTree();
+            this.CanvasRight = null;
         }
     }
 }

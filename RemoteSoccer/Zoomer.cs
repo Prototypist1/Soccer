@@ -10,13 +10,14 @@ namespace RemoteSoccer
         private double viewFrameWidth;
         private double viewFrameHeight;
         private Guid body;
-        private double times = .1;
+        private double times;
 
-        public Zoomer(double viewFrameWidth, double viewFrameHeight, Guid body)
+        public Zoomer(double viewFrameWidth, double viewFrameHeight, Guid body, double times)
         {
             this.viewFrameWidth = viewFrameWidth;
             this.viewFrameHeight = viewFrameHeight;
             this.body = body;
+            this.times = times;
         }
 
         public double GetTimes() => times;

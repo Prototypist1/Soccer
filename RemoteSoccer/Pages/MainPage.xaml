@@ -5,19 +5,24 @@
     xmlns:local="using:RemoteSoccer"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     Unloaded="Page_Unloaded"
     >
 
-    <Grid x:Name="GameHolder" SizeChanged="GameHolder_SizeChanged" Background="#ffeeeeee"  PointerWheelChanged="GameHolder_PointerWheelChanged">
+    <!--xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"-->
 
+    <Grid x:Name="GameHolder" Background="#ffeeeeee"  PointerWheelChanged="GameHolder_PointerWheelChanged">
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
         <!--<Canvas x:Name="GameArea" />-->
         
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.ColumnSpan="2">
             <Border BorderThickness="10" >
                 <TextBlock x:Name="LeftScore" Text="0"  FontSize="150" Foreground="#22000000"/>
             </Border>
@@ -29,7 +34,8 @@
             </Border>
         </StackPanel>
 
-        <canvas:CanvasControl x:Name="Canvas" Draw="Canvas_Draw" />
+        <canvas:CanvasControl x:Name="CanvasLeft" SizeChanged="Canvas_SizeChangedLeft"  Draw="Canvas_DrawLeft" />
+        <canvas:CanvasControl x:Name="CanvasRight" SizeChanged="Canvas_SizeChangedRight"  Draw="Canvas_DrawRight" Grid.Column="2" />
 
         <Border BorderThickness="10" VerticalAlignment="Bottom">
             <TextBlock x:Name="Fps" Text="" />
@@ -40,10 +46,10 @@
             Visibility="Collapsed"
             HorizontalAlignment="Left" 
             VerticalAlignment="Top">
-            <controls:DropShadowPanel
+            <!--<controls:DropShadowPanel
                 BlurRadius="20"
                 ShadowOpacity=".5"
-                Color="#ff444444">
+                Color="#ff444444">-->
                 <StackPanel Background="#ffeeeeee" >
                     <!--<StackPanel.Background>
                         <AcrylicBrush
@@ -76,8 +82,7 @@
                         <Button Click="Button_Click" Content="Done" HorizontalAlignment="Stretch"/>
                     </Border>
                 </StackPanel>
-            </controls:DropShadowPanel>
+            <!--</controls:DropShadowPanel>-->
         </Border>
-
     </Grid>
 </Page>
