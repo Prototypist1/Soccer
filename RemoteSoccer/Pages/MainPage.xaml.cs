@@ -212,28 +212,33 @@ namespace RemoteSoccer
 
 
                 //https://stackoverflow.com/questions/48997243/uwp-gamepad-gamepads-is-empty-even-though-a-controller-is-connected
-                var x = 0;
-                while (x < 10)
-                {
-                    var db = Gamepad.Gamepads.Count;
-                    Task.Delay(100).Wait();
-                    x++;
-                }
+                //var x = 0;
+                //while (x < 10)
+                //{
+                //    var db = Gamepad.Gamepads.Count;
+                //    Task.Delay(100).Wait();
+                //    x++;
+                //}
 
 
-                var gps = Gamepad.Gamepads.ToArray();
-                foreach (var (gamePad, key) in gps.Zip(ourTeam.Take(gps.Length), (x, y) => (x, y)))
-                {
-                    var body = key;// Guid.NewGuid();
-                    var inputs = CreateController(gamePad, body);
-                    inputs.Init().Wait();
-                    CreatePlayer(body, inputs).Wait();
-                }
+                //var gps = Gamepad.Gamepads.ToArray();
+                //foreach (var (gamePad, key) in gps.Zip(ourTeam.Take(gps.Length), (x, y) => (x, y)))
+                //{
+                //    var body = key;// Guid.NewGuid();
+                //    var inputs = CreateController(gamePad, body);
+                //    inputs.Init().Wait();
+                //    CreatePlayer(body, inputs).Wait();
+                //}
+
+                var body = ourTeam.First();
+                var inputs = new MouseKeyboardInputs(lockCurser, body);
+                await inputs.Init();
+                await CreatePlayer(body, inputs, new byte[3] { 0x88, 0x00, 0xff });
 
                 {
                     var team = new AITeam(game.gameState, ourTeam, fieldDimensions, false);
 
-                    foreach (var (key, input) in team.GetPlayers().Skip(gps.Length))
+                    foreach (var (key, input) in team.GetPlayers().Skip(1/*gps.Length*/))
                     {
                         input.Init().Wait();
                         CreatePlayer(key, input, new byte[3] { 0x00, 0x00, 0xff }).Wait();
